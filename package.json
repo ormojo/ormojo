@@ -12,7 +12,8 @@
   "keywords": [
     "orm",
     "sql",
-    "nosql"
+    "nosql",
+    "denormalize"
   ],
   "author": "William C. Johnson <wcjohnson@oigroup.net> (https://github.com/wcjohnson)",
   "license": "MIT",
@@ -21,10 +22,12 @@
   },
   "homepage": "https://github.com/wcjohnson/ormojo",
   "devDependencies": {
+    "chai": "^3.5.0",
+    "coffee-script": "^1.10.0",
+    "mocha": "^2.4.5"
   },
   "dependencies": {
   },
   "peerDependencies": {
-
   }
 }
