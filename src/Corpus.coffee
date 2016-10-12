@@ -14,4 +14,15 @@ class Corpus
 		m = new Model(@, spec)
 		@models[m.name] = m
 
+	#
+	# Create a resolved promise.
+	#
+	promiseResolve: (reason) -> @_promiseResolve(reason)
+
+	#
+	# Create a rejected promise.
+	#
+	promiseReject: (reason) -> @_promiseReject(reason)
+
+
 module.exports = Corpus
