@@ -6,9 +6,8 @@ isPrimitive = (v) ->
 
 createStandardInstanceClassForBoundModel = (bm) ->
 	class BMInstance extends Instance
-		constructor: (boundModel) ->
+		constructor: (boundModel, @dataValues = {}) ->
 			super(boundModel)
-			@dataValues = {}
 			@_previousDataValues = {}
 
 		getDataValue: (key) -> @dataValues[key]
@@ -20,16 +19,28 @@ createStandardInstanceClassForBoundModel = (bm) ->
 			@dataValues[key] = value
 
 		get: (key) ->
-			if key and @boundModel.instanceProps[key]
-				if (getter = @boundModel.getters[key])
-					getter.call(@, key)
-				else
-					@getDataValue(key)
+			if key
+				if @boundModel.instanceProps[key]
+					if (getter = @boundModel.getters[key])
+						getter.call(@, key)
+					else
+						@getDataValue(key)
 			else
 				values = {}
 				for k of @boundModel.instanceProps
 					values[k] = @get(k)
 				values
+
+		set: (key, value) ->
+			if (value isnt undefined)
+				if @boundModel.instanceProps[key]
+					if (setter = @boundModel.setters[key])
+						setter.call(@, key, value)
+					else
+						@setDataValue(key, value)
+			else
+				for k,v of key when @boundModel.instanceProps[k]
+					@set(k,v)
 
 		changed: (key) ->
 			if key
@@ -38,17 +49,23 @@ createStandardInstanceClassForBoundModel = (bm) ->
 				changes = (key for key of @dataValues when (key of @_previousDataValues))
 				if changes.length > 0 then changes else false
 
+		save: ->
+			@boundModel.backend.saveInstance(@, @boundModel)
+
+		destroy: ->
+			@boundModel.backend.destroyInstance(@, @boundModel)
 
 	# Create getters and setters
-	for k,v of model.instanceProps when v
-		Object.defineProperty(ModelInstance.prototype, k, {
-			enumerable: true, configurable: true
-			get: -> @get(k)
-			set: (val) -> @set(k, val)
-		})
+	for k,v of bm.instanceProps when v
+		do (k,v) ->
+			Object.defineProperty(BMInstance.prototype, k, {
+				enumerable: true, configurable: true
+				get: -> @get(k)
+				set: (val) -> @set(k, val)
+			})
 
-	# Don't let coffeescript make a comprehension
-	undefined
+	# Return the instance class
+	BMInstance
 
 module.exports = {
 	createStandardInstanceClassForBoundModel

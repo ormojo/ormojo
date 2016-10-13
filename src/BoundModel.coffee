@@ -1,6 +1,8 @@
 # A model bound to a backend or backends.
 class BoundModel
 	constructor: (@model, @backend) ->
+		@corpus = @model.corpus
+		@name = @model.name
 		@getters = {}
 		@setters = {}
 		@instanceProps = {}
@@ -10,7 +12,7 @@ class BoundModel
 			@setters[k] = null
 			@instanceProps[k] = true
 
-		for k,v of model.spec.properties
+		for k,v of (@model.spec.properties or {})
 			if not v
 				delete @instanceProps[k]
 			else
@@ -18,6 +20,10 @@ class BoundModel
 				@setters[k] = v.set
 				@instanceProps[k] = true
 
+	create: (data) ->
+		@backend.createInstance(@, data)
 
+	findById: (id) ->
+		@backend.findInstanceById(@, id)
 
 module.exports = BoundModel
