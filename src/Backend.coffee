@@ -1,6 +1,12 @@
 class Backend
 	constructor: ->
 
-	initialize: (@corpus) ->
+	_initialize: (@corpus) -> @initialize()
+
+	initialize: ->
+
+	# Invoked after Corpus.createModel.
+	modelWasAdded: (model) ->
+
 
 module.exports = Backend

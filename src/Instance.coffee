@@ -2,6 +2,18 @@ class Instance
 	constructor: (@boundModel) ->
 
 	#
+	# Get the raw value of a field. No getters are called.
+	#
+	getDataValue: (key) ->
+		throw new Error('ormojo: `getDataValue` called on abstract instance')
+
+	#
+	# Set the raw value of a field.
+	#
+	setDataValue: (key) ->
+		throw new Error('ormojo: `setDataValue` called on abstract instance')
+
+	#
 	# Get the value of a field on this instance by key.
 	# If the key is not specified, converts the instance to a plain object.
 	#
