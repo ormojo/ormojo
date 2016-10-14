@@ -5,7 +5,7 @@ isPrimitive = (v) ->
 	if (t is 'string') or (t is 'number') or (t is 'boolean') then true else false
 
 createStandardInstanceClassForBoundModel = (bm) ->
-	class BMInstance extends Instance
+	class BoundInstance extends Instance
 		constructor: (boundModel, @dataValues = {}) ->
 			super(boundModel)
 			@_previousDataValues = {}
@@ -58,14 +58,14 @@ createStandardInstanceClassForBoundModel = (bm) ->
 	# Create getters and setters
 	for k,v of bm.instanceProps when v
 		do (k,v) ->
-			Object.defineProperty(BMInstance.prototype, k, {
+			Object.defineProperty(BoundInstance.prototype, k, {
 				enumerable: true, configurable: true
 				get: -> @get(k)
 				set: (val) -> @set(k, val)
 			})
 
 	# Return the instance class
-	BMInstance
+	BoundInstance
 
 module.exports = {
 	createStandardInstanceClassForBoundModel

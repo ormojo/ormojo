@@ -18,6 +18,7 @@ class TestBackend extends Backend
 		if instance.isNewRecord
 			if not instance.id then instance.id = cuid()
 			@storage[boundModel.name][instance.id] = {}
+			delete instance.isNewRecord
 		Object.assign(@storage[boundModel.name][instance.id], instance.dataValues)
 		@corpus.promiseResolve(instance)
 
