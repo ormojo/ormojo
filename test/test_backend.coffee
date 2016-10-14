@@ -39,7 +39,7 @@ class TestBackend extends Backend
 	createInstance: (boundModel, initialData) ->
 		instance = @createRawInstance(boundModel)
 		instance.isNewRecord = true
-		instance._applyDefaults()
+		instance.__applyDefaults()
 		if initialData isnt undefined
 			instance.set(initialData)
 			@saveInstance(instance, boundModel)

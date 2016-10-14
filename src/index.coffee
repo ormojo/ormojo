@@ -1,10 +1,8 @@
-module.exports = {
-	STRING: 'STRING'
-	BOOLEAN: 'BOOLEAN'
-	INTEGER: 'INTEGER'
-	FLOAT: 'FLOAT'
-	OBJECT: 'OBJECT'
-	ANY: 'ANY'
+FieldTypes = require './FieldTypes'
+
+module.exports = Object.assign({
 	Model: require './Model'
 	Corpus: require './Corpus'
-}
+	Backend: require './Backend'
+	BoundModel: require './BoundModel'
+}, FieldTypes)
