@@ -25,9 +25,15 @@ class BoundModel
 				@instanceProps[k] = true
 
 	create: (data) ->
-		@backend.createInstance(@, data)
+		@backend.create(@, data)
 
 	findById: (id) ->
-		@backend.findInstanceById(@, id)
+		@backend.findById(@, id)
+
+	find: (options) ->
+		@backend.find(@, options)
+
+	findAll: (options) ->
+		@backend.findAll(@, options)
 
 module.exports = BoundModel

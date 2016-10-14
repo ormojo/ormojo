@@ -50,10 +50,10 @@ createStandardInstanceClassForBoundModel = (bm) ->
 				if changes.length > 0 then changes else false
 
 		save: ->
-			@boundModel.backend.saveInstance(@, @boundModel)
+			@boundModel.backend.save(@, @boundModel)
 
 		destroy: ->
-			@boundModel.backend.destroyInstance(@, @boundModel)
+			@boundModel.backend.destroy(@, @boundModel)
 
 	# Create getters and setters
 	for k,v of bm.instanceProps when v

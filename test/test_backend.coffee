@@ -14,7 +14,7 @@ class TestBackend extends Backend
 		new BoundModel(model, @)
 
 	# Invoked when an instance wants to save
-	saveInstance: (instance, boundModel) ->
+	save: (instance, boundModel) ->
 		if instance.isNewRecord
 			if not instance.id then instance.id = cuid()
 			@storage[boundModel.name][instance.id] = {}
@@ -23,7 +23,7 @@ class TestBackend extends Backend
 		@corpus.promiseResolve(instance)
 
 	# Invoked when an instance wants to destroy
-	destroyInstance: (instance, boundModel) ->
+	destroy: (instance, boundModel) ->
 		@corpus.promiseResolve().then ->
 			delete @storage[boundModel.name][instance.id]
 
@@ -35,17 +35,17 @@ class TestBackend extends Backend
 		instance
 
 	# Create and save a new instance.
-	createInstance: (boundModel, initialData) ->
+	create: (boundModel, initialData) ->
 		instance = @createRawInstance(boundModel)
 		instance.isNewRecord = true
 		instance.__applyDefaults()
 		if initialData isnt undefined
 			instance.set(initialData)
-			@saveInstance(instance, boundModel)
+			@save(instance, boundModel)
 		else
 			instance
 
-	findInstanceById: (boundModel, id) ->
+	findById: (boundModel, id) ->
 		data = @storage[boundModel.name][id]
 		if not data
 			@corpus.promiseResolve()
