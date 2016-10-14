@@ -1,8 +1,12 @@
 # A model bound to a backend or backends.
 class BoundModel
 	constructor: (@model, @backend) ->
-		@corpus = @model.corpus
-		@name = @model.name
+		# Basic demographics
+		@corpus = @model.corpus; @name = @model.name
+		# Construct spec from model spec + backend name
+		@spec = {}
+		@spec.backend = @model.spec.backends?[@backend.name]
+
 		@getters = {}
 		@setters = {}
 		@instanceProps = {}
