@@ -1,6 +1,6 @@
 { expect } = require 'chai'
 TestBackend = require './test_backend'
-ormojo = require '../src'
+ormojo = require '..'
 
 makeCorpus = ->
 	c = new ormojo.Corpus({

@@ -1,7 +1,5 @@
-Backend = require '../src/Backend'
-BoundModel = require '../src/BoundModel'
+{ Backend, BoundModel, createStandardInstanceClassForBoundModel } = require '..'
 cuid = require 'cuid'
-{ createStandardInstanceClassForBoundModel } = require '../src/StandardInstance'
 
 class TestBackend extends Backend
 	constructor: ->

@@ -5,4 +5,5 @@ module.exports = Object.assign({
 	Corpus: require './Corpus'
 	Backend: require './Backend'
 	BoundModel: require './BoundModel'
+	createStandardInstanceClassForBoundModel: (require './StandardInstance').createStandardInstanceClassForBoundModel
 }, FieldTypes)

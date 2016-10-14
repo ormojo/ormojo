@@ -2,8 +2,12 @@
   "name": "ormojo",
   "version": "0.0.1",
   "description": "A multi-backend SQL/NoSQL ORM for node.js and the browser.",
-  "main": "src/index.coffee",
-  "scripts": {},
+  "main": "./index.js",
+  "scripts": {
+    "clean": "rm -rf js",
+    "build": "mkdir -p js && coffee -o js src/*.coffee",
+    "prepublish": "npm run clean && npm run build"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/wcjohnson/ormojo.git"
