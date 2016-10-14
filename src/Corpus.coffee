@@ -18,6 +18,9 @@ class Corpus
 		if sz is 0
 			throw new Error("Corpus: must register at least one backend")
 
+		if (not @config.defaultBackend) or (not @backends[@config.defaultBackend])
+			throw new Error("Corpus: defaultBackend must be specified and must exist.")
+
 		@models = {}
 
 	# Create a model within this Corpus with the given spec.
@@ -33,6 +36,13 @@ class Corpus
 
 	getBackend: (name) ->
 		if @backends[name] then @backends[name] else throw new Error("No such backend #{name}")
+
+	getDefaultBackendForModel: (model) ->
+		backendName = @config.defaultBackends?[model.name] or @config.defaultBackend
+		backend = @backends[backendName]
+		if not backend
+			throw new Error("getDefaultBackendForModel(`#{model.name}`): no such backend `#{backendName}`")
+		backend
 
 
 module.exports = Corpus

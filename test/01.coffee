@@ -7,6 +7,7 @@ makeCorpus = ->
 		backends: {
 			'memory': new TestBackend
 		}
+		defaultBackend: 'memory'
 	})
 
 	c.createModel({
