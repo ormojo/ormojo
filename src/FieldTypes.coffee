@@ -4,5 +4,6 @@ module.exports = {
 	INTEGER: 'INTEGER'
 	FLOAT: 'FLOAT'
 	OBJECT: 'OBJECT'
+	ARRAY: 'ARRAY'
 	ANY: 'ANY'
 }
