@@ -14,7 +14,7 @@ class Corpus
 		for k,v of @backends
 			sz++
 			if not (v instanceof Backend) then throw new Error("Corpus: object at `#{k}` is not a backend")
-			v._initialize(@)
+			v._initialize(@, k)
 		if sz is 0
 			throw new Error("Corpus: must register at least one backend")
 
