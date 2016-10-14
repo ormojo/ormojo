@@ -4,7 +4,7 @@ class Instance
 	#
 	# Apply default values to this instance.
 	#
-	_applyDefaults: ->
+	__applyDefaults: ->
 		for n, field of @boundModel.model.fields
 			if (defaulter = field.spec.default)
 				if typeof(defaulter) is 'function'
