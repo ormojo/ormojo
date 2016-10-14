@@ -1,7 +1,7 @@
 class Backend
 	constructor: ->
 
-	_initialize: (@corpus) -> @initialize()
+	_initialize: (@corpus, @name) -> @initialize()
 
 	initialize: ->
 
@@ -33,7 +33,11 @@ class Backend
 	# If initialData is undefined, the method is synchronous and returns a fresh instance.
 	#
 	createInstance: (boundModel, initialData) ->
-		@corpus.promiseReject(new Error('Backend: createInstance called on abstract backend.'))
+		err = new Error('Backend: createInstance called on abstract backend.')
+		if initialData is undefined
+			throw err
+		else
+			@corpus.promiseReject(err)
 
 	findInstanceById: (boundModel, id) ->
 		@corpus.promiseReject(new Error('Backend: `findInstanceById` called on abstract backend.'))
