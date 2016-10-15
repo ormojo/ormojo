@@ -2,7 +2,7 @@
 class BoundModel
 	constructor: (@model, @backend) ->
 		# Basic demographics
-		@corpus = @model.corpus; @name = @model.name
+		@corpus = @model.corpus; @name = @model.name; @fields = @model.fields
 		# Construct spec from model spec + backend name
 		@spec = {}
 		@spec.backend = @model.spec.backends?[@backend.name]
@@ -23,6 +23,8 @@ class BoundModel
 				@getters[k] = v.get
 				@setters[k] = v.set
 				@instanceProps[k] = true
+
+	fields: -> @fields
 
 	create: (data) ->
 		@backend.create(@, data)

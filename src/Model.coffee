@@ -6,7 +6,8 @@ class Model
 
 		@fields = {}; @fieldsList = []
 		for k,fspec of @spec.fields
-			f = new Field(k, fspec)
+			f = new Field()
+			f.fromSpec(k, fspec)
 			@fields[k] = f; @fieldsList.push(f)
 
 	_forBackend: (backend) -> backend.bindModel(@)
