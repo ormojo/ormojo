@@ -4,6 +4,6 @@ module.exports = {
 	INTEGER: 'INTEGER'
 	FLOAT: 'FLOAT'
 	OBJECT: 'OBJECT'
-	ARRAY: 'ARRAY'
+	ARRAY: (subtype) -> "ARRAY(#{subtype})"
 	ANY: 'ANY'
 }
