@@ -23,6 +23,19 @@ class Corpus
 
 		@models = {}
 
+		#### Set up no-op logging functions if needed
+		if @config.log
+			@log = config.log
+		else
+			@log = {
+				trace: ->
+				debug: ->
+				info: ->
+				warn: ->
+				error: ->
+				fatal: ->
+			}
+
 	# Create a model within this Corpus with the given spec.
 	createModel: (spec) ->
 		if not spec?.name then throw new Error('createModel: name must be specified')
