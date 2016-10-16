@@ -49,12 +49,12 @@ class Instance
 	# Persist this instance to the backend.
 	#
 	save: ->
-		@boundModel.corpus.promiseReject(new Error('ormojo: `save` called on abstract instance'))
+		@boundModel.corpus.Promise.reject(new Error('ormojo: `save` called on abstract instance'))
 
 	#
 	# Destroy the corresponding instance in the backend.
 	#
 	destroy: ->
-		@boundModel.corpus.promiseReject(new Error('ormojo: `destroy` called on abstract instance'))
+		@boundModel.corpus.Promise.reject(new Error('ormojo: `destroy` called on abstract instance'))
 
 module.exports = Instance

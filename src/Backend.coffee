@@ -17,11 +17,11 @@ class Backend
 
 	# Invoked when an instance wants to save
 	save: (instance, boundModel) ->
-		@corpus.promiseReject(new Error('Backend: saveInstance called on abstract backend.'))
+		@corpus.Promise.reject(new Error('Backend: saveInstance called on abstract backend.'))
 
 	# Invoked when an instance wants to destroy
 	destroy: (instance, boundModel) ->
-		@corpus.promiseReject(new Error('Backend: destroyInstance called on abstract backend.'))
+		@corpus.Promise.reject(new Error('Backend: destroyInstance called on abstract backend.'))
 
 	# Create a raw un-persisted instance.
 	createRawInstance: (boundModel, dataValues) ->
@@ -37,10 +37,10 @@ class Backend
 		if initialData is undefined
 			throw err
 		else
-			@corpus.promiseReject(err)
+			@corpus.Promise.reject(err)
 
 	findById: (boundModel, id) ->
-		@corpus.promiseReject(new Error('Backend: `findById` called on abstract backend.'))
+		@corpus.Promise.reject(new Error('Backend: `findById` called on abstract backend.'))
 
 
 module.exports = Backend

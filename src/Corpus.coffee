@@ -5,8 +5,11 @@ class Corpus
 	constructor: (@config = {}) ->
 
 		#### Export methods to make promises.
-		@promiseResolve = @config.promiseResolve or ((x) -> Promise.resolve(x))
-		@promiseReject = @config.promiseReject or ((x) -> Promise.reject(x))
+		@Promise = @config.Promise or {
+			reject: (x) -> Promise.reject(x)
+			resolve: (x) -> Promise.resolve(x)
+			all: (x) -> Promise.all(x)
+		}
 
 		#### Get backends
 		@backends = @config.backends or {}
@@ -56,6 +59,12 @@ class Corpus
 		if not backend
 			throw new Error("getDefaultBackendForModel(`#{model.name}`): no such backend `#{backendName}`")
 		backend
+
+	# Attach all models to default bindings.
+	bindAllModels: ->
+		for name, model of @models
+			model._defaultBinding()
+		undefined
 
 
 module.exports = Corpus

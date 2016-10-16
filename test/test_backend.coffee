@@ -20,11 +20,11 @@ class TestBackend extends Backend
 			@storage[boundModel.name][instance.id] = {}
 			delete instance.isNewRecord
 		Object.assign(@storage[boundModel.name][instance.id], instance.dataValues)
-		@corpus.promiseResolve(instance)
+		@corpus.Promise.resolve(instance)
 
 	# Invoked when an instance wants to destroy
 	destroy: (instance, boundModel) ->
-		@corpus.promiseResolve().then ->
+		@corpus.Promise.resolve().then ->
 			delete @storage[boundModel.name][instance.id]
 
 	# Synchronously create an un-persisted instance.
@@ -48,9 +48,9 @@ class TestBackend extends Backend
 	findById: (boundModel, id) ->
 		data = @storage[boundModel.name][id]
 		if not data
-			@corpus.promiseResolve()
+			@corpus.Promise.resolve()
 		else
 			instance = @createRawInstance(boundModel, data)
-			@corpus.promiseResolve(instance)
+			@corpus.Promise.resolve(instance)
 
 module.exports = TestBackend
