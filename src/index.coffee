@@ -9,5 +9,6 @@ module.exports = Object.assign({
 	Instance: require './Instance'
 	Util: require './Util'
 	Pagination: require './Pagination'
+	Migration: require './Migration'
 	createStandardInstanceClassForBoundModel: (require './StandardInstance').createStandardInstanceClassForBoundModel
 }, FieldTypes)
