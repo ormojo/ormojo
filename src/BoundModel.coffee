@@ -24,7 +24,7 @@ class BoundModel
 				@setters[k] = v.set
 				@instanceProps[k] = true
 
-	fields: -> @fields
+	getFields: -> @fields
 
 	create: (data) ->
 		@backend.create(@, data)

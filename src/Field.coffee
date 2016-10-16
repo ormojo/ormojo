@@ -13,4 +13,7 @@ class Field
 	fromField: (field) ->
 		@fromSpec(field.name, field.spec)
 
+	# Get database column/field name
+	getBackendFieldName: -> @name
+
 module.exports = Field
