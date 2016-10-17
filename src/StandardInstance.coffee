@@ -4,6 +4,20 @@ isPrimitive = (v) ->
 	t = typeof(v)
 	if (t is 'string') or (t is 'number') or (t is 'boolean') then true else false
 
+#
+# Attaches properties to the instance class prototype so that dot-access to
+# declared model fields automatically calls getters as needed.
+#
+applyModelPropsToInstanceClass = (boundModel, clazz) ->
+	for k,v of boundModel.instanceProps when v
+		do (k,v) ->
+			Object.defineProperty(clazz.prototype, k, {
+				enumerable: true, configurable: true
+				get: -> @get(k)
+				set: (val) -> @set(k, val)
+			})
+	undefined
+
 createStandardInstanceClassForBoundModel = (bm) ->
 	class BoundInstance extends Instance
 		constructor: (boundModel, @dataValues = {}) ->
@@ -17,6 +31,7 @@ createStandardInstanceClassForBoundModel = (bm) ->
 			if (not isPrimitive(value)) or (value isnt originalValue)
 				if not (key of @_previousDataValues) then @_previousDataValues[key] = originalValue
 			@dataValues[key] = value
+			undefined
 
 		get: (key) ->
 			if key
@@ -33,14 +48,17 @@ createStandardInstanceClassForBoundModel = (bm) ->
 
 		set: (key, value) ->
 			if (value isnt undefined)
+				# Run single setter, if exists.
 				if @boundModel.instanceProps[key]
 					if (setter = @boundModel.setters[key])
 						setter.call(@, key, value)
 					else
 						@setDataValue(key, value)
 			else
-				for k,v of key when @boundModel.instanceProps[k]
-					@set(k,v)
+				# Run setters for each key.
+				@set(k,v) for k,v of key when @boundModel.instanceProps[k]
+				undefined
+
 
 		changed: (key) ->
 			if key
@@ -56,17 +74,12 @@ createStandardInstanceClassForBoundModel = (bm) ->
 			@boundModel.backend.destroy(@, @boundModel)
 
 	# Create getters and setters
-	for k,v of bm.instanceProps when v
-		do (k,v) ->
-			Object.defineProperty(BoundInstance.prototype, k, {
-				enumerable: true, configurable: true
-				get: -> @get(k)
-				set: (val) -> @set(k, val)
-			})
+	applyModelPropsToInstanceClass(bm, BoundInstance)
 
 	# Return the instance class
 	BoundInstance
 
 module.exports = {
+	applyModelPropsToInstanceClass
 	createStandardInstanceClassForBoundModel
 }
