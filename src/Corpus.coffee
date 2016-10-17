@@ -28,7 +28,7 @@ class Corpus
 
 		#### Set up no-op logging functions if needed
 		if @config.log
-			@log = config.log
+			@log = @config.log
 		else
 			@log = {
 				trace: ->
