@@ -11,6 +11,7 @@ class Instance
 					@set(field.name, defaulter(@))
 				else
 					@set(field.name, defaulter)
+		@
 
 	#
 	# Get the raw value of a field. No getters are called.
