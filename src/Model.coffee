@@ -29,7 +29,9 @@ class Model
 		@_defaultBinding().create(data)
 
 	#
-	# asynchronously locate a model by id.
+	# Asynchronously locate a model by id. If id is an array, searches for multiple
+	# models matching each respective id and returns them in order. If no such
+	# model is found, returns undefined.
 	#
 	findById: (id) ->
 		@_defaultBinding().findById(id)
