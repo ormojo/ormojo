@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset='UTF-8'>
+  <title>CoffeeScript API Documentation</title>
+  <script src='../javascript/application.js'></script>
+  <script src='../javascript/search.js'></script>
+  <link rel='stylesheet' href='../stylesheets/application.css' type='text/css'>
+</head>
+  <body>
+    <div id='base' data-path='../'></div>
+<div id='header'>
+  <div id='menu'>
+    <a href='../extra/README.md.html' title='Ormojo'>
+      Ormojo
+    </a>
+    &raquo;
+    <a href='../alphabetical_index.html' title='Index'>
+      Index
+    </a>
+    &raquo;
+    <span class='title'>Corpus</span>
+  </div>
+</div>
+    <div id='content'>
+      <h1>
+        Class:
+        Corpus
+      </h1>
+      <table class='box'>
+        <tr>
+          <td>Defined in:</td>
+          <td>src&#47;Corpus.coffee</td>
+        </tr>
+      </table>
+      <h2>Overview</h2>
+      <div class='docstring'>
+  <p>A collection of models connected to a collection of backends.</p>
+</div>
+<div class='tags'>
+</div>
+      <h2>Instance Method Summary</h2>
+      <ul class='summary'>
+  <li>
+    <span class='signature'>
+      <a href='#createModel-dynamic'>
+        #
+(void)
+<b>createModel</b><span>(spec)</span>
+      </a>
+    </span>
+    <span class='desc'>
+      Create a model within this Corpus with the given spec. 
+    </span>
+  </li>
+  <li>
+    <span class='signature'>
+      <a href='#getModel-dynamic'>
+        #
+(Model)
+<b>getModel</b><span>(name)</span>
+      </a>
+    </span>
+    <span class='desc'>
+      Get the <code>Model</code> with the given name. 
+    </span>
+  </li>
+  <li>
+    <span class='signature'>
+      <a href='#getBackend-dynamic'>
+        #
+(Backend)
+<b>getBackend</b><span>(name)</span>
+      </a>
+    </span>
+    <span class='desc'>
+      Get the <code>Backend</code> with the given name. 
+    </span>
+  </li>
+  <li>
+    <span class='signature'>
+      <a href='#getDefaultBackendForModel-dynamic'>
+        #
+(void)
+<b>getDefaultBackendForModel</b><span>(model)</span>
+      </a>
+    </span>
+    <span class='desc'>
+      Get the default backend for the given model. 
+    </span>
+  </li>
+  <li>
+    <span class='signature'>
+      <a href='#bindAllModels-dynamic'>
+        #
+(void)
+<b>bindAllModels</b><span>()</span>
+      </a>
+    </span>
+    <span class='desc'>
+      Attach all models to default bindings. 
+    </span>
+  </li>
+</ul>
+      <h2>Constructor Details</h2>
+      <div class='methods'>
+  <div class='method_details'>
+    <p class='signature' id='constructor-dynamic'>
+      #
+(void)
+<b>constructor</b><span>(config = {})</span>
+      <br>
+    </p>
+    <div class='docstring'>
+  <p>Create a new <code>Corpus</code></p>
+</div>
+<div class='tags'>
+  <h3>Parameters:</h3>
+  <ul class='param'>
+    <li>
+      <span class='name'>config</span>
+      <span class='type'>
+        (
+          <tt>Object</tt>
+        )
+      </span>
+      &mdash;
+      <span class='desc'>Configuration data. </span>
+    </li>
+  </ul>
+  <h3>
+    Options Hash:
+    (config):
+  </h3>
+  <ul class='options'>
+    <li>
+      <span class='name'>promise</span>
+      <span class='type'>
+        (
+          <tt>Object</tt>
+        )
+      </span>
+      &mdash;
+      <span class='desc'>Promise implementation to use internally. By default, uses whatever Promise implementation is installed in the global Promise variable. The object is of the form <code>js { reject, resolve, all }</code> </span>
+    </li>
+    <li>
+      <span class='name'>backends</span>
+      <span class='type'>
+        (
+          <tt>Object&lt;String, Backend&gt;</tt>
+        )
+      </span>
+      &mdash;
+      <span class='desc'>A hash of named backends available to this Corpus. </span>
+    </li>
+    <li>
+      <span class='name'>log</span>
+      <span class='type'>
+        (
+          <tt>Object</tt>
+        )
+      </span>
+      &mdash;
+      <span class='desc'>A bunyan-style logger object of the form <code>js {trace, debug, info, warn, error, fatal}</code>. All ormojo logging will be directed through this object. <em>NB</em> Trace-level logging is extremely verbose! </span>
+    </li>
+    <li>
+      <span class='name'>defaultBackend</span>
+      <span class='type'>
+        (
+          <tt>String</tt>
+        )
+      </span>
+      &mdash;
+      <span class='desc'>The name of the backend to use by default when an operation would require a named backend but none is specified. </span>
+    </li>
+  </ul>
+</div>
+  </div>
+</div>
+      <h2>Instance Method Details</h2>
+      <div class='methods'>
+  <div class='method_details'>
+    <p class='signature' id='createModel-dynamic'>
+      #
+(void)
+<b>createModel</b><span>(spec)</span>
+      <br>
+    </p>
+    <div class='docstring'>
+  <p>Create a model within this Corpus with the given spec.</p>
+</div>
+<div class='tags'>
+  <h3>Parameters:</h3>
+  <ul class='param'>
+    <li>
+      <span class='name'>spec</span>
+      <span class='type'>
+        (
+          <tt>Object</tt>
+        )
+      </span>
+      &mdash;
+      <span class='desc'>Specification object for the Model. </span>
+    </li>
+  </ul>
+</div>
+  </div>
+  <div class='method_details'>
+    <p class='signature' id='getModel-dynamic'>
+      #
+(Model)
+<b>getModel</b><span>(name)</span>
+      <br>
+    </p>
+    <div class='docstring'>
+  <p>Get the <code>Model</code> with the given name.</p>
+</div>
+<div class='tags'>
+  <h3>Parameters:</h3>
+  <ul class='param'>
+    <li>
+      <span class='name'>name</span>
+      <span class='type'>
+        (
+          <tt>String</tt>
+        )
+      </span>
+      &mdash;
+      <span class='desc'>Model name </span>
+    </li>
+  </ul>
+  <h3>Returns:</h3>
+  <ul class='return'>
+    <li>
+      <span class='type'></span>
+      <tt><a href='../class/Model.html'>Model</a></tt>
+    </li>
+  </ul>
+</div>
+  </div>
+  <div class='method_details'>
+    <p class='signature' id='getBackend-dynamic'>
+      #
+(Backend)
+<b>getBackend</b><span>(name)</span>
+      <br>
+    </p>
+    <div class='docstring'>
+  <p>Get the <code>Backend</code> with the given name.</p>
+</div>
+<div class='tags'>
+  <h3>Parameters:</h3>
+  <ul class='param'>
+    <li>
+      <span class='name'>name</span>
+      <span class='type'>
+        (
+          <tt>String</tt>
+        )
+      </span>
+      &mdash;
+      <span class='desc'>Backend name </span>
+    </li>
+  </ul>
+  <h3>Returns:</h3>
+  <ul class='return'>
+    <li>
+      <span class='type'></span>
+      <tt><a href='../class/Backend.html'>Backend</a></tt>
+    </li>
+  </ul>
+</div>
+  </div>
+  <div class='method_details'>
+    <p class='signature' id='getDefaultBackendForModel-dynamic'>
+      #
+(void)
+<b>getDefaultBackendForModel</b><span>(model)</span>
+      <br>
+    </p>
+    <div class='docstring'>
+  <p>Get the default backend for the given model.</p>
+</div>
+<div class='tags'>
+  <h3>Parameters:</h3>
+  <ul class='param'>
+    <li>
+      <span class='name'>model</span>
+      <span class='type'>
+        (
+          <tt><a href='../class/Model.html'>Model</a></tt>
+        )
+      </span>
+    </li>
+  </ul>
+</div>
+  </div>
+  <div class='method_details'>
+    <p class='signature' id='bindAllModels-dynamic'>
+      #
+(void)
+<b>bindAllModels</b><span>()</span>
+      <br>
+    </p>
+    <div class='docstring'>
+  <p>Attach all models to default bindings.</p>
+</div>
+<div class='tags'>
+</div>
+  </div>
+</div>
+    </div>
+    <div id='footer'>
+  By
+  <a href='https://github.com/coffeedoc/codo' title='CoffeeScript API documentation generator'>
+    Codo
+  </a>
+  2.1.2
+  &#10034;
+  Press H to see the keyboard shortcuts
+  &#10034;
+  <a href='http://twitter.com/netzpirat' target='_parent'>@netzpirat</a>
+  &#10034;
+  <a href='http://twitter.com/_inossidabile' target='_parent'>@_inossidabile</a>
+</div>
+<iframe id='search_frame'></iframe>
+<div id='fuzzySearch'>
+  <input type='text'>
+  <ol></ol>
+</div>
+<div id='help'>
+  <p>
+    Quickly fuzzy find classes, mixins, methods, file:
+  </p>
+  <ul>
+    <li>
+      <span>T</span>
+      Open fuzzy finder dialog
+    </li>
+  </ul>
+  <p>
+    Control the navigation frame:
+  </p>
+  <ul>
+    <li>
+      <span>L</span>
+      Toggle list view
+    </li>
+    <li>
+      <span>C</span>
+      Show class list
+    </li>
+    <li>
+      <span>I</span>
+      Show mixin list
+    </li>
+    <li>
+      <span>F</span>
+      Show file list
+    </li>
+    <li>
+      <span>M</span>
+      Show method list
+    </li>
+    <li>
+      <span>E</span>
+      Show extras list
+    </li>
+  </ul>
+  <p>
+    You can focus and blur the search input:
+  </p>
+  <ul>
+    <li>
+      <span>S</span>
+      Focus search input
+    </li>
+    <li>
+      <span>Esc</span>
+      Blur search input
+    </li>
+  </ul>
+</div>
+  </body>
+</html>

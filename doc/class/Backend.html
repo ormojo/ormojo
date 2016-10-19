@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset='UTF-8'>
+  <title>CoffeeScript API Documentation</title>
+  <script src='../javascript/application.js'></script>
+  <script src='../javascript/search.js'></script>
+  <link rel='stylesheet' href='../stylesheets/application.css' type='text/css'>
+</head>
+  <body>
+    <div id='base' data-path='../'></div>
+<div id='header'>
+  <div id='menu'>
+    <a href='../extra/README.md.html' title='Ormojo'>
+      Ormojo
+    </a>
+    &raquo;
+    <a href='../alphabetical_index.html' title='Index'>
+      Index
+    </a>
+    &raquo;
+    <span class='title'>Backend</span>
+  </div>
+</div>
+    <div id='content'>
+      <h1>
+        Class:
+        Backend
+      </h1>
+      <table class='box'>
+        <tr>
+          <td>Defined in:</td>
+          <td>src&#47;Backend.coffee</td>
+        </tr>
+      </table>
+      <h2>Overview</h2>
+      <div class='docstring'>
+  <p>Driver that intermediates between the ormojo API and some underlying data layer.</p>
+</div>
+<div class='tags'>
+</div>
+      <h2>Instance Method Summary</h2>
+      <ul class='summary'>
+  <li>
+    <span class='signature'>
+      <a href='#initialize-dynamic'>
+        #
+(void)
+<b>initialize</b><span>()</span>
+      </a>
+    </span>
+    <span class='desc'>
+      Initialize a Backend that has been added to a Corpus. 
+    </span>
+  </li>
+  <li>
+    <span class='signature'>
+      <a href='#bindModel-dynamic'>
+        #
+(void)
+<b>bindModel</b><span>(model)</span>
+      </a>
+    </span>
+    <span class='abstract note title'>Abstract</span>
+    <span class='desc'>
+      Invoked when a model is being bound to this backend. 
+    </span>
+  </li>
+  <li>
+    <span class='signature'>
+      <a href='#save-dynamic'>
+        #
+(Promise&lt;Instance&gt;)
+<b>save</b><span>(instance, boundModel)</span>
+      </a>
+    </span>
+    <span class='abstract note title'>Abstract</span>
+    <span class='desc'>
+      Invoked when an <code>Instance</code> wants to persist itself to the backend. 
+    </span>
+  </li>
+  <li>
+    <span class='signature'>
+      <a href='#destroy-dynamic'>
+        #
+(Promise&lt;undefined&gt;)
+<b>destroy</b><span>(instance, boundModel)</span>
+      </a>
+    </span>
+    <span class='abstract note title'>Abstract</span>
+    <span class='desc'>
+      Invoked when an <code>Instance</code> wants to delete from the backend. 
+    </span>
+  </li>
+  <li>
+    <span class='signature'>
+      <a href='#createRawInstance-dynamic'>
+        #
+(void)
+<b>createRawInstance</b><span>(boundModel, dataValues)</span>
+      </a>
+    </span>
+    <span class='abstract note title'>Abstract</span>
+    <span class='desc'>
+      Create a raw un-persisted instance. 
+    </span>
+  </li>
+  <li>
+    <span class='signature'>
+      <a href='#create-dynamic'>
+        #
+(void)
+<b>create</b><span>(boundModel, initialData)</span>
+      </a>
+    </span>
+    <span class='desc'>
+      Create a new instance 
+    </span>
+  </li>
+  <li>
+    <span class='signature'>
+      <a href='#findById-dynamic'>
+        #
+(void)
+<b>findById</b><span>(boundModel, id)</span>
+      </a>
+    </span>
+    <span class='abstract note title'>Abstract</span>
+    <span class='desc'>
+      Retrieve an instance from the backing store from id or ids. 
+    </span>
+  </li>
+  <li>
+    <span class='signature'>
+      <a href='#find-dynamic'>
+        #
+(void)
+<b>find</b><span>(boundModel, options)</span>
+      </a>
+    </span>
+    <span class='abstract note title'>Abstract</span>
+    <span class='desc'>
+      Retrieve a single instance from the backing store using query options. 
+    </span>
+  </li>
+  <li>
+    <span class='signature'>
+      <a href='#findAll-dynamic'>
+        #
+(void)
+<b>findAll</b><span>(boundModel, options)</span>
+      </a>
+    </span>
+    <span class='abstract note title'>Abstract</span>
+    <span class='desc'>
+      Retrieve many instances from the backing store using query options. 
+    </span>
+  </li>
+</ul>
+      <h2>Constructor Details</h2>
+      <div class='methods'>
+  <div class='method_details'>
+    <p class='signature' id='constructor-dynamic'>
+      #
+(void)
+<b>constructor</b><span>()</span>
+      <br>
+    </p>
+    <div class='docstring'>
+  <p>Construct a backend. Generally, initialization work for the backend should not be
+performed here, but rather in <code>.initialize</code></p>
+</div>
+<div class='tags'>
+  <h3>See also:</h3>
+  <ul class='see'>
+    <li>
+      <a href='../class/Backend.html#initialize-dynamic'>Backend#initialize</a>
+    </li>
+  </ul>
+</div>
+  </div>
+</div>
+      <h2>Instance Method Details</h2>
+      <div class='methods'>
+  <div class='method_details'>
+    <p class='signature' id='initialize-dynamic'>
+      #
+(void)
+<b>initialize</b><span>()</span>
+      <br>
+    </p>
+    <div class='docstring'>
+  <p>Initialize a Backend that has been added to a Corpus.</p>
+</div>
+<div class='tags'>
+</div>
+  </div>
+  <div class='method_details'>
+    <p class='signature' id='bindModel-dynamic'>
+      #
+(void)
+<b>bindModel</b><span>(model)</span>
+      <br>
+    </p>
+    <div class='docstring'>
+  <div class='abstract note'>
+    <strong>
+      This
+      method
+      is abstract.
+    </strong>
+    
+  </div>
+  <p>Invoked when a model is being bound to this backend.
+Errors thrown from this method indicate that a Model is incompatible with this
+particular backend.</p>
+</div>
+<div class='tags'>
+  <h3>Parameters:</h3>
+  <ul class='param'>
+    <li>
+      <span class='name'>model</span>
+      <span class='type'>
+        (
+          <tt><a href='../class/Model.html'>Model</a></tt>
+        )
+      </span>
+      &mdash;
+      <span class='desc'>The model to bind to this backend. </span>
+    </li>
+  </ul>
+</div>
+  </div>
+  <div class='method_details'>
+    <p class='signature' id='save-dynamic'>
+      #
+(Promise&lt;Instance&gt;)
+<b>save</b><span>(instance, boundModel)</span>
+      <br>
+    </p>
+    <div class='docstring'>
+  <div class='abstract note'>
+    <strong>
+      This
+      method
+      is abstract.
+    </strong>
+    
+  </div>
+  <p>Invoked when an <code>Instance</code> wants to persist itself to the backend.</p>
+</div>
+<div class='tags'>
+  <h3>Parameters:</h3>
+  <ul class='param'>
+    <li>
+      <span class='name'>instance</span>
+      <span class='type'>
+        (
+          <tt><a href='../class/Instance.html'>Instance</a></tt>
+        )
+      </span>
+      &mdash;
+      <span class='desc'>The <code>Instance</code> to be persisted </span>
+    </li>
+    <li>
+      <span class='name'>boundModel</span>
+      <span class='type'>
+        (
+          <tt><a href='../class/BoundModel.html'>BoundModel</a></tt>
+        )
+      </span>
+      &mdash;
+      <span class='desc'>The <code>BoundModel</code> that created the <code>Instance</code>. </span>
+    </li>
+  </ul>
+  <h3>Returns:</h3>
+  <ul class='return'>
+    <li>
+      <span class='type'></span>
+      (
+        <tt>Promise&lt;Instance&gt;</tt>
+      )
+      &mdash;
+      <span class='desc'>A <code>Promise</code> whose fate is settled depending on the performance of the save operation. If the save operation succeeds, it should resolve with the updated Instance. </span>
+    </li>
+  </ul>
+</div>
+  </div>
+  <div class='method_details'>
+    <p class='signature' id='destroy-dynamic'>
+      #
+(Promise&lt;undefined&gt;)
+<b>destroy</b><span>(instance, boundModel)</span>
+      <br>
+    </p>
+    <div class='docstring'>
+  <div class='abstract note'>
+    <strong>
+      This
+      method
+      is abstract.
+    </strong>
+    
+  </div>
+  <p>Invoked when an <code>Instance</code> wants to delete from the backend.</p>
+</div>
+<div class='tags'>
+  <h3>Parameters:</h3>
+  <ul class='param'>
+    <li>
+      <span class='name'>instance</span>
+      <span class='type'>
+        (
+          <tt><a href='../class/Instance.html'>Instance</a></tt>
+        )
+      </span>
+      &mdash;
+      <span class='desc'>The <code>Instance</code> to be deleted </span>
+    </li>
+    <li>
+      <span class='name'>boundModel</span>
+      <span class='type'>
+        (
+          <tt><a href='../class/BoundModel.html'>BoundModel</a></tt>
+        )
+      </span>
+      &mdash;
+      <span class='desc'>The <code>BoundModel</code> that created the <code>Instance</code>. </span>
+    </li>
+  </ul>
+  <h3>Returns:</h3>
+  <ul class='return'>
+    <li>
+      <span class='type'></span>
+      (
+        <tt>Promise&lt;undefined&gt;</tt>
+      )
+      &mdash;
+      <span class='desc'>A <code>Promise</code> whose fate is settled depending on the performance of the operation. </span>
+    </li>
+  </ul>
+</div>
+  </div>
+  <div class='method_details'>
+    <p class='signature' id='createRawInstance-dynamic'>
+      #
+(void)
+<b>createRawInstance</b><span>(boundModel, dataValues)</span>
+      <br>
+    </p>
+    <div class='docstring'>
+  <div class='abstract note'>
+    <strong>
+      This
+      method
+      is abstract.
+    </strong>
+    
+  </div>
+  <p>Create a raw un-persisted instance.</p>
+</div>
+<div class='tags'>
+  <h3>Parameters:</h3>
+  <ul class='param'>
+    <li>
+      <span class='name'>boundModel</span>
+      <span class='type'>
+        (
+          <tt><a href='../class/BoundModel.html'>BoundModel</a></tt>
+        )
+      </span>
+      &mdash;
+      <span class='desc'>The <code>BoundModel</code> that will create the <code>Instance</code>. </span>
+    </li>
+    <li>
+      <span class='name'>dataValues</span>
+      <span class='type'>
+        (
+          <tt>Object</tt>
+        )
+      </span>
+      &mdash;
+      <span class='desc'>The initial data for the instance. Interpretation of this field is implementation-dependent, however, note that it represents the raw data of the object unfiltered by getters or setters. </span>
+    </li>
+  </ul>
+</div>
+  </div>
+  <div class='method_details'>
+    <p class='signature' id='create-dynamic'>
+      #
+(void)
+<b>create</b><span>(boundModel, initialData)</span>
+      <br>
+    </p>
+    <div class='docstring'>
+  <p>Create a new instance</p>
+</div>
+<div class='tags'>
+  <h3>See also:</h3>
+  <ul class='see'>
+    <li>
+      <a href='../class/Model.html#create-dynamic'>Model#create</a>
+    </li>
+  </ul>
+</div>
+  </div>
+  <div class='method_details'>
+    <p class='signature' id='findById-dynamic'>
+      #
+(void)
+<b>findById</b><span>(boundModel, id)</span>
+      <br>
+    </p>
+    <div class='docstring'>
+  <div class='abstract note'>
+    <strong>
+      This
+      method
+      is abstract.
+    </strong>
+    
+  </div>
+  <p>Retrieve an instance from the backing store from id or ids.</p>
+</div>
+<div class='tags'>
+  <h3>See also:</h3>
+  <ul class='see'>
+    <li>
+      <a href='../class/Model.html#findById-dynamic'>Model#findById</a>
+    </li>
+  </ul>
+</div>
+  </div>
+  <div class='method_details'>
+    <p class='signature' id='find-dynamic'>
+      #
+(void)
+<b>find</b><span>(boundModel, options)</span>
+      <br>
+    </p>
+    <div class='docstring'>
+  <div class='abstract note'>
+    <strong>
+      This
+      method
+      is abstract.
+    </strong>
+    
+  </div>
+  <p>Retrieve a single instance from the backing store using query options.</p>
+</div>
+<div class='tags'>
+  <h3>See also:</h3>
+  <ul class='see'>
+    <li>
+      <a href='../class/Model.html#find-dynamic'>Model#find</a>
+    </li>
+  </ul>
+</div>
+  </div>
+  <div class='method_details'>
+    <p class='signature' id='findAll-dynamic'>
+      #
+(void)
+<b>findAll</b><span>(boundModel, options)</span>
+      <br>
+    </p>
+    <div class='docstring'>
+  <div class='abstract note'>
+    <strong>
+      This
+      method
+      is abstract.
+    </strong>
+    
+  </div>
+  <p>Retrieve many instances from the backing store using query options.</p>
+</div>
+<div class='tags'>
+  <h3>See also:</h3>
+  <ul class='see'>
+    <li>
+      <a href='../class/Model.html#findAll-dynamic'>Model#findAll</a>
+    </li>
+  </ul>
+</div>
+  </div>
+</div>
+    </div>
+    <div id='footer'>
+  By
+  <a href='https://github.com/coffeedoc/codo' title='CoffeeScript API documentation generator'>
+    Codo
+  </a>
+  2.1.2
+  &#10034;
+  Press H to see the keyboard shortcuts
+  &#10034;
+  <a href='http://twitter.com/netzpirat' target='_parent'>@netzpirat</a>
+  &#10034;
+  <a href='http://twitter.com/_inossidabile' target='_parent'>@_inossidabile</a>
+</div>
+<iframe id='search_frame'></iframe>
+<div id='fuzzySearch'>
+  <input type='text'>
+  <ol></ol>
+</div>
+<div id='help'>
+  <p>
+    Quickly fuzzy find classes, mixins, methods, file:
+  </p>
+  <ul>
+    <li>
+      <span>T</span>
+      Open fuzzy finder dialog
+    </li>
+  </ul>
+  <p>
+    Control the navigation frame:
+  </p>
+  <ul>
+    <li>
+      <span>L</span>
+      Toggle list view
+    </li>
+    <li>
+      <span>C</span>
+      Show class list
+    </li>
+    <li>
+      <span>I</span>
+      Show mixin list
+    </li>
+    <li>
+      <span>F</span>
+      Show file list
+    </li>
+    <li>
+      <span>M</span>
+      Show method list
+    </li>
+    <li>
+      <span>E</span>
+      Show extras list
+    </li>
+  </ul>
+  <p>
+    You can focus and blur the search input:
+  </p>
+  <ul>
+    <li>
+      <span>S</span>
+      Focus search input
+    </li>
+    <li>
+      <span>Esc</span>
+      Blur search input
+    </li>
+  </ul>
+</div>
+  </body>
+</html>
