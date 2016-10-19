@@ -1,13 +1,8 @@
 Instance = require './Instance'
+{ isPrimitive } = require './Util'
 
-isPrimitive = (v) ->
-	t = typeof(v)
-	if (t is 'string') or (t is 'number') or (t is 'boolean') then true else false
-
-#
 # Attaches properties to the instance class prototype so that dot-access to
 # declared model fields automatically calls getters as needed.
-#
 applyModelPropsToInstanceClass = (boundModel, clazz) ->
 	for k,v of boundModel.instanceProps when v
 		do (k,v) ->
@@ -18,14 +13,20 @@ applyModelPropsToInstanceClass = (boundModel, clazz) ->
 			})
 	undefined
 
+# Creates a standard `BoundInstance` class for the given `BoundModel`
 createStandardInstanceClassForBoundModel = (bm) ->
+	# Instance class for third-party `BoundModel`s that provides default implementations
+	# of essential functionality.
 	class BoundInstance extends Instance
+		# @private
 		constructor: (boundModel, @dataValues = {}) ->
 			super(boundModel)
 			@_previousDataValues = {}
 
+		# @see Instance#getDataValue
 		getDataValue: (key) -> @dataValues[key]
 
+		# @see Instance#setDataValue
 		setDataValue: (key, value) ->
 			originalValue = @dataValues[key]
 			if (not isPrimitive(value)) or (value isnt originalValue)
@@ -33,6 +34,7 @@ createStandardInstanceClassForBoundModel = (bm) ->
 			@dataValues[key] = value
 			undefined
 
+		# @see Instance#get
 		get: (key) ->
 			if key
 				if @boundModel.instanceProps[key]
@@ -46,6 +48,7 @@ createStandardInstanceClassForBoundModel = (bm) ->
 					values[k] = @get(k)
 				values
 
+		# @see Instance#set
 		set: (key, value) ->
 			if (value isnt undefined)
 				# Run single setter, if exists.
@@ -59,7 +62,7 @@ createStandardInstanceClassForBoundModel = (bm) ->
 				@set(k,v) for k,v of key when @boundModel.instanceProps[k]
 				undefined
 
-
+		# @see Instance#changed
 		changed: (key) ->
 			if key
 				if (key of @_previousDataValues) then true else false
@@ -67,9 +70,11 @@ createStandardInstanceClassForBoundModel = (bm) ->
 				changes = (key for key of @dataValues when (key of @_previousDataValues))
 				if changes.length > 0 then changes else false
 
+		# @see Instance#save
 		save: ->
 			@boundModel.backend.save(@, @boundModel)
 
+		# @see Instance#destroy
 		destroy: ->
 			@boundModel.backend.destroy(@, @boundModel)
 
