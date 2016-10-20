@@ -10,6 +10,8 @@ FLOAT = 'FLOAT'
 OBJECT = 'OBJECT'
 # Array field type; must specify subtype
 ARRAY = (subtype) -> "ARRAY(#{subtype})"
+# Date field type
+DATE = 'DATE'
 # Any field type
 ANY = 'ANY'
 
@@ -20,5 +22,6 @@ module.exports = {
 	FLOAT
 	OBJECT
 	ARRAY
+	DATE
 	ANY
 }
