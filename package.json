@@ -6,6 +6,7 @@
   "scripts": {
     "clean": "rm -rf js",
     "build": "mkdir -p js && coffee -o js src/*.coffee",
+    "build_doc": "codo src/",
     "prepublish": "npm run clean && npm run build"
   },
   "repository": {

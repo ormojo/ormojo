@@ -5,4 +5,18 @@ class Cursor
 	# @abstract
 	constructor: ->
 
+	# Get the total number of results for the query that made this cursor.
+	#
+	# @abstract
+	# @return [Number] The total results.
+	getTotalResultCount: ->
+		throw new Error('`getTotalResultCount` called on abstract Cursor')
+
+	# Get the remaining results not yet fetched for the query that made this Cursor.
+	#
+	# @Abstract
+	# @return [Number] The remaining results.
+	getRemainingResultCount: ->
+		throw new Error('`getRemainingResultCount` called on abstract Cursor')
+
 module.exports = Cursor

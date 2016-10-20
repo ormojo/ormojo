@@ -15,6 +15,15 @@ class ResultSet
 	# @return [Number] The count of results.
 	getResultCount: -> if @results then @results.length else 0
 
+	# Get the total number of results from the query that produced this `ResultSet`,
+	# including results in future pages.
+	# Not possible on all backends.
+	#
+	# @abstract
+	# @return [Number] The total number of results.
+	getTotalResultCount: ->
+		throw new Error('`getTotalResultCount` called on abstract ResultSet')
+
 	# Retrieve the array of results in this set.
 	#
 	# @return [Array<Instance>] The collection of results.
