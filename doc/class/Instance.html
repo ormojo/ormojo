@@ -129,7 +129,7 @@ or document of a document-oriented store, though the semantics are backend-depen
     <span class='signature'>
       <a href='#destroy-dynamic'>
         #
-(Promise&lt;undefined&gt;)
+(Promise&lt;bool&gt;)
 <b>destroy</b><span>()</span>
       </a>
     </span>
@@ -545,7 +545,7 @@ synchronization with the backing store.</p>
   <div class='method_details'>
     <p class='signature' id='destroy-dynamic'>
       #
-(Promise&lt;undefined&gt;)
+(Promise&lt;bool&gt;)
 <b>destroy</b><span>()</span>
       <br>
     </p>
@@ -566,10 +566,10 @@ synchronization with the backing store.</p>
     <li>
       <span class='type'></span>
       (
-        <tt>Promise&lt;undefined&gt;</tt>
+        <tt>Promise&lt;bool&gt;</tt>
       )
       &mdash;
-      <span class='desc'>A <code>Promise</code> that resolves to <code>undefined</code> after the delete operation completes. The Promise rejects on a database error. </span>
+      <span class='desc'>A <code>Promise</code> that resolves to <code>true</code> if the object is deleted or <code>false</code> otherwise. The Promise rejects on a database error. </span>
     </li>
   </ul>
 </div>
