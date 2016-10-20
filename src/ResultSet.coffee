@@ -37,4 +37,10 @@ class ResultSet
 	getCursor: ->
 		throw new Error('`getCursor` called on abstract ResultSet')
 
+	# Determine if the query that generated this `ResultSet` has more results beyond what
+	# are available in this set.
+	#
+	# @return [Boolean] `true` if more results are available.
+	hasMore: -> (@getCursor()?)
+
 module.exports = ResultSet
