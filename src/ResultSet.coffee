@@ -5,6 +5,11 @@ class ResultSet
 	# @private
 	constructor: ->
 
+	# Determine if this result set is empty.
+	#
+	# @return [Boolean] `true` if empty.
+	isEmpty: -> (@getResultCount() is 0)
+
 	# Retrieve the number of results in this set.
 	#
 	# @return [Number] The count of results.
