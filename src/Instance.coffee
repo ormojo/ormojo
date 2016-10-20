@@ -85,7 +85,7 @@ class Instance
 	# Destroy the corresponding instance in the backend.
 	#
 	# @abstract
-	# @return [Promise<undefined>] A `Promise` that resolves to `undefined` after the delete operation completes. The Promise rejects on a database error.
+	# @return [Promise<bool>] A `Promise` that resolves to `true` if the object is deleted or `false` otherwise. The Promise rejects on a database error.
 	destroy: ->
 		@boundModel.corpus.Promise.reject(new Error('ormojo: `destroy` called on abstract instance'))
 
