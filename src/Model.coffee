@@ -69,7 +69,7 @@ class Model
 	# @param options [Object] Query options. *NB* Not all backends need support all options.
 	# @option options [Number] offset Offset for pagination.
 	# @option options [Number] limit Limit (number of entries per page) for pagination.
-	# @option options [Pagination] pagination A pagination object returned by a previous `findAll` operation. If passed, this operation will retrieve the next page. *NB* Passing a pagination object may override other query options in an attempt to match your query against the one that generated the pagination.
+	# @option options [Cursor] cursor A `Cursor` object returned by a previous `findAll` operation. If passed, this operation will retrieve the next page. *NB* Passing a pagination object may override other query options in an attempt to match your query against the one that generated the pagination.
 	# @return [Promise<Results>]
 	findAll: (options) ->
 		@_defaultBinding().findAll(options)

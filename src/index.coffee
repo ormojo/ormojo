@@ -8,7 +8,7 @@ module.exports = Object.assign({
 	Field: require './Field'
 	Instance: require './Instance'
 	Util: require './Util'
-	Pagination: require './Pagination'
+	Cursor: require './Cursor'
 	Migration: require './Migration'
 	createStandardInstanceClassForBoundModel: (require './StandardInstance').createStandardInstanceClassForBoundModel
 }, FieldTypes)
