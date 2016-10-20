@@ -10,5 +10,6 @@ module.exports = Object.assign({
 	Util: require './Util'
 	Cursor: require './Cursor'
 	Migration: require './Migration'
+	ResultSet: require './ResultSet'
 	createStandardInstanceClassForBoundModel: (require './StandardInstance').createStandardInstanceClassForBoundModel
 }, FieldTypes)
