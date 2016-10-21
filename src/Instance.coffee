@@ -8,12 +8,9 @@ class Instance
 	# Apply default values to this instance.
 	# @private
 	__applyDefaults: ->
-		for n, field of @boundModel.model.fields
-			if (defaulter = field.spec.default)
-				if typeof(defaulter) is 'function'
-					@set(field.name, defaulter(@))
-				else
-					@set(field.name, defaulter)
+		for n, field of @boundModel.getFields()
+			if (def = field._getDefault(@))
+				@set(field.name, def)
 		@
 
 	# Get the raw value from the value store. No getters are called.

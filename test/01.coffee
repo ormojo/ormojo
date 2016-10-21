@@ -35,6 +35,15 @@ describe 'basic tests: ', ->
 			c.createModel({name: 'widget', fields: { id: type: ormojo.STRING } })
 		).to.throw("createModel: duplicate model name `widget`")
 
+	it 'should create default values', ->
+		c = makeCorpus()
+		widget = c.getModel('widget')
+		widgetm = widget.forBackend('memory')
+		awidget = widgetm.create()
+
+		expect(awidget.name).to.equal('nameless')
+		expect(awidget.qty).to.equal(2)
+
 	it 'should create, save, find by id', ->
 		c = makeCorpus()
 		widget = c.getModel('widget')

@@ -29,4 +29,13 @@ class Field
 	# Get database column/field name
 	getBackendFieldName: -> @name
 
+	# Get the default value of this field for the given Instance.
+	#
+	# @param instance [Instance]
+	_getDefault: (instance) ->
+		if (defaulter = @spec.default)
+			if typeof(defaulter) is 'function' then defaulter(instance) else defaulter
+		else
+			undefined
+
 module.exports = Field
