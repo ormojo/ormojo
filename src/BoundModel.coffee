@@ -46,6 +46,11 @@ class BoundModel
 	getFields: ->
 		@fields
 
+	# Create an empty instance of this boundModel.
+	# @private
+	_createInstance: (dataValues) ->
+		new @instanceClass(@, dataValues)
+
 	# Create a new instance
 	#
 	# @overload create()
@@ -57,7 +62,14 @@ class BoundModel
 	#   @param data [Object] Initial data for the instance. This data will be merged to the instance as with `Instance.set()`, calling all setters as needed.
 	#   @return [Promise<Instance>] A `Promise` whose fate is settled depending on whether the Instance was persisted to the database.
 	create: (data) ->
-		@backend.create(@, data)
+		instance = @_createInstance()
+		instance.isNewRecord = true
+		instance.__applyDefaults()
+		if data isnt undefined
+			instance.set(data)
+			instance.save()
+		else
+			instance
 
 	# Retrieve an instance from the backing store from id or ids.
 	#

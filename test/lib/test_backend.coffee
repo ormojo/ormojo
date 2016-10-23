@@ -11,7 +11,9 @@ class TestBackend extends Backend
 	# Invoked after Corpus.createModel.
 	bindModel: (model, bindingOptions) ->
 		if not @storage[model.name] then @storage[model.name] = {}
-		new BoundModel(model, @, bindingOptions)
+		m = new BoundModel(model, @, bindingOptions)
+		m.instanceClass = createStandardInstanceClassForBoundModel(m)
+		m
 
 	# Invoked when an instance wants to save
 	save: (instance, boundModel) ->
@@ -29,8 +31,6 @@ class TestBackend extends Backend
 
 	# Synchronously create an un-persisted instance.
 	createRawInstance: (boundModel, dataValues) ->
-		if not boundModel.instanceClass
-			boundModel.instanceClass = createStandardInstanceClassForBoundModel(boundModel)
 		instance = new boundModel.instanceClass(boundModel, dataValues)
 		instance
 

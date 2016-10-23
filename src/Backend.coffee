@@ -42,27 +42,6 @@ class Backend
 	destroy: (instance, boundModel) ->
 		@corpus.Promise.reject(new Error('Backend: destroyInstance called on abstract backend.'))
 
-	# Create a raw un-persisted instance.
-	#
-	# @abstract
-	# @param boundModel [BoundModel] The `BoundModel` that will create the `Instance`.
-	# @param dataValues [Object] The initial data for the instance. Interpretation of this field is implementation-dependent, however, note that it represents the raw data of the object unfiltered by getters or setters.
-	createRawInstance: (boundModel, dataValues) ->
-		throw new Error('Backend: `createRawInstance` called on abstract backend.')
-
-	# Create a new instance
-	#
-	# @see Model#create
-	create: (boundModel, initialData) ->
-		instance = @createRawInstance(boundModel)
-		instance.isNewRecord = true
-		instance.__applyDefaults()
-		if initialData isnt undefined
-			instance.set(initialData)
-			@save(instance, boundModel)
-		else
-			instance
-
 	# Retrieve an instance from the backing store from id or ids.
 	#
 	# @abstract
