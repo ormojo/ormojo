@@ -15,6 +15,10 @@ class Field
 		if @name.substr(0, 1) is '_' then throw new Error("Invalid field name `#{@name}`: cannot begin with _")
 		if reservedWords[@name] then throw new Error("Invalid field name `#{@name}`: reserved word")
 		if not @spec?.type then throw new Error("Invalid field spec for `#{@name}`: must specify a type")
+		@type = @spec.type
+		@get = @spec.get
+		@set = @spec.set
+		@default = @spec.default
 		@
 
 	# Copy another field object. Mainly useful for backend implementors deriving
@@ -30,11 +34,11 @@ class Field
 	getBackendFieldName: -> @name
 
 	# Get the default value of this field for the given Instance.
-	#
+	# @private
 	# @param instance [Instance]
 	_getDefault: (instance) ->
-		if (defaulter = @spec.default)
-			if typeof(defaulter) is 'function' then defaulter(instance) else defaulter
+		if (@default)?
+			if typeof(@default) is 'function' then @default(instance) else @default
 		else
 			undefined
 

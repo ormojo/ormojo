@@ -1,4 +1,4 @@
-{ Backend, BoundModel, createStandardInstanceClassForBoundModel } = require '..'
+{ Backend, BoundModel, createStandardInstanceClassForBoundModel } = require '../..'
 cuid = require 'cuid'
 
 class TestBackend extends Backend
@@ -9,9 +9,9 @@ class TestBackend extends Backend
 	initialize: ->
 
 	# Invoked after Corpus.createModel.
-	bindModel: (model) ->
+	bindModel: (model, bindingOptions) ->
 		if not @storage[model.name] then @storage[model.name] = {}
-		new BoundModel(model, @)
+		new BoundModel(model, @, bindingOptions)
 
 	# Invoked when an instance wants to save
 	save: (instance, boundModel) ->
@@ -33,17 +33,6 @@ class TestBackend extends Backend
 			boundModel.instanceClass = createStandardInstanceClassForBoundModel(boundModel)
 		instance = new boundModel.instanceClass(boundModel, dataValues)
 		instance
-
-	# Create and save a new instance.
-	create: (boundModel, initialData) ->
-		instance = @createRawInstance(boundModel)
-		instance.isNewRecord = true
-		instance.__applyDefaults()
-		if initialData isnt undefined
-			instance.set(initialData)
-			@save(instance, boundModel)
-		else
-			instance
 
 	findById: (boundModel, id) ->
 		data = @storage[boundModel.name][id]

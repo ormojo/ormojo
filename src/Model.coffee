@@ -8,20 +8,15 @@ class Model
 	constructor: (@corpus, @spec) ->
 		@name = @spec.name
 
-		@fields = {}; @fieldsList = []
-		for k,fspec of @spec.fields
-			f = new Field()
-			f.fromSpec(k, fspec)
-			@fields[k] = f; @fieldsList.push(f)
-
 	# @private
-	_forBackend: (backend) -> backend.bindModel(@)
+	_forBackend: (backend, bindingOptions) -> backend.bindModel(@, bindingOptions)
 
 	# Bind this model to the backend in the `Corpus` with the given name.
 	#
 	# @param backendName [String] Name of a valid backend in the `Corpus` containing this model.
 	# @return [BoundModel] A BoundModel tying this model to the given backend.
-	forBackend: (backendName) -> @_forBackend(@corpus.getBackend(backendName))
+	forBackend: (backendName, bindingOptions) ->
+		@_forBackend(@corpus.getBackend(backendName), bindingOptions)
 
 	# @private
 	_defaultBinding: ->

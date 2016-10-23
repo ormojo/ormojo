@@ -9,7 +9,7 @@ class Instance
 	# @private
 	__applyDefaults: ->
 		for n, field of @boundModel.getFields()
-			if (def = field._getDefault(@))
+			if (def = field._getDefault(@))?
 				@set(field.name, def)
 		@
 
