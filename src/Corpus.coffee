@@ -11,7 +11,6 @@ class Corpus
 	# @option config [Object] log A bunyan-style logger object of the form ```js {trace, debug, info, warn, error, fatal}```. All ormojo logging will be directed through this object. *NB* Trace-level logging is extremely verbose!
 	# @option config [String] defaultBackend The name of the backend to use by default when an operation would require a named backend but none is specified.
 	constructor: (@config = {}) ->
-
 		# Export methods to make promises.
 		@Promise = @config.Promise or {
 			reject: (x) -> Promise.reject(x)
@@ -28,9 +27,6 @@ class Corpus
 			v._initialize(@, k)
 		if sz is 0
 			throw new Error("Corpus: must register at least one backend")
-
-		if (not @config.defaultBackend) or (not @backends[@config.defaultBackend])
-			throw new Error("Corpus: defaultBackend must be specified and must exist.")
 
 		@models = {}
 
@@ -68,21 +64,5 @@ class Corpus
 	# @return [Backend]
 	getBackend: (name) ->
 		if @backends[name] then @backends[name] else throw new Error("No such backend #{name}")
-
-	# Get the default backend for the given model.
-	# @param model [Model]
-	getDefaultBackendForModel: (model) ->
-		backendName = @config.defaultBackends?[model.name] or @config.defaultBackend
-		backend = @backends[backendName]
-		if not backend
-			throw new Error("getDefaultBackendForModel(`#{model.name}`): no such backend `#{backendName}`")
-		backend
-
-	# Attach all models to default bindings.
-	bindAllModels: ->
-		for name, model of @models
-			model._defaultBinding()
-		undefined
-
 
 module.exports = Corpus
