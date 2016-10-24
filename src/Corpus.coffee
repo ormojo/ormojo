@@ -18,18 +18,6 @@ class Corpus
 			all: (x) -> Promise.all(x)
 		}
 
-		# Get backends
-		@backends = @config.backends or {}
-		sz = 0
-		for k,v of @backends
-			sz++
-			if not (v instanceof Backend) then throw new Error("Corpus: object at `#{k}` is not a backend")
-			v._initialize(@, k)
-		if sz is 0
-			throw new Error("Corpus: must register at least one backend")
-
-		@models = {}
-
 		# Set up no-op logging functions if needed
 		if @config.log
 			@log = @config.log
@@ -42,6 +30,20 @@ class Corpus
 				error: ->
 				fatal: ->
 			}
+
+		@models = {}
+
+		# Get backends
+		@backends = @config.backends or {}
+		sz = 0
+		for k,v of @backends
+			sz++
+			if not (v instanceof Backend) then throw new Error("Corpus: object at `#{k}` is not a backend")
+			v._initialize(@, k)
+		if sz is 0
+			throw new Error("Corpus: must register at least one backend")
+
+
 
 	# Create a model within this Corpus with the given spec.
 	#
