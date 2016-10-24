@@ -1,7 +1,7 @@
 /node_modules
 /build
 /coverage
-*.sublime-workspace
+/doc
 /logs
 npm-debug.log
 /js
@@ -9,3 +9,4 @@ npm-debug.log
 .v8flags.*
 .npm/
 .vagrant/
+*.sublime-workspace
