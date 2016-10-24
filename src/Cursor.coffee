@@ -5,12 +5,16 @@ class Cursor
 	# @abstract
 	constructor: ->
 
+	### !pragma coverage-skip-next ###
+
 	# Get the total number of results for the query that made this cursor.
 	#
 	# @abstract
 	# @return [Number] The total results.
 	getTotalResultCount: ->
 		throw new Error('`getTotalResultCount` called on abstract Cursor')
+
+	### !pragma coverage-skip-next ###
 
 	# Get the remaining results not yet fetched for the query that made this Cursor.
 	#

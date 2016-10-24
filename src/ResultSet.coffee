@@ -15,6 +15,8 @@ class ResultSet
 	# @return [Number] The count of results.
 	getResultCount: -> if @results then @results.length else 0
 
+	### !pragma coverage-skip-next ###
+
 	# Get the total number of results from the query that produced this `ResultSet`,
 	# including results in future pages.
 	# Not possible on all backends.
@@ -29,6 +31,8 @@ class ResultSet
 	# @return [Array<Instance>] The collection of results.
 	getResults: -> @results or []
 
+	### !pragma coverage-skip-next ###
+
 	# Retrieve a cursor representing this set, which can be used to continue a paginated
 	# query.
 	#
@@ -36,6 +40,8 @@ class ResultSet
 	# @return [Cursor] A cursor that can be used to get the next ResultSet. A null return indicates no further results are available.
 	getCursor: ->
 		throw new Error('`getCursor` called on abstract ResultSet')
+
+	### !pragma coverage-skip-next ###
 
 	# Determine if the query that generated this `ResultSet` has more results beyond what
 	# are available in this set.

@@ -13,6 +13,8 @@ class Instance
 				@set(field.name, def)
 		@
 
+	### !pragma coverage-skip-next ###
+
 	# Get the raw value from the value store. No getters are called.
 	#
 	# @abstract
@@ -21,6 +23,8 @@ class Instance
 	getDataValue: (key) ->
 		throw new Error('ormojo: `getDataValue` called on abstract instance')
 
+	### !pragma coverage-skip-next ###
+
 	# Set a raw value in the value store. No setters are called.
 	#
 	# @abstract
@@ -28,6 +32,8 @@ class Instance
 	# @param value [Any] Value to assign. If undefined, the value will be dropped from the instance's store altogether.
 	setDataValue: (key, value) ->
 		throw new Error('ormojo: `setDataValue` called on abstract instance')
+
+	### !pragma coverage-skip-next ###
 
 	# Get properties of this instance.
 	#
@@ -43,6 +49,8 @@ class Instance
 	get: (key) ->
 		throw new Error('ormojo: `get` called on abstract instance')
 
+	### !pragma coverage-skip-next ###
+
 	# Set properties of this instance.
 	#
 	# @abstract
@@ -56,6 +64,8 @@ class Instance
 	#   @param values [Object<String, Any>] A hash with keys the name of each field to set, and associated values to be set. `set(key, value)` will be run on each such pair.
 	set: (key, value) ->
 		throw new Error('ormojo: `set` called on abstract instance')
+
+	### !pragma coverage-skip-next ###
 
 	# Determine whether changes have been made to this instance since its last
 	# synchronization with the backing store.
@@ -72,12 +82,16 @@ class Instance
 	changed: (key) ->
 		throw new Error('ormojo: `changed` called on abstract instance')
 
+	### !pragma coverage-skip-next ###
+
 	# Persist this instance to the backend.
 	#
 	# @abstract
 	# @return [Promise<Instance>] A `Promise` that resolves to this instance after the save operation completes. The Promise rejects on a database error.
 	save: ->
 		@boundModel.corpus.Promise.reject(new Error('ormojo: `save` called on abstract instance'))
+
+	### !pragma coverage-skip-next ###
 
 	# Destroy the corresponding instance in the backend.
 	#

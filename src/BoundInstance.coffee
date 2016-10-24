@@ -20,6 +20,10 @@ class BoundInstance extends Instance
 		@dataValues[key] = value
 		undefined
 
+	# Notify that data values are in sync with the most recent database call.
+	_clearChanges: ->
+		@_previousDataValues = {}
+
 	# @see Instance#get
 	get: (key) ->
 		if key

@@ -3,12 +3,18 @@ isPrimitive = (v) ->
 	t = typeof(v)
 	if (t is 'string') or (t is 'number') or (t is 'boolean') then true else false
 
+# This is from lodash, its probably okay.
+### !pragma coverage-skip-next ###
+
 # Get a value at a deep location in an object.
 get = (object, path) ->
 	index = 0; length = path.length
 	while object? and index < length
 		object = object[path[index++]]
 	if (index is length) then object else undefined
+
+# This is from lodash, its probably okay.
+### !pragma coverage-skip-next ###
 
 # Set a value at a deep location in an object.
 set = (object, path, val) ->
