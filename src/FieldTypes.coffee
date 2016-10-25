@@ -1,5 +1,7 @@
 # String field type.
 STRING = 'STRING'
+# Text field type. On nosql backends this is usually the same as STRING.
+TEXT = 'TEXT'
 # Boolean field type.
 BOOLEAN = 'BOOLEAN'
 # Integer field type
@@ -17,6 +19,7 @@ ANY = 'ANY'
 
 module.exports = {
 	STRING
+	TEXT
 	BOOLEAN
 	INTEGER
 	FLOAT
