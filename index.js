@@ -1,10 +1,10 @@
 var exp;
 
 try {
-	exp = require("./src/index");
+	exp = require("./js/index");
 } catch(e) {
-	if(/\/src\//.test(e.message || '')) {
-		exp = require("./js/index");
+	if(/\/js\//.test(e.message || '')) {
+		exp = require("./src/index");
 	} else {
 		console.log(e);
 	}
