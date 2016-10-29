@@ -1,7 +1,7 @@
-reservedWords = require './reservedWords'
+import reservedWords from './reservedWords'
 
 # Declarative representation of a field in a `Model`
-class Field
+export default class Field
 	# Construct a Field.
 	constructor: ->
 
@@ -11,6 +11,7 @@ class Field
 	# @param spec [Object] An object giving a declarative specification for the field. *NB* Options for fields and their meanings can vary with the backend used! Please consult backend docs.
 	# @option spec [FieldType] type The type of the field.
 	# @option spec [Boolean] allowNull Whether the field is nullable. Default `true`.
+	# @option spec [Any | => Any] defaultValue The default value for this field on a new instance, or a function which will produce that value.
 	fromSpec: (@name, @spec) ->
 		if typeof(@name) isnt 'string' then throw new Error("Invalid field name: must be a string")
 		if @name.substr(0, 1) is '_' then throw new Error("Invalid field name `#{@name}`: cannot begin with _")
@@ -19,7 +20,7 @@ class Field
 		@type = @spec.type
 		@get = @spec.get
 		@set = @spec.set
-		@default = @spec.default
+		@defaulter = @spec.defaultValue
 		@
 
 	# Copy another field object. Mainly useful for backend implementors deriving
@@ -38,9 +39,7 @@ class Field
 	# @private
 	# @param instance [Instance]
 	_getDefault: (instance) ->
-		if (@default)?
-			if typeof(@default) is 'function' then @default(instance) else @default
+		if (@defaulter)?
+			if typeof(@defaulter) is 'function' then @defaulter(instance) else @defaulter
 		else
 			undefined
-
-module.exports = Field

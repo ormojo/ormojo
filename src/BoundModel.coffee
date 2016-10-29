@@ -1,8 +1,8 @@
-mergeOptions = require 'merge-options'
-Field = require './Field'
+import mergeOptions from 'merge-options'
+import Field from './Field'
 
 # A model bound to a backend or backends.
-class BoundModel
+export default class BoundModel
 	# Should only be called by Backend.bindModel
 	# @private
 	constructor: (@model, @backend, bindingOptions) ->
@@ -98,5 +98,3 @@ class BoundModel
 	# @return [Promise<ResultSet>] A `Promise` of the `ResultSet` matching the query
 	findAll: (querySpec) ->
 		@backend.findAll(@, querySpec)
-
-module.exports = BoundModel

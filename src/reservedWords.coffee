@@ -1,5 +1,5 @@
 # Fields can't be named after reserved words.
-module.exports = {
+export default reservedWords = {
 	dataValues: true
 	set: true
 	get: true

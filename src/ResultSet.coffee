@@ -1,6 +1,6 @@
 # Collection of results from a query that may return multiple results.
 # @abstract
-class ResultSet
+export default class ResultSet
 	# The constructor should only be called by backends.
 	# @private
 	constructor: ->
@@ -48,5 +48,3 @@ class ResultSet
 	#
 	# @return [Boolean] `true` if more results are available.
 	hasMore: -> (@getCursor()?)
-
-module.exports = ResultSet

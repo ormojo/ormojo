@@ -1,5 +1,5 @@
 # Object representing a pagination of results returned from a backend.
-class Cursor
+export default class Cursor
 	# Only backends should construct Cursors.
 	# @private
 	# @abstract
@@ -22,5 +22,3 @@ class Cursor
 	# @return [Number] The remaining results.
 	getRemainingResultCount: ->
 		throw new Error('`getRemainingResultCount` called on abstract Cursor')
-
-module.exports = Cursor

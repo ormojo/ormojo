@@ -1,7 +1,7 @@
-Field = require './Field'
+import Field from './Field'
 
 # Declarative representation of a model.
-class Model
+export default class Model
 	# Constructor should only be called by `Corpus.createModel()`.
 	# @private
 	# @see Corpus#createModel
@@ -17,5 +17,3 @@ class Model
 	# @return [BoundModel] A BoundModel tying this model to the given backend.
 	forBackend: (backendName, bindingOptions) ->
 		@_forBackend(@corpus.getBackend(backendName), bindingOptions)
-
-module.exports = Model

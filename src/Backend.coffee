@@ -1,5 +1,5 @@
 # Driver that intermediates between the ormojo API and some underlying data layer.
-class Backend
+export default class Backend
 	# Construct a backend. Generally, initialization work for the backend should not be
 	# performed here, but rather in `.initialize`
 	#
@@ -75,5 +75,3 @@ class Backend
 	# @see BoundModel#findAll
 	findAll: (boundModel, options) ->
 		@corpus.Promise.reject(new Error('Backend: `findAll` called on abstract backend.'))
-
-module.exports = Backend

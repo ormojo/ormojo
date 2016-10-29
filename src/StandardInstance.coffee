@@ -1,8 +1,8 @@
-BoundInstance = require './BoundInstance'
+import BoundInstance from './BoundInstance'
 
 # Attaches properties to the instance class prototype so that dot-access to
 # declared model fields automatically calls getters as needed.
-applyModelPropsToInstanceClass = (boundModel, clazz) ->
+export applyModelPropsToInstanceClass = (boundModel, clazz) ->
 	for k,v of boundModel.instanceProps when v
 		do (k,v) ->
 			Object.defineProperty(clazz.prototype, k, {
@@ -13,7 +13,7 @@ applyModelPropsToInstanceClass = (boundModel, clazz) ->
 	undefined
 
 # Creates a standard `BoundInstance` class for the given `BoundModel`
-createStandardInstanceClassForBoundModel = (bm) ->
+export createStandardInstanceClassForBoundModel = (bm) ->
 	class StandardInstance extends BoundInstance
 
 	# Create getters and setters
@@ -21,8 +21,3 @@ createStandardInstanceClassForBoundModel = (bm) ->
 
 	# Return the instance class
 	StandardInstance
-
-module.exports = {
-	applyModelPropsToInstanceClass
-	createStandardInstanceClassForBoundModel
-}

@@ -1,6 +1,6 @@
 # An instance of a `BoundModel`. Typically maps one-to-one onto a single row of a database
 # or document of a document-oriented store, though the semantics are backend-dependent.
-class Instance
+export default class Instance
 	# Should only be called by `BoundModel`.
 	# @private
 	constructor: (@boundModel) ->
@@ -99,5 +99,3 @@ class Instance
 	# @return [Promise<bool>] A `Promise` that resolves to `true` if the object is deleted or `false` otherwise. The Promise rejects on a database error.
 	destroy: ->
 		@boundModel.corpus.Promise.reject(new Error('ormojo: `destroy` called on abstract instance'))
-
-module.exports = Instance

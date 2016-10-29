@@ -1,7 +1,7 @@
 #
 # Object representing a declarative request for particular information from a backend.
 #
-module.exports = class Query
+export default class Query
 	# Query constructor.
 	# @param spec [Object] Query options specification. *NB:* not all backends will support all options. Please consult backend-specific documentation.
 	# @option spec [Number] offset Offset for pagination.

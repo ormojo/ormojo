@@ -1,9 +1,9 @@
-Instance = require './Instance'
-{ isPrimitive } = require './Util'
+import Instance from './Instance'
+import { isPrimitive } from './Util'
 
 # Instance class for third-party `BoundModel`s that provides default implementations
 # of essential functionality.
-class BoundInstance extends Instance
+export default class BoundInstance extends Instance
 	# @private
 	constructor: (boundModel, @dataValues = {}) ->
 		super(boundModel)
@@ -67,5 +67,3 @@ class BoundInstance extends Instance
 	# @see Instance#destroy
 	destroy: ->
 		@boundModel.backend.destroy(@, @boundModel)
-
-module.exports = BoundInstance

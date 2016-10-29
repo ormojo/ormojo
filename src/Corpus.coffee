@@ -1,8 +1,8 @@
-Model = require './Model'
-Backend = require './Backend'
+import Model from './Model'
+import Backend from './Backend'
 
 # A collection of models connected to a collection of backends.
-class Corpus
+export default class Corpus
 	# Create a new `Corpus`
 	#
 	# @param config [Object] Configuration data.
@@ -43,8 +43,6 @@ class Corpus
 		if sz is 0
 			throw new Error("Corpus: must register at least one backend")
 
-
-
 	# Create a model within this Corpus with the given spec.
 	#
 	# @param spec [Object] Specification object for the Model.
@@ -66,5 +64,3 @@ class Corpus
 	# @return [Backend]
 	getBackend: (name) ->
 		if @backends[name] then @backends[name] else throw new Error("No such backend #{name}")
-
-module.exports = Corpus

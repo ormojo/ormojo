@@ -23,21 +23,21 @@ makeCorpus = ->
 		name: 'Widget'
 		fields: {
 			id: { type: ormojo.STRING }
-			flatDefault: { type: ormojo.STRING, default: 'unnamed' }
-			functionalDefault: { type: ormojo.INTEGER, default: -> 1 + 1 }
+			flatDefault: { type: ormojo.STRING, defaultValue: 'unnamed' }
+			functionalDefault: { type: ormojo.INTEGER, defaultValue: -> 1 + 1 }
 			getter: {
 				type: ormojo.STRING
-				default: ''
+				defaultValue: ''
 				get: (k) -> @getDataValue(k) + ' getter'
 			}
 			setter: {
 				type: ormojo.STRING
-				default: ''
+				defaultValue: ''
 				set: (k, v) -> @setDataValue(k, v + ' setter')
 			}
 			getterAndSetter: {
 				type: ormojo.STRING
-				default: ''
+				defaultValue: ''
 				get: (k) -> @getDataValue(k) + ' getter'
 				set: (k, v) -> @setDataValue(k, v + ' setter')
 			}

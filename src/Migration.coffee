@@ -1,6 +1,6 @@
 # Abstract representation of a database migration.
 # @abstract
-class Migration
+export default class Migration
 	# Construct a Migration associated with the given `Corpus` and `Backend`.
 	constructor: (@corpus, @backend) ->
 
@@ -15,5 +15,3 @@ class Migration
 	#
 	# @abstract
 	getMigrationPlan: ->
-
-module.exports = Migration

@@ -1,5 +1,5 @@
 # Check if a value is primitive.
-isPrimitive = (v) ->
+export isPrimitive = (v) ->
 	t = typeof(v)
 	if (t is 'string') or (t is 'number') or (t is 'boolean') then true else false
 
@@ -7,7 +7,7 @@ isPrimitive = (v) ->
 ### !pragma coverage-skip-next ###
 
 # Get a value at a deep location in an object.
-get = (object, path) ->
+export get = (object, path) ->
 	index = 0; length = path.length
 	while object? and index < length
 		object = object[path[index++]]
@@ -17,7 +17,7 @@ get = (object, path) ->
 ### !pragma coverage-skip-next ###
 
 # Set a value at a deep location in an object.
-set = (object, path, val) ->
+export set = (object, path, val) ->
 	index = 0; length = path.length
 	while object? and index < (length - 1)
 		object = object[path[index++]]
@@ -28,16 +28,9 @@ set = (object, path, val) ->
 		false
 
 # Get an Object representing the "delta" of this instance from the persisted version.
-getDelta = (instance) ->
+export getDelta = (instance) ->
 	changedKeys = instance.changed()
 	if not changedKeys then return false
 	ret = {}
 	ret[k] = instance.dataValues[k] for k in changedKeys
 	ret
-
-module.exports = {
-	getDelta
-	isPrimitive
-	set
-	get
-}
