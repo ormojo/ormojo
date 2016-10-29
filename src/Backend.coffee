@@ -22,7 +22,6 @@ class Backend
 	#
 	# @abstract
 	# @param [Model] model The model to bind to this backend.
-	#
 	bindModel: (model) ->
 		throw new Error('Backend: `bindModel` called on abstract backend.')
 
@@ -35,7 +34,6 @@ class Backend
 	# @param boundModel [BoundModel] The `BoundModel` that created the `Instance`.
 	#
 	# @return [Promise<Instance>] A `Promise` whose fate is settled depending on the performance of the save operation. If the save operation succeeds, it should resolve with the updated Instance.
-	#
 	save: (instance, boundModel) ->
 		@corpus.Promise.reject(new Error('Backend: saveInstance called on abstract backend.'))
 
@@ -48,7 +46,6 @@ class Backend
 	# @param boundModel [BoundModel] The `BoundModel` that created the `Instance`.
 	#
 	# @return [Promise<undefined>] A `Promise` whose fate is settled depending on the performance of the operation.
-	#
 	destroy: (instance, boundModel) ->
 		@corpus.Promise.reject(new Error('Backend: destroyInstance called on abstract backend.'))
 
@@ -57,8 +54,7 @@ class Backend
 	# Retrieve an instance from the backing store from id or ids.
 	#
 	# @abstract
-	# @see Model#findById
-	#
+	# @see BoundModel#findById
 	findById: (boundModel, id) ->
 		@corpus.Promise.reject(new Error('Backend: `findById` called on abstract backend.'))
 
@@ -67,7 +63,7 @@ class Backend
 	# Retrieve a single instance from the backing store using query options.
 	#
 	# @abstract
-	# @see Model#find
+	# @see BoundModel#find
 	find: (boundModel, options) ->
 		@corpus.Promise.reject(new Error('Backend: `find` called on abstract backend.'))
 
@@ -76,8 +72,7 @@ class Backend
 	# Retrieve many instances from the backing store using query options.
 	#
 	# @abstract
-	# @see Model#findAll
-	#
+	# @see BoundModel#findAll
 	findAll: (boundModel, options) ->
 		@corpus.Promise.reject(new Error('Backend: `findAll` called on abstract backend.'))
 

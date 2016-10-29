@@ -87,19 +87,16 @@ class BoundModel
 
 	# Retrieve a single instance from the backing store using query options.
 	#
-	# @param options [Object] Query options. *NB* Not all backends need support all options.
+	# @param querySpec [Object] Query options. *NB* Not all backends need support all options. See the documentation for your backend for specifics.
 	# @return [Promise<Instance>] A `Promise` of the `Instance` matching the query, if found. If not found, the `Promise` will resolve with the value `undefined`. The `Promise` is only rejected in the event of a database error.
-	find: (options) ->
-		@backend.find(@, options)
+	find: (querySpec) ->
+		@backend.find(@, querySpec)
 
 	# Retrieve many instances from the backing store using query options.
 	#
-	# @param options [Object] Query options. *NB* Not all backends need support all options.
-	# @option options [Number] offset Offset for pagination.
-	# @option options [Number] limit Limit (number of entries per page) for pagination.
-	# @option options [Cursor] cursor A `Cursor` object returned by a previous `findAll` operation. If passed, this operation will retrieve the next page. *NB* Passing a pagination object may override other query options in an attempt to match your query against the one that generated the pagination.
-	# @return [Promise<Results>]
-	findAll: (options) ->
-		@backend.findAll(@, options)
+	# @param querySpec [Object] Query options. *NB* Not all backends need support all options. See the documentation for your backend for specifics.
+	# @return [Promise<ResultSet>] A `Promise` of the `ResultSet` matching the query
+	findAll: (querySpec) ->
+		@backend.findAll(@, querySpec)
 
 module.exports = BoundModel

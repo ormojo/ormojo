@@ -8,8 +8,9 @@ class Field
 	# Create a field from a specification object.
 	#
 	# @param name [String] The name of the field. May not begin with `_`.
-	# @param spec [Object] An object giving a declarative specification for the field. *NB* Options for fields and their meanings can vary with the backend used!
+	# @param spec [Object] An object giving a declarative specification for the field. *NB* Options for fields and their meanings can vary with the backend used! Please consult backend docs.
 	# @option spec [FieldType] type The type of the field.
+	# @option spec [Boolean] allowNull Whether the field is nullable. Default `true`.
 	fromSpec: (@name, @spec) ->
 		if typeof(@name) isnt 'string' then throw new Error("Invalid field name: must be a string")
 		if @name.substr(0, 1) is '_' then throw new Error("Invalid field name `#{@name}`: cannot begin with _")
