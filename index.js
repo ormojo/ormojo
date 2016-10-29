@@ -1,7 +1,7 @@
 var exp;
 
 try {
-	exp = require("./js/index");
+	exp = require("./lib/index");
 } catch(e) {
 	if(/\/js\//.test(e.message || '')) {
 		exp = require("./src/index");
