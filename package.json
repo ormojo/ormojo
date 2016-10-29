@@ -1,8 +1,8 @@
 {
   "name": "ormojo",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A multi-backend SQL/NoSQL ORM for node.js and the browser.",
-  "main": "./index.js",
+  "main": "lib/index.js",
   "scripts": {
     "clean": "rimraf lib build es coverage",
     "build": "mkdir -p lib && coffee -o lib src/*.coffee",
