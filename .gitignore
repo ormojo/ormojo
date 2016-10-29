@@ -4,7 +4,6 @@
 /doc
 /logs
 npm-debug.log
-/js
 
 .v8flags.*
 .npm/
