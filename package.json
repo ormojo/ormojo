@@ -3,6 +3,8 @@
   "version": "0.0.6",
   "description": "A multi-backend SQL/NoSQL ORM for node.js and the browser.",
   "main": "lib/index.js",
+	"module": "es/index.js",
+	"jsnext:main": "es/index.js",
   "scripts": {
     "clean": "rimraf lib build es coverage",
     "build": "npm run build:coffee && npm run build:babel:commonjs && npm run build:babel:es",
