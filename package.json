@@ -17,7 +17,9 @@
     "coverage:build": "node_modules/.bin/mocha --recursive --compilers coffee:coffee-script/register --require coffee-coverage/register-istanbul",
     "coverage:report": "node_modules/.bin/istanbul report",
     "coverage": "npm run coverage:build && npm run coverage:report",
-		"precommit": "npm run prepublish && npm run test"
+		"precommit": "npm run prepublish && npm run test",
+		"postcheckout": "npm install",
+		"postmerge": "npm install"
   },
   "repository": {
     "type": "git",
