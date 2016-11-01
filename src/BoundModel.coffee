@@ -51,6 +51,9 @@ export default class BoundModel
 	_createInstance: (dataValues) ->
 		new @instanceClass(@, dataValues)
 
+	createRaw: (dataValues) ->
+		new @instanceClass(@, dataValues)
+
 	# Create a new instance
 	#
 	# @overload create()
