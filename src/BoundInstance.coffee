@@ -26,12 +26,11 @@ export default class BoundInstance extends Instance
 
 	# @see Instance#get
 	get: (key) ->
-		if key
-			if @boundModel.instanceProps[key]
-				if (getter = @boundModel.getters[key])
-					getter.call(@, key)
-				else
-					@getDataValue(key)
+		if key and (key of @boundModel.instanceProps)
+			if (getter = @boundModel.getters[key])
+				getter.call(@, key)
+			else
+				@getDataValue(key)
 		else
 			values = {}
 			for k of @boundModel.instanceProps
@@ -42,14 +41,14 @@ export default class BoundInstance extends Instance
 	set: (key, value) ->
 		if (value isnt undefined)
 			# Run single setter, if exists.
-			if @boundModel.instanceProps[key]
+			if key and (key of @boundModel.instanceProps)
 				if (setter = @boundModel.setters[key])
 					setter.call(@, key, value)
 				else
 					@setDataValue(key, value)
 		else
 			# Run setters for each key.
-			@set(k,v) for k,v of key when @boundModel.instanceProps[k]
+			@set(k,v) for k,v of key when k of @boundModel.instanceProps
 			undefined
 
 	# @see Instance#changed
