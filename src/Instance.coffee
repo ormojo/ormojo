@@ -7,7 +7,7 @@ export default class Instance
 
 	# Apply default values to this instance.
 	# @private
-	__applyDefaults: ->
+	_applyDefaults: ->
 		for n, field of @boundModel.getFields()
 			if (def = field._getDefault(@))?
 				@set(field.name, def)

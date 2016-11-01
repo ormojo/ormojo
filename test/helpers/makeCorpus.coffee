@@ -23,6 +23,7 @@ makeCorpus = ->
 		name: 'Widget'
 		fields: {
 			id: { type: ormojo.STRING }
+			name: { type: ormojo.STRING }
 			flatDefault: { type: ormojo.STRING, defaultValue: 'unnamed' }
 			functionalDefault: { type: ormojo.INTEGER, defaultValue: -> 1 + 1 }
 			getter: {
@@ -44,6 +45,8 @@ makeCorpus = ->
 		}
 	})
 
-	{ corpus, Widget }
+	BWidget = Widget.forBackend('memory')
+
+	{ corpus, Widget, BWidget }
 
 module.exports = makeCorpus

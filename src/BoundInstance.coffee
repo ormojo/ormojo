@@ -7,7 +7,6 @@ export default class BoundInstance extends Instance
 	# @private
 	constructor: (boundModel, @dataValues = {}) ->
 		super(boundModel)
-		@_previousDataValues = {}
 
 	# @see Instance#getDataValue
 	getDataValue: (key) -> @dataValues[key]
@@ -15,7 +14,11 @@ export default class BoundInstance extends Instance
 	# @see Instance#setDataValue
 	setDataValue: (key, value) ->
 		originalValue = @dataValues[key]
+		# If value is different or not comparable...
 		if (not isPrimitive(value)) or (value isnt originalValue)
+			# Create diff cache if needed...
+			if not @_previousDataValues then @_previousDataValues = Object.create(null)
+			# Add key to diff cache
 			if not (key of @_previousDataValues) then @_previousDataValues[key] = originalValue
 		@dataValues[key] = value
 		undefined
@@ -54,15 +57,16 @@ export default class BoundInstance extends Instance
 	# @see Instance#changed
 	changed: (key) ->
 		if key
-			if (key of @_previousDataValues) then true else false
+			if @_previousDataValues and (key of @_previousDataValues) then true else false
 		else
+			if not @_previousDataValues then return false
 			changes = (key for key of @dataValues when (key of @_previousDataValues))
 			if changes.length > 0 then changes else false
 
 	# @see Instance#save
 	save: ->
-		@boundModel.backend.save(@, @boundModel)
+		@boundModel.save(@)
 
 	# @see Instance#destroy
 	destroy: ->
-		@boundModel.backend.destroy(@, @boundModel)
+		@boundModel.destroy(@)

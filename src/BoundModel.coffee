@@ -46,12 +46,11 @@ export default class BoundModel
 	getFields: ->
 		@fields
 
-	# Create an empty instance of this boundModel.
-	# @private
-	_createInstance: (dataValues) ->
-		new @instanceClass(@, dataValues)
-
-	createRaw: (dataValues) ->
+	# Create a raw instance of this boundModel with the given dataValues.
+	# Synchronous and does not interact with the persistence framework.
+	# Generally only backends should be calling this method; you probably want
+	# `BoundModel.create()`.
+	createInstance: (dataValues) ->
 		new @instanceClass(@, dataValues)
 
 	# Create a new instance
@@ -65,14 +64,45 @@ export default class BoundModel
 	#   @param data [Object] Initial data for the instance. This data will be merged to the instance as with `Instance.set()`, calling all setters as needed.
 	#   @return [Promise<Instance>] A `Promise` whose fate is settled depending on whether the Instance was persisted to the database.
 	create: (data) ->
-		instance = @_createInstance()
+		instance = @createInstance()
 		instance.isNewRecord = true
-		instance.__applyDefaults()
+		instance._applyDefaults()
 		if data isnt undefined
 			instance.set(data)
 			instance.save()
 		else
 			instance
+
+	### !pragma coverage-skip-next ###
+
+	# Invoked when an `Instance` wants to persist itself to the backend.
+	#
+	# @abstract
+	# @param instance [Instance] The `Instance` to be persisted
+	#
+	# @return [Promise<Instance>] A `Promise` whose fate is settled depending on the performance of the save operation. If the save operation succeeds, it should resolve with the updated Instance.
+	save: (instance) ->
+		@corpus.Promise.reject(new Error('abstract method called.'))
+
+	# Attempt to persist the given dataValues object to the backing store.
+	#
+	# @param dataValues [Object] Raw data for the instance.
+	# @return [Promise<Object>] A `Promise` of an object containing the new
+	# dataValues for this object after it is persisted.
+	put: (dataValues, shouldCreate = true) ->
+		@corpus.Promise.reject(new Error('abstract method called.'))
+
+	### !pragma coverage-skip-next ###
+
+	# Invoked when an `Instance` wants to delete from the backend.
+	#
+	# @abstract
+	# @param instance [Instance] The `Instance` to be deleted
+	#
+	# @return [Promise<undefined>] A `Promise` whose fate is settled depending on the performance of the operation.
+	destroy: (instance) ->
+		@corpus.Promise.reject(new Error('abstract method called.'))
+
 
 	# Retrieve an instance from the backing store from id or ids.
 	#
@@ -86,18 +116,18 @@ export default class BoundModel
 	#   @param id [Array<String | Number>] The ids of the `Instance`s as understood by the backing store.
 	#   @return [Promise< Array<Instance> >] A `Promise` of an array whose entries correspond to the entries of the `ids` array. In each position, the array will contain the `Instance` with the given id, if found. If not found, the entry will be `undefined`. The `Promise` is only rejected in the event of a database error.
 	findById: (id) ->
-		@backend.findById(@, id)
+		@corpus.Promise.reject(new Error('abstract method called.'))
 
 	# Retrieve a single instance from the backing store using query options.
 	#
 	# @param querySpec [Object] Query options. *NB* Not all backends need support all options. See the documentation for your backend for specifics.
 	# @return [Promise<Instance>] A `Promise` of the `Instance` matching the query, if found. If not found, the `Promise` will resolve with the value `undefined`. The `Promise` is only rejected in the event of a database error.
 	find: (querySpec) ->
-		@backend.find(@, querySpec)
+		@corpus.Promise.reject(new Error('abstract method called.'))
 
 	# Retrieve many instances from the backing store using query options.
 	#
 	# @param querySpec [Object] Query options. *NB* Not all backends need support all options. See the documentation for your backend for specifics.
 	# @return [Promise<ResultSet>] A `Promise` of the `ResultSet` matching the query
 	findAll: (querySpec) ->
-		@backend.findAll(@, querySpec)
+		@corpus.Promise.reject(new Error('abstract method called.'))
