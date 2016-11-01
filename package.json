@@ -11,7 +11,7 @@
     "build:babel:commonjs": "cross-env BABEL_ENV=commonjs babel build --out-dir lib",
     "build:babel:es": "cross-env BABEL_ENV=es babel build --out-dir es",
     "build:coffee": "mkdir -p build && coffee -o build src/*.coffee",
-    "build_doc": "node_modules/.bin/codo src/",
+    "doc:build": "node_modules/.bin/codo src/",
     "prepublish": "npm run clean && npm run build",
     "test": "node_modules/.bin/mocha --recursive --compilers coffee:coffee-script/register",
     "coverage:build": "node_modules/.bin/mocha --recursive --compilers coffee:coffee-script/register --require coffee-coverage/register-istanbul",

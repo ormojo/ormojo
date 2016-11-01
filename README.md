@@ -7,3 +7,4 @@ Your runtime or transpiler toolchain will need to support the following JavaScri
 
 - `Object.defineProperty`
 - `Object.assign`
+- `Array.isArray`
