@@ -99,3 +99,16 @@ export default class Instance
 	# @return [Promise<bool>] A `Promise` that resolves to `true` if the object is deleted or `false` otherwise. The Promise rejects on a database error.
 	destroy: ->
 		@boundModel.corpus.Promise.reject(new Error('ormojo: `destroy` called on abstract instance'))
+
+	# Notify that data values are in sync with the most recent database call.
+	_clearChanges: ->
+		throw new Error('called abstract method')
+
+	# Get raw data values as an immutable JS object.
+	_getDataValues: -> @dataValues
+
+	# Set raw data values from a JS object.
+	_setDataValues: (@dataValues) ->
+
+	# Merge raw data values from an external source.
+	_mergeDataValues: (source) ->

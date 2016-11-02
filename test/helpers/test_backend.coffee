@@ -18,19 +18,19 @@ class TestBoundModel extends BoundModel
 	# Invoked when an instance wants to save
 	save: (instance) ->
 		(if instance.isNewRecord
-			@put(instance.dataValues, true)
+			@put(instance._getDataValues(), true)
 		else
-			@put(instance.dataValues, false)
+			@put(instance._getDataValues(), false)
 		).then (nextDataValues) ->
-			delete instance.isNewRecord
-			instance.dataValues = nextDataValues
+			instance._setDataValues(nextDataValues)
 			instance._clearChanges()
 			instance
 
-	# Invoked when an instance wants to destroy
-	destroy: (instance) ->
-		delete @storage[instance.id]
-		@corpus.Promise.resolve()
+	destroyById: (id) ->
+		if id of @storage
+			delete @storage[id]; @corpus.Promise.resolve(true)
+		else
+			@corpus.Promise.resolve(false)
 
 	_findById: (id) ->
 		data = @storage[id]
@@ -52,7 +52,6 @@ class TestBackend extends Backend
 		super
 		@storage = {}
 
-	# Invoked after Corpus.createModel.
 	bindModel: (model, bindingOptions) ->
 		if not @storage[model.name] then @storage[model.name] = {}
 		m = new TestBoundModel(model, @, bindingOptions)

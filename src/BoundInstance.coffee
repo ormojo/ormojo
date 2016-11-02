@@ -25,7 +25,18 @@ export default class BoundInstance extends Instance
 
 	# Notify that data values are in sync with the most recent database call.
 	_clearChanges: ->
-		@_previousDataValues = {}
+		delete @isNewRecord
+		delete @_previousDataValues
+
+	# Get raw data values as an immutable JS object.
+	_getDataValues: -> @dataValues
+
+	# Set raw data values from a JS object.
+	_setDataValues: (@dataValues) ->
+
+	# Merge raw data values from an external source.
+	_mergeDataValues: (source) ->
+		Object.assign(@dataValues, source)
 
 	# @see Instance#get
 	get: (key) ->
