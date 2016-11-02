@@ -67,7 +67,7 @@ export default class BoundInstance extends Instance
 
 	# @see Instance#changed
 	changed: (key) ->
-		if key
+		if key isnt undefined
 			if @_previousDataValues and (key of @_previousDataValues) then true else false
 		else
 			if not @_previousDataValues then return false

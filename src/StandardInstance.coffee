@@ -10,7 +10,7 @@ export applyModelPropsToInstanceClass = (boundModel, clazz) ->
 				get: -> @get(k)
 				set: (val) -> @set(k, val)
 			})
-	undefined
+	clazz
 
 # Creates a standard `BoundInstance` class for the given `BoundModel`
 export createStandardInstanceClassForBoundModel = (bm) ->
@@ -18,6 +18,3 @@ export createStandardInstanceClassForBoundModel = (bm) ->
 
 	# Create getters and setters
 	applyModelPropsToInstanceClass(bm, StandardInstance)
-
-	# Return the instance class
-	StandardInstance

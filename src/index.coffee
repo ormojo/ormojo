@@ -4,12 +4,13 @@ import Backend from './Backend'
 import BoundModel from './BoundModel'
 import Field from './Field'
 import Instance from './Instance'
+import BoundInstance from './BoundInstance'
 import * as Util from './Util'
 import Cursor from './Cursor'
 import Migration from './Migration'
 import ResultSet from './ResultSet'
 import Query from './Query'
-import { createStandardInstanceClassForBoundModel } from './StandardInstance'
+import { createStandardInstanceClassForBoundModel, applyModelPropsToInstanceClass } from './StandardInstance'
 
 # String field type.
 export STRING = 'STRING'
@@ -32,7 +33,8 @@ export ANY = 'ANY'
 
 export {
 	Model, Corpus, Backend, BoundModel
-	Field, Instance, Util, Cursor
+	Field, Instance, BoundInstance,
+	Util, Cursor
 	Migration, ResultSet, Query
-	createStandardInstanceClassForBoundModel
+	createStandardInstanceClassForBoundModel, applyModelPropsToInstanceClass
 }

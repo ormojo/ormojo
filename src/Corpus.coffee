@@ -9,7 +9,6 @@ export default class Corpus
 	# @option config [Object] promise Promise implementation to use internally. By default, uses whatever Promise implementation is installed in the global Promise variable. The object is of the form ```js { reject, resolve, all }```
 	# @option config [Object<String, Backend>] backends A hash of named backends available to this Corpus.
 	# @option config [Object] log A bunyan-style logger object of the form ```js {trace, debug, info, warn, error, fatal}```. All ormojo logging will be directed through this object. *NB* Trace-level logging is extremely verbose!
-	# @option config [String] defaultBackend The name of the backend to use by default when an operation would require a named backend but none is specified.
 	constructor: (@config = {}) ->
 		# Export methods to make promises.
 		@Promise = @config.Promise or {

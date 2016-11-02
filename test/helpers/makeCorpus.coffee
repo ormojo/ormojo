@@ -16,7 +16,6 @@ makeCorpus = ->
 		backends: {
 			'memory': new TestBackend
 		}
-		defaultBackend: 'memory'
 	})
 
 	Widget = corpus.createModel({

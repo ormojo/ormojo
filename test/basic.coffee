@@ -36,6 +36,15 @@ describe 'basic tests: ', ->
 		expect(awidget.flatDefault).to.equal('unnamed')
 		expect(awidget.functionalDefault).to.equal(2)
 
+	it 'should pass defaults through setters', ->
+		{corpus, Widget} = makeCorpus()
+		widgetm = Widget.forBackend('memory')
+		awidget = widgetm.create()
+
+		expect(awidget.getter).to.equal(' getter')
+		expect(awidget.setter).to.equal(' setter')
+		expect(awidget.getterAndSetter).to.equal(' setter getter')
+
 	it 'should create, save, find by id', ->
 		{corpus, Widget} = makeCorpus()
 		widgetm = Widget.forBackend('memory')

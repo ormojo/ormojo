@@ -12,6 +12,7 @@ export default class BoundModel
 		@spec = mergeOptions(@model.spec, bindingOptions or {})
 		@_deriveFields()
 		@_deriveProperties()
+		@initialize()
 
 	# Derive fields from spec.
 	# @private
@@ -39,6 +40,9 @@ export default class BoundModel
 				@getters[k] = v.get; @setters[k] = v.set; @instanceProps[k] = true
 		# prevent comprehension
 		undefined
+
+	# Perform initialization after the spec has been read.
+	initialize: ->
 
 	# Retrieves a hash of fields by name.
 	#
