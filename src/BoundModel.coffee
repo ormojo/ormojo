@@ -94,15 +94,23 @@ export default class BoundModel
 
 	### !pragma coverage-skip-next ###
 
+	# Invoked to destroy an object from persistent storage by id.
+	#
+	# @abstract
+	# @param id [String|Integer] The id of the object to be deleted from the store.
+	#
+	# @return [Promise<Boolean>] A `Promise` whose fate is settled depending on the performance of the operation, and whose value is true if an instance with the given id existed and was deleted, or false otherwise.
+	destroyById: (id) ->
+		@corpus.Promise.reject(new Error('abstract method called.'))
+
 	# Invoked when an `Instance` wants to delete from the backend.
 	#
 	# @abstract
 	# @param instance [Instance] The `Instance` to be deleted
 	#
-	# @return [Promise<undefined>] A `Promise` whose fate is settled depending on the performance of the operation.
+	# @return [Promise<Boolean>] A `Promise` whose fate is settled depending on the performance of the operation, and whose value is true if an instance existed and was deleted, or false otherwise.
 	destroy: (instance) ->
-		@corpus.Promise.reject(new Error('abstract method called.'))
-
+		@destroyById(instance.id)
 
 	# Retrieve an instance from the backing store from id or ids.
 	#
