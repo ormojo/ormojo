@@ -10,7 +10,13 @@ import Cursor from './Cursor'
 import Migration from './Migration'
 import ResultSet from './ResultSet'
 import Query from './Query'
+import View from './View'
 import { createStandardInstanceClassForBoundModel, applyModelPropsToInstanceClass } from './StandardInstance'
+
+import * as RxUtil from './RxUtil'
+import Hydrator from './Hydrator'
+import Reducible from './Reducible'
+import Sorter from './Sorter'
 
 # String field type.
 export STRING = 'STRING'
@@ -37,4 +43,5 @@ export {
 	Util, Cursor
 	Migration, ResultSet, Query
 	createStandardInstanceClassForBoundModel, applyModelPropsToInstanceClass
+	RxUtil, Hydrator, Reducible, Sorter
 }

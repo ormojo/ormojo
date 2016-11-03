@@ -14,12 +14,13 @@
     "doc:build": "node_modules/.bin/codo src/",
     "prepublish": "npm run clean && npm run build",
     "test": "node_modules/.bin/mocha --recursive --compilers coffee:coffee-script/register",
+		"test:debug": "node --inspect --debug-brk node_modules/.bin/_mocha --recursive --compilers coffee:coffee-script/register",
     "coverage:build": "node_modules/.bin/mocha --recursive --compilers coffee:coffee-script/register --require coffee-coverage/register-istanbul",
     "coverage:report": "node_modules/.bin/istanbul report",
     "coverage": "npm run coverage:build && npm run coverage:report",
-		"precommit": "npm run prepublish && npm run test",
-		"postcheckout": "npm install",
-		"postmerge": "npm install"
+    "precommit": "npm run prepublish && npm run test",
+    "postcheckout": "npm install",
+    "postmerge": "npm install"
   },
   "repository": {
     "type": "git",
@@ -49,10 +50,13 @@
     "husky": "^0.11.9",
     "istanbul": "^0.4.5",
     "mocha": "^2.4.5",
-    "rimraf": "^2.5.4"
+    "rimraf": "^2.5.4",
+    "zen-observable": "^0.3.0"
   },
   "dependencies": {
-    "merge-options": "0.0.64"
+    "any-observable": "^0.2.0",
+    "merge-options": "0.0.64",
+    "symbol-observable": "^1.0.4"
   },
   "peerDependencies": {}
 }

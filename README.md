@@ -8,3 +8,4 @@ Your runtime or transpiler toolchain will need to support the following JavaScri
 - `Object.defineProperty`
 - `Object.assign`
 - `Array.isArray`
+- `Observable` (**NB** We use `any-observable` to get the Observable implementation.)
