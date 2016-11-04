@@ -1,3 +1,5 @@
+import BoundModel from './BoundModel'
+
 # Driver that intermediates between the ormojo API and some underlying data layer.
 export default class Backend
 	# Construct a backend. Generally, initialization work for the backend should not be
@@ -22,5 +24,5 @@ export default class Backend
 	#
 	# @abstract
 	# @param [Model] model The model to bind to this backend.
-	bindModel: (model) ->
-		throw new Error('Backend: `bindModel` called on abstract backend.')
+	bindModel: (model, bindingOptions) ->
+		new BoundModel(model, @, bindingOptions)

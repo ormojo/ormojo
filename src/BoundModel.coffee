@@ -1,5 +1,6 @@
 import mergeOptions from 'merge-options'
 import Field from './Field'
+import { createStandardInstanceClassForBoundModel } from './StandardInstance'
 
 # A model bound to a backend or backends.
 export default class BoundModel
@@ -43,6 +44,7 @@ export default class BoundModel
 
 	# Perform initialization after the spec has been read.
 	initialize: ->
+		@instanceClass = createStandardInstanceClassForBoundModel(@)
 
 	# Retrieves a hash of fields by name.
 	#

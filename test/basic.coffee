@@ -15,6 +15,22 @@ describe 'basic tests: ', ->
 			corpus.createModel({name: 'Widget', fields: { id: type: ormojo.STRING } })
 		).to.throw("createModel: duplicate model name `Widget`")
 
+	it 'should create trivial bound model', ->
+		corpus = new ormojo.Corpus({
+			backends: {
+				test: new ormojo.Backend()
+			}
+		})
+		zz = corpus.createModel({
+			name: 'Widget'
+			fields: {
+				id: { type: ormojo.STRING }
+			}
+		}).forBackend('test')
+		inst = zz.createInstance({id: 1})
+		console.log inst
+		expect(inst.id).to.equal(1)
+
 	it 'should extend properly', ->
 		{ corpus } = makeCorpus()
 		bm0 = corpus.getModel('Widget').forBackend('memory')
