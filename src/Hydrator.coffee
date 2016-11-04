@@ -1,13 +1,14 @@
 import Reducible from './Reducible'
 
 export default class Hydrator extends Reducible
-	constructor: (@boundModel) ->
-		@initialize()
+	constructor: (options) ->
+		@initialize(options)
 
-	initialize: ->
+	initialize: (options = {}) ->
 		@instances = Object.create(null)
-		bm = @boundModel
-		@createInstance = -> bm.createInstance()
+		bm = @boundModel = options.boundModel
+		@createInstance = options.createInstance or (-> bm.createInstance())
+		@shouldClearChanges = options.shouldClearChanges
 
 	filter: (instance) ->
 		true
@@ -27,6 +28,7 @@ export default class Hydrator extends Reducible
 			# Update the extant instance with the data values.
 			instance = @instances[entity.id]
 			instance._setDataValues(entity)
+			if @shouldClearChanges then instance._clearChanges()
 			# If it passes the filter, mark it as updated; else discard it.
 			if @filter(instance)
 				updated.push(instance)

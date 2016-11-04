@@ -86,13 +86,10 @@ describe 'Hydrator', ->
 	it 'should CUD', ->
 		{ BWidget: Widget } = makeCorpus()
 		inj = new RxUtil.Subject
-		hyd = new ormojo.Hydrator(Widget)
-		RxUtil.tap(inj, tapper)
+		hyd = new ormojo.Hydrator({ boundModel: Widget })
 		o1 = hyd.connectAfter(inj)
-		RxUtil.tap(o1, tapper)
 		inj.next({ type: 'CREATE', payload: [ { id: 1, name: 'widget1'}]})
 		inst = hyd.getById(1)
-		console.log inst
 		expect(inst.name).to.equal('widget1')
 		inj.next({ type: 'UPDATE', payload: [ { id: 1, name: 'widget2'}]})
 		expect(inst.name).to.equal('widget2')
@@ -102,13 +99,10 @@ describe 'Hydrator', ->
 	it 'should reset, no store', ->
 		{ BWidget: Widget } = makeCorpus()
 		inj = new RxUtil.Subject
-		hyd = new ormojo.Hydrator(Widget)
-		RxUtil.tap(inj, tapper)
+		hyd = new ormojo.Hydrator({ boundModel: Widget })
 		o1 = hyd.connectAfter(inj)
-		RxUtil.tap(o1, tapper)
 		inj.next({ type: 'CREATE', payload: [ { id: 1, name: 'widget1'}]})
 		inst = hyd.getById(1)
-		console.log inst
 		expect(inst.name).to.equal('widget1')
 		inj.next({ type: 'RESET'})
 		expect(inst.wasDeleted).to.equal(true)
@@ -132,12 +126,9 @@ describe 'Hydrator', ->
 		{ BWidget: Widget } = makeCorpus()
 		inj = new RxUtil.Subject
 		sto = new MyStore({'1': { id: 1, name: 'widget2'}})
-		hyd = new ormojo.Hydrator(Widget)
-		RxUtil.tap(inj, tapper)
+		hyd = new ormojo.Hydrator({ boundModel: Widget })
 		o1 = sto.connectAfter(inj)
-		RxUtil.tap(o1, tapper)
 		o2 = hyd.connectAfter(o1)
-		RxUtil.tap(o2, tapper)
 		inj.next({ type: 'CREATE', payload: [ { id: 1, name: 'widget1'}]})
 		inj.next({ type: 'CREATE', payload: [ { id: 2, name: 'widget2'}]})
 		inst = hyd.getById(1)
@@ -147,3 +138,18 @@ describe 'Hydrator', ->
 		expect(inst.wasDeleted).to.equal(undefined)
 		expect(inst.name).to.equal('widget2')
 		expect(inst2.wasDeleted).to.equal(true)
+
+describe 'Sorter', ->
+	it 'should sort', ->
+		{ BWidget: Widget } = makeCorpus()
+		inj = new RxUtil.Subject
+		hyd = new ormojo.Hydrator({ boundModel: Widget })
+		sort = new ormojo.Sorter( (a,b) -> if a.name > b.name then 1 else -1 )
+		o1 = hyd.connectAfter(inj)
+		o2 = sort.connectAfter(o1)
+		inj.next({ type: 'CREATE', payload: [ { id: 1, name: 'zed'}]})
+		expect(sort.getSorted()[0].name).to.equal('zed')
+		inj.next({ type: 'CREATE', payload: [ { id: 2, name: 'alpha'}]})
+		expect(sort.getSorted()[0].name).to.equal('alpha')
+		inj.next({ type: 'CREATE', payload: [ { id: 3, name: 'beta'}]})
+		expect(sort.getSorted()[0].name).to.equal('alpha')
