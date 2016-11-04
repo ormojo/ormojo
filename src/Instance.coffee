@@ -109,6 +109,3 @@ export default class Instance
 
 	# Set raw data values from a JS object.
 	_setDataValues: (@dataValues) ->
-
-	# Merge raw data values from an external source.
-	_mergeDataValues: (source) ->

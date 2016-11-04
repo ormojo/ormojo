@@ -9,7 +9,8 @@ export default class BoundInstance extends Instance
 		super(boundModel)
 
 	# @see Instance#getDataValue
-	getDataValue: (key) -> @dataValues[key]
+	getDataValue: (key) ->
+		if @_nextDataValues and (key of @_nextDataValues) then @_nextDataValues[key] else @dataValues[key]
 
 	# @see Instance#setDataValue
 	setDataValue: (key, value) ->
@@ -17,26 +18,26 @@ export default class BoundInstance extends Instance
 		# If value is different or not comparable...
 		if (not isPrimitive(value)) or (value isnt originalValue)
 			# Create diff cache if needed...
-			if not @_previousDataValues then @_previousDataValues = Object.create(null)
+			if not @_nextDataValues then @_nextDataValues = Object.create(null)
 			# Add key to diff cache
-			if not (key of @_previousDataValues) then @_previousDataValues[key] = originalValue
-		@dataValues[key] = value
+			@_nextDataValues[key] = value
 		undefined
 
 	# Notify that data values are in sync with the most recent database call.
 	_clearChanges: ->
 		delete @isNewRecord
-		delete @_previousDataValues
+		delete @_nextDataValues
 
-	# Get raw data values as an immutable JS object.
-	_getDataValues: -> @dataValues
+	# Get raw data values as an immutable JS object. This represents the user's
+	# DESIRED FUTURE STATE of the object, for persistence to the store.
+	_getDataValues: ->
+		if @_nextDataValues
+			Object.assign({}, @dataValues, @_nextDataValues)
+		else
+			@dataValues
 
 	# Set raw data values from a JS object.
-	_setDataValues: (@dataValues) ->
-
-	# Merge raw data values from an external source.
-	_mergeDataValues: (source) ->
-		Object.assign(@dataValues, source)
+	_setDataValues: (@dataValues) -> undefined
 
 	# @see Instance#get
 	get: (key) ->
@@ -47,8 +48,7 @@ export default class BoundInstance extends Instance
 				@getDataValue(key)
 		else
 			values = {}
-			for k of @boundModel.instanceProps
-				values[k] = @get(k)
+			values[k] = @get(k) for k of @boundModel.instanceProps
 			values
 
 	# @see Instance#set
@@ -68,10 +68,10 @@ export default class BoundInstance extends Instance
 	# @see Instance#changed
 	changed: (key) ->
 		if key isnt undefined
-			if @_previousDataValues and (key of @_previousDataValues) then true else false
+			if @_nextDataValues and (key of @_nextDataValues) then true else false
 		else
-			if not @_previousDataValues then return false
-			changes = (key for key of @dataValues when (key of @_previousDataValues))
+			if not @_nextDataValues then return false
+			changes = (key for key of @dataValues when (key of @_nextDataValues))
 			if changes.length > 0 then changes else false
 
 	# @see Instance#save

@@ -10,7 +10,6 @@ import Cursor from './Cursor'
 import Migration from './Migration'
 import ResultSet from './ResultSet'
 import Query from './Query'
-import View from './View'
 import { createStandardInstanceClassForBoundModel, applyModelPropsToInstanceClass } from './StandardInstance'
 
 import * as RxUtil from './RxUtil'
