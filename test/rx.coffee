@@ -6,8 +6,6 @@ Observable = require 'any-observable'
 RxUtil = ormojo.RxUtil
 
 expectHello = (x) -> expect(x).to.equal('hello')
-tapper = (x, y, z) -> console.log 'tapper', x, y, z
-
 expectSequence = (seq) ->
 	i = 0
 	{
@@ -15,7 +13,6 @@ expectSequence = (seq) ->
 		error: (x) -> throw x
 		complete: -> expect(i).to.equal(seq.length)
 	}
-
 expectTests = (tests) ->
 	i = 0
 	{
@@ -42,9 +39,6 @@ describe 'RxUtil', ->
 			expectSequence( ['hello', 'world'] )
 		)
 		inj.next('hello'); inj.next('world')
-
-	it 'should tap', ->
-		RxUtil.tap(Observable.of('hello'), tapper).subscribe(expectHello)
 
 	it 'should mapWithSideEffects', ->
 		obj = { method: expectHello }
@@ -76,9 +70,8 @@ describe 'Reducible', ->
 		pl1 = new Payloader
 		pl2 = new Payloader
 		inj = new RxUtil.Subject
-		o0 = RxUtil.tap(inj, tapper)
-		o1 = RxUtil.tap(pl1.connectAfter(o0), tapper)
-		o2 = RxUtil.tap(pl2.connectAfter(o1), tapper)
+		o1 = pl1.connectAfter(inj)
+		o2 = pl2.connectAfter(o1)
 		inj.next({ type: 'ACTION', payload: 5 })
 		expect(pl2.payload).to.equal(6)
 
