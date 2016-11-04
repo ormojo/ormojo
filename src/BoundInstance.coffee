@@ -39,6 +39,10 @@ export default class BoundInstance extends Instance
 	# Set raw data values from a JS object.
 	_setDataValues: (@dataValues) -> undefined
 
+	# Merge raw data values from a JS object.
+	_mergeDataValues: (nextDataValues) ->
+		Object.assign(@dataValues, nextDataValues)
+
 	# @see Instance#get
 	get: (key) ->
 		if key and (key of @boundModel.instanceProps)
