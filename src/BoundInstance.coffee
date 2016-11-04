@@ -75,7 +75,8 @@ export default class BoundInstance extends Instance
 			if @_nextDataValues and (key of @_nextDataValues) then true else false
 		else
 			if not @_nextDataValues then return false
-			changes = (key for key of @dataValues when (key of @_nextDataValues))
+			#changes = (key for key of @dataValues when (key of @_nextDataValues))
+			changes = (key for key of @_nextDataValues)
 			if changes.length > 0 then changes else false
 
 	# @see Instance#save
