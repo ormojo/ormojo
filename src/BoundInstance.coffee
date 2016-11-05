@@ -1,5 +1,7 @@
 import Instance from './Instance'
 import { isPrimitive } from './Util'
+import { defineObservableSymbol, removeFromList } from './RxUtil'
+import Observable from './Observable'
 
 # Instance class for third-party `BoundModel`s that provides default implementations
 # of essential functionality.
@@ -21,6 +23,8 @@ export default class BoundInstance extends Instance
 			if not @_nextDataValues then @_nextDataValues = Object.create(null)
 			# Add key to diff cache
 			@_nextDataValues[key] = value
+			# Notify wasUpdated
+			@_wasUpdated()
 		undefined
 
 	# Notify that data values are in sync with the most recent database call.
@@ -37,11 +41,16 @@ export default class BoundInstance extends Instance
 			@dataValues
 
 	# Set raw data values from a JS object.
-	_setDataValues: (@dataValues) -> undefined
+	_setDataValues: (@dataValues) ->
+		@_wasUpdated()
 
 	# Merge raw data values from a JS object.
 	_mergeDataValues: (nextDataValues) ->
 		Object.assign(@dataValues, nextDataValues)
+		@_wasUpdated()
+
+	# Invoked when this object was updated.
+	_wasUpdated: ->
 
 	# @see Instance#get
 	get: (key) ->
@@ -88,3 +97,19 @@ export default class BoundInstance extends Instance
 	# @see Instance#destroy
 	destroy: ->
 		@boundModel.destroy(@)
+
+# Observability
+_observableWasUpdated = ->
+	observer.next(@) for observer in @_observers
+	undefined
+
+defineObservableSymbol(BoundInstance.prototype, ->
+	if @_observable then return @_observable
+	instance = @
+	if not instance._observers then instance._observers = []
+	if instance._wasUpdated is BoundInstance.prototype._wasUpdated
+		instance._wasUpdated = _observableWasUpdated
+	@_observable = new Observable (observer) ->
+		instance._observers.push(observer)
+		-> removeFromList(instance._observers, observer)
+)
