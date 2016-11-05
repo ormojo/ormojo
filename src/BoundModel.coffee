@@ -51,6 +51,11 @@ export default class BoundModel
 	_deriveInstanceClass: ->
 
 	_deriveInstanceClassProperties: ->
+		for name,method of (@spec.statics or {})
+			Object.defineProperty(@, name, {
+				configurable: true, enumerable: false, writable: true
+				value: method
+			})
 		for name,method of (@spec.methods or {})
 			Object.defineProperty(@instanceClass.prototype, name, {
 				configurable: true, enumerable: false, writable: true
