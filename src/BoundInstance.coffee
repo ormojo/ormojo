@@ -45,6 +45,7 @@ export default class BoundInstance extends Instance
 
 	# @see Instance#get
 	get: (key) ->
+		if not @boundModel then return # this can be called on the Prototype by weird libraries...
 		if key and (key of @boundModel.instanceProps)
 			if (getter = @boundModel.getters[key])
 				getter.call(@, key)
@@ -57,6 +58,7 @@ export default class BoundInstance extends Instance
 
 	# @see Instance#set
 	set: (key, value) ->
+		if not @boundModel then return # this can be called on the Prototype by weird libraries...
 		if (value isnt undefined)
 			# Run single setter, if exists.
 			if key and (key of @boundModel.instanceProps)
