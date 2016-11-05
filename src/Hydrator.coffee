@@ -23,11 +23,18 @@ export default class Hydrator extends Reducible
 			func.call(thisArg, v, k) for k,v of @instances
 		undefined
 
+	createOptimisticInstance: (id) ->
+		instance = @createInstance()
+		instance.id = id
+		instance.isOptimistic = true
+		instance
+
 	_createUpdateAction: (entity, created, updated, deleted) ->
 		if entity.id of @instances
 			# Update the extant instance with the data values.
 			instance = @instances[entity.id]
 			instance._setDataValues(entity)
+			delete instance.isOptimistic
 			if @shouldClearChanges then instance._clearChanges()
 			# If it passes the filter, mark it as updated; else discard it.
 			if @filter(instance)
