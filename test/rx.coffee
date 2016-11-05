@@ -1,7 +1,8 @@
 { expect } = require 'chai'
 ormojo = require '..'
 makeCorpus = require './helpers/makeCorpus'
-Observable = require 'any-observable'
+Observable = ormojo.Observable
+impl = require 'any-observable/implementation'
 
 RxUtil = ormojo.RxUtil
 
@@ -16,9 +17,11 @@ expectSequence = (seq) ->
 expectTests = (tests) ->
 	i = 0
 	{
-		next: (x) -> expect(tests[i++](x)).to.equal(true)
+		next: (x) ->
+			console.log x
+			expect(tests[i++](x)).to.equal(true)
 		error: (x) -> throw x
-		complete: -> expect(i).to.equal(seq.length)
+		complete: -> expect(i).to.equal(tests.length)
 	}
 
 describe 'RxUtil', ->

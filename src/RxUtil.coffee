@@ -1,24 +1,11 @@
-import Observable from 'any-observable'
+import Observable from './Observable'
+import theSubject from './Subject'
 import $$observable from 'symbol-observable'
 
 export defineObservableSymbol = (proto, value) ->
 	Object.defineProperty(proto, $$observable, { writable: true, configurable: true, value })
 
-export class Subject
-	constructor: -> @observers = []
-	subscribe: (obs) ->
-		@observers.push(obs)
-		=> @_unsubscribe(obs)
-	_unsubscribe: (obs) -> ix = @observers.indexOf(obs); if ix isnt -1 then @observers.splice(ix, 1)
-
-	next: (x) ->
-		# Prevent reentrancy from screwing up the iteration
-		mutationCopy = @observers.slice()
-		observer.next?(x) for observer in mutationCopy
-		undefined
-	observable: -> this
-
-defineObservableSymbol(Subject.prototype, -> @)
+export Subject = theSubject
 
 export mapWithSideEffects = (obs, map, mapThis) ->
 	rst = new Subject

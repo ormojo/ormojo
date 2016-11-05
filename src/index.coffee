@@ -10,6 +10,8 @@ import Cursor from './Cursor'
 import Migration from './Migration'
 import ResultSet from './ResultSet'
 import Query from './Query'
+import Observable from './Observable'
+import Subject from './Subject'
 import { createStandardInstanceClassForBoundModel, applyModelPropsToInstanceClass } from './StandardInstance'
 
 import * as RxUtil from './RxUtil'
@@ -37,6 +39,7 @@ export DATE = 'DATE'
 export ANY = 'ANY'
 
 export {
+	Observable, Subject
 	Model, Corpus, Backend, BoundModel
 	Field, Instance, BoundInstance,
 	Util, Cursor
