@@ -24,9 +24,11 @@ export default class Hydrator extends Reducible
 		undefined
 
 	createOptimisticInstance: (id) ->
+		if (instance = @instances[id]) then return instance
 		instance = @createInstance()
 		instance.id = id
 		instance.isOptimistic = true
+		@instances[id] = instance
 		instance
 
 	_createUpdateAction: (entity, created, updated, deleted) ->
