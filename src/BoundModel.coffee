@@ -14,6 +14,8 @@ export default class BoundModel
 		@_deriveFields()
 		@_deriveProperties()
 		@initialize()
+		@_deriveInstanceClass()
+		@_deriveInstanceClassProperties()
 
 	# Derive fields from spec.
 	# @private
@@ -45,6 +47,17 @@ export default class BoundModel
 	# Perform initialization after the spec has been read.
 	initialize: ->
 		@instanceClass = createStandardInstanceClassForBoundModel(@)
+
+	_deriveInstanceClass: ->
+
+	_deriveInstanceClassProperties: ->
+		for name,method of (@spec.methods or {})
+			Object.defineProperty(@instanceClass.prototype, name, {
+				configurable: true, enumerable: false, writable: true
+				value: method
+			})
+		undefined
+
 
 	# Retrieves a hash of fields by name.
 	#
