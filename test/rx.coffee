@@ -17,9 +17,7 @@ expectSequence = (seq) ->
 expectTests = (tests) ->
 	i = 0
 	{
-		next: (x) ->
-			console.log x
-			expect(tests[i++](x)).to.equal(true)
+		next: (x) -> expect(tests[i++](x)).to.equal(true)
 		error: (x) -> throw x
 		complete: -> expect(i).to.equal(tests.length)
 	}
@@ -63,10 +61,9 @@ describe 'Reducible', ->
 
 	it 'should polymorph action', ->
 		pl = new Payloader
-		pl.connectAfter(Observable.of({
-			type: 'ACTION'
-			payload: 5
-		})).subscribe(expectTests([ (x) -> x.payload is 6 ]))
+		inj = new RxUtil.Subject
+		pl.connectAfter(inj).subscribe(expectTests([ (x) -> x.payload is 6 ]))
+		inj.next({ type: 'ACTION', payload: 5 })
 		expect(pl.payload).to.equal(5)
 
 	it 'should chain', ->
