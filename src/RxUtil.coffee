@@ -23,3 +23,6 @@ export merge = (obs1, obs2) ->
 		sub1 = Observable.from(obs1).subscribe(observer)
 		sub2 = Observable.from(obs2).subscribe(observer)
 		-> sub1.unsubscribe?(); sub2.unsubscribe?(); undefined
+
+export removeFromList = (list, value) ->
+	if (i = list.indexOf(value)) > -1 then list.splice(i, 1)
