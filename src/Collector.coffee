@@ -16,13 +16,14 @@ export default class Sorter extends Reducible
 	forEach: (func) -> func(v,k) for k,v of @byId; undefined
 	getArray: -> @instances
 
-	_createAction: (entity) ->
+	_createAction: (store, entity) ->
 		if not @filter(entity) then return
 		if not (entity.id of @byId)
-			@byId[entity.id] = entity; @instances.push(entity)
+			storedEntity = store.getById(entity.id)
+			@byId[entity.id] = storedEntity; @instances.push(storedEntity)
 		@dirty = true
 
-	_updateAction: (entity) ->
+	_updateAction: (store, entity) ->
 		# If passes filter...
 		if @filter(entity)
 			# Create if non present
@@ -32,7 +33,7 @@ export default class Sorter extends Reducible
 		else
 			if entity.id of @byId then return @_deleteAction(entity)
 
-	_deleteAction: (entity) ->
+	_deleteAction: (store, entity) ->
 		if entity.id of @byId
 			delete @byId[id]
 			@instances = (v for k,v of @byId)
@@ -54,11 +55,11 @@ export default class Sorter extends Reducible
 
 		switch action.type
 			when 'CREATE'
-				@_createAction(entity) for entity in action.payload
+				@_createAction(store, entity) for entity in action.payload
 			when 'UPDATE'
-				@_updateAction(entity) for entity in action.payload
+				@_updateAction(store, entity) for entity in action.payload
 			when 'DELETE'
-				@_deleteAction(entity) for entity in action.payload
+				@_deleteAction(store, entity) for entity in action.payload
 			else
 				return action
 
