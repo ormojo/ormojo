@@ -17,7 +17,7 @@ import { createStandardInstanceClassForBoundModel, applyModelPropsToInstanceClas
 import * as RxUtil from './RxUtil'
 import Hydrator from './Hydrator'
 import Reducible from './Reducible'
-import Sorter from './Sorter'
+import Collector from './Collector'
 
 # String field type.
 export STRING = 'STRING'
@@ -45,5 +45,5 @@ export {
 	Util, Cursor
 	Migration, ResultSet, Query
 	createStandardInstanceClassForBoundModel, applyModelPropsToInstanceClass
-	RxUtil, Hydrator, Reducible, Sorter
+	RxUtil, Hydrator, Reducible, Collector
 }

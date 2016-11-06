@@ -132,17 +132,19 @@ describe 'Hydrator', ->
 		expect(inst.name).to.equal('widget2')
 		expect(inst2.wasDeleted).to.equal(true)
 
-describe 'Sorter', ->
+describe 'Collector', ->
 	it 'should sort', ->
 		{ BWidget: Widget } = makeCorpus()
 		inj = new RxUtil.Subject
 		hyd = new ormojo.Hydrator({ boundModel: Widget })
-		sort = new ormojo.Sorter( (a,b) -> if a.name > b.name then 1 else -1 )
+		sort = new ormojo.Collector
+		sort.updater = ->
+			@getArray().sort( (a,b) -> if a.name > b.name then 1 else -1 )
 		o1 = hyd.connectAfter(inj)
 		o2 = sort.connectAfter(o1)
 		inj.next({ type: 'CREATE', payload: [ { id: 1, name: 'zed'}]})
-		expect(sort.getSorted()[0].name).to.equal('zed')
+		expect(sort.getArray()[0].name).to.equal('zed')
 		inj.next({ type: 'CREATE', payload: [ { id: 2, name: 'alpha'}]})
-		expect(sort.getSorted()[0].name).to.equal('alpha')
+		expect(sort.getArray()[0].name).to.equal('alpha')
 		inj.next({ type: 'CREATE', payload: [ { id: 3, name: 'beta'}]})
-		expect(sort.getSorted()[0].name).to.equal('alpha')
+		expect(sort.getArray()[0].name).to.equal('alpha')
