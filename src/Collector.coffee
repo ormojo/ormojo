@@ -27,11 +27,11 @@ export default class Sorter extends Reducible
 		# If passes filter...
 		if @filter(entity)
 			# Create if non present
-			if not (entity.id of @byId) then return @_createAction(entity)
+			if not (entity.id of @byId) then return @_createAction(store, entity)
 			# Else trigger update
 			@dirty = true
 		else
-			if entity.id of @byId then return @_deleteAction(entity)
+			if entity.id of @byId then return @_deleteAction(store, entity)
 
 	_deleteAction: (store, entity) ->
 		if entity.id of @byId
