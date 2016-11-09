@@ -2,6 +2,7 @@ import Reducible from './Reducible'
 
 export default class Hydrator extends Reducible
 	constructor: (options) ->
+		super()
 		@initialize(options)
 
 	initialize: (options = {}) ->
@@ -13,15 +14,9 @@ export default class Hydrator extends Reducible
 	filter: (instance) ->
 		true
 
-	getById: (id) ->
-		@instances[id]
-
-	forEach: (func, thisArg) ->
-		if thisArg is undefined
-			func(v, k) for k, v of @instances
-		else
-			func.call(thisArg, v, k) for k,v of @instances
-		undefined
+	# Implement Store interface
+	getById: (id) -> @instances[id]
+	forEach: (func) -> func(v,k) for k,v of @instances; undefined
 
 	createOptimisticInstance: (id) ->
 		if (instance = @instances[id]) then return instance

@@ -62,7 +62,8 @@ describe 'Reducible', ->
 	it 'should polymorph action', ->
 		pl = new Payloader
 		inj = new RxUtil.Subject
-		pl.connectAfter(inj).subscribe(expectTests([ (x) -> x.payload is 6 ]))
+		pl.connectAfter(inj)
+		pl.subscribe(expectTests([ (x) -> x.payload is 6 ]))
 		inj.next({ type: 'ACTION', payload: 5 })
 		expect(pl.payload).to.equal(5)
 
@@ -71,7 +72,7 @@ describe 'Reducible', ->
 		pl2 = new Payloader
 		inj = new RxUtil.Subject
 		o1 = pl1.connectAfter(inj)
-		o2 = pl2.connectAfter(o1)
+		o2 = pl2.connectAfter(pl1)
 		inj.next({ type: 'ACTION', payload: 5 })
 		expect(pl2.payload).to.equal(6)
 
@@ -103,6 +104,7 @@ describe 'Hydrator', ->
 	it 'should reset, with store', ->
 		class MyStore extends ormojo.Reducible
 			constructor: (@storage) ->
+				super()
 
 			reduce: (action) -> {
 				type: action.type
@@ -121,7 +123,7 @@ describe 'Hydrator', ->
 		sto = new MyStore({'1': { id: 1, name: 'widget2'}})
 		hyd = new ormojo.Hydrator({ boundModel: Widget })
 		o1 = sto.connectAfter(inj)
-		o2 = hyd.connectAfter(o1)
+		o2 = hyd.connectAfter(sto)
 		inj.next({ type: 'CREATE', payload: [ { id: 1, name: 'widget1'}]})
 		inj.next({ type: 'CREATE', payload: [ { id: 2, name: 'widget2'}]})
 		inst = hyd.getById(1)
@@ -141,7 +143,7 @@ describe 'Collector', ->
 		sort.updater = ->
 			@getArray().sort( (a,b) -> if a.name > b.name then 1 else -1 )
 		o1 = hyd.connectAfter(inj)
-		o2 = sort.connectAfter(o1)
+		o2 = sort.connectAfter(hyd)
 		inj.next({ type: 'CREATE', payload: [ { id: 1, name: 'zed'}]})
 		expect(sort.getArray()[0].name).to.equal('zed')
 		inj.next({ type: 'CREATE', payload: [ { id: 2, name: 'alpha'}]})

@@ -1,15 +1,15 @@
 import Reducible from './Reducible'
 
-export default class Sorter extends Reducible
+export default class Collector extends Reducible
 	constructor: ->
+		super()
 		@reset()
 
 	reset: ->
 		@byId = {}
 		@instances = []
 
-	filter: -> true
-	actionFilter: -> true
+	updater: ->
 
 	# Implement Store interface
 	getById: (id) -> @byId[id]
@@ -43,12 +43,10 @@ export default class Sorter extends Reducible
 		type: action.type
 		meta: Object.assign {}, action.meta, { store: @ }
 		payload: action.payload
+		error: action.error
 	}
 
 	reduce: (action) ->
-		# Do nothing if action doesn't pass our filter.
-		if not @actionFilter(action) then return action
-
 		# Collectors must be connected after Stores.
 		store = action.meta?.store
 		if not store then throw new Error('Collector must be connected after a Store')
