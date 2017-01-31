@@ -1,7 +1,7 @@
 import Instance from './Instance'
 import { isPrimitive } from './Util'
-import { defineObservableSymbol, removeFromList } from './RxUtil'
-import Observable from './Observable'
+import { defineObservableSymbol, removeFromList } from './rx/RxUtil'
+import Observable from './rx/Observable'
 
 # Instance class for third-party `BoundModel`s that provides default implementations
 # of essential functionality.
@@ -12,6 +12,7 @@ export default class BoundInstance extends Instance
 
 	# @see Instance#getDataValue
 	getDataValue: (key) ->
+		# _nextDataValues holds optimistic updates to the instance. Query it first; fallback to dataValues.
 		if @_nextDataValues and (key of @_nextDataValues) then @_nextDataValues[key] else @dataValues[key]
 
 	# @see Instance#setDataValue
@@ -36,15 +37,18 @@ export default class BoundInstance extends Instance
 	# DESIRED FUTURE STATE of the object, for persistence to the store.
 	_getDataValues: ->
 		if @_nextDataValues
+			# Flatten dataValues together with optimistic updates.
 			Object.assign({}, @dataValues, @_nextDataValues)
 		else
 			@dataValues
 
 	# Set raw data values from a JS object.
+	# @private
 	_setDataValues: (@dataValues) ->
 		@_wasUpdated()
 
 	# Merge raw data values from a JS object.
+	# @private
 	_mergeDataValues: (nextDataValues) ->
 		Object.assign(@dataValues, nextDataValues)
 		@_wasUpdated()
@@ -54,20 +58,25 @@ export default class BoundInstance extends Instance
 
 	# @see Instance#get
 	get: (key) ->
-		if not @boundModel then return # this can be called on the Prototype by weird libraries...
-		if key and (key of @boundModel.instanceProps)
-			if (getter = @boundModel.getters[key])
-				getter.call(@, key)
-			else
-				@getDataValue(key)
+		# Some libraries call this on the Prototype; early out in that case.
+		if not @boundModel then return
+		if key isnt undefined
+			# Get value for the given prop.
+			if (key of @boundModel.instanceProps)
+				if (getter = @boundModel.getters[key])
+					getter.call(@, key)
+				else
+					@getDataValue(key)
 		else
+			# Get all values.
 			values = {}
 			values[k] = @get(k) for k of @boundModel.instanceProps
 			values
 
 	# @see Instance#set
 	set: (key, value) ->
-		if not @boundModel then return # this can be called on the Prototype by weird libraries...
+		# Some libraries call this on the Prototype; early out in that case.
+		if not @boundModel then return
 		if (value isnt undefined)
 			# Run single setter, if exists.
 			if key and (key of @boundModel.instanceProps)

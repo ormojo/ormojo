@@ -39,6 +39,12 @@ export default class Collector extends Reducible
 			@instances = (v for k,v of @byId)
 			@dirty = true
 
+	_resetAction: (store) ->
+		@reset()
+		store.forEach (v,k) =>
+			@byId[k] = v; @instances.push(v)
+		@dirty = true
+
 	augmentAction: (action) -> {
 		type: action.type
 		meta: Object.assign {}, action.meta, { store: @ }
@@ -58,6 +64,8 @@ export default class Collector extends Reducible
 				@_updateAction(store, entity) for entity in action.payload
 			when 'DELETE'
 				@_deleteAction(store, entity) for entity in action.payload
+			when 'RESET'
+				@_resetAction(store)
 			else
 				return action
 
