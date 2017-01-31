@@ -2,7 +2,6 @@
 ormojo = require '..'
 makeCorpus = require './helpers/makeCorpus'
 Observable = ormojo.Observable
-impl = require 'any-observable/implementation'
 
 RxUtil = ormojo.RxUtil
 
