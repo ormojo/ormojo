@@ -28,7 +28,6 @@ describe 'basic tests: ', ->
 			}
 		}).forBackend('test')
 		inst = zz.createInstance({id: 1})
-		console.log inst
 		expect(inst.id).to.equal(1)
 
 	it 'should extend properly', ->

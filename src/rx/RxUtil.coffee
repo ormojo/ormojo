@@ -7,15 +7,6 @@ export defineObservableSymbol = (proto, value) ->
 
 export Subject = theSubject
 
-export mapWithSideEffects = (obs, map, mapThis) ->
-	rst = new Subject
-	baseNext = rst.next
-	rst.next = (x) ->
-		y = map.call(mapThis, x)
-		baseNext.call(this, y)
-	obs.subscribe(rst)
-	rst
-
 export merge = (obs1, obs2) ->
 	if not obs1 then return Observable.from(obs2)
 	if not obs2 then return Observable.from(obs1)

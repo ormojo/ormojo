@@ -6,9 +6,11 @@ export default class Collector extends Reducible
 		@reset()
 
 	reset: ->
-		@byId = {}
+		@byId = Object.create(null)
 		@instances = []
 
+	# The Updater is called every time the entities in the Collector's internal
+	# store are changed. Use this opportunity to, e.g., sort the data.
 	updater: ->
 
 	# Implement Store interface
@@ -16,34 +18,75 @@ export default class Collector extends Reducible
 	forEach: (func) -> func(v,k) for k,v of @byId; undefined
 	getArray: -> @instances
 
+	# Default hydration implementation just fetches the entity, presumably
+	# already hydrated, from the anterior store. Overload to perform hydration
+	# inside the collector.
+	willCreateEntity: (store, entity) ->
+		store.getById(entity.id)
+	willUpdateEntity: (store, previousEntity, entity) ->
+		store.getById(entity.id)
+	willDeleteEntity: (store, entity) ->
+
 	_createAction: (store, entity) ->
-		if not @filter(entity) then return
-		if not (entity.id of @byId)
-			storedEntity = store.getById(entity.id)
-			@byId[entity.id] = storedEntity; @instances.push(storedEntity)
+		storedEntity = @willCreateEntity(store, entity)
+		if (not @filter(storedEntity)) then return
+		if not (storedEntity.id of @byId)
+			@byId[storedEntity.id] = storedEntity
+			@instances.push(storedEntity)
 		@dirty = true
 
 	_updateAction: (store, entity) ->
-		# If passes filter...
-		if @filter(entity)
-			# Create if non present
-			if not (entity.id of @byId) then return @_createAction(store, entity)
-			# Else trigger update
-			@dirty = true
-		else
-			if entity.id of @byId then return @_deleteAction(store, entity)
-
-	_deleteAction: (store, entity) ->
+		# If the entity is within our store...
 		if entity.id of @byId
+			previousEntity = @byId[entity.id]
+			# Re-up and reapply the filter
+			nextEntity = @willUpdateEntity(store, previousEntity, entity)
+			if @filter(nextEntity)
+				@byId[entity.id] = nextEntity
+				@dirty = true
+			else
+				return @_deleteAction(store, entity)
+		else
+			# Not in the store, do a create action
+			return @_createAction(store, entity)
+
+	_deleteAction: (store, entity, shouldUpdateInstances = true) ->
+		if (id = entity.id) of @byId
+			@willDeleteEntity(store, @byId[id])
 			delete @byId[id]
-			@instances = (v for k,v of @byId)
+			if shouldUpdateInstances then @instances = (v for k,v of @byId)
 			@dirty = true
+
+	# Update and delete extant entities, based on values from a store.
+	_diffUpdateDelete: (store) ->
+		# For each extant entity..
+		for k,v of @byId
+			# If it exists on the remote store...
+			if (nextEntity = store.getById(k))
+				# Process as an update.
+				@_updateAction(store, nextEntity)
+			else
+				# Remove from local store
+				@_deleteAction(store, v, false)
+		undefined
+
+	# Create missing entities that exist on the store, but not this collector.
+	_diffCreate: (store) ->
+		store.forEach (v, k) =>
+			if not (k of @byId) then @_createAction(store, v)
 
 	_resetAction: (store) ->
-		@reset()
-		store.forEach (v,k) =>
-			@byId[k] = v; @instances.push(v)
 		@dirty = true
+		if store?
+			# Diff store against self.
+			@_diffUpdateDelete(store)
+			@_diffCreate(store)
+		else
+			# Total wipeout
+			for k,v of @byId
+				@willDeleteEntity(null, v)
+				delete @byId[k]
+			@instances = []
 
 	augmentAction: (action) -> {
 		type: action.type
@@ -53,9 +96,9 @@ export default class Collector extends Reducible
 	}
 
 	reduce: (action) ->
-		# Collectors must be connected after Stores.
+		# A collector may optionally be connected after another Store, in which case
+		# it obtains its values from that store.
 		store = action.meta?.store
-		if not store then throw new Error('Collector must be connected after a Store')
 
 		switch action.type
 			when 'CREATE'

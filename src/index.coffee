@@ -6,18 +6,21 @@ import Field from './Field'
 import Instance from './Instance'
 import BoundInstance from './BoundInstance'
 import * as Util from './Util'
-import Cursor from './Cursor'
 import Migration from './Migration'
 import ResultSet from './ResultSet'
-import Query from './Query'
 import { createStandardInstanceClassForBoundModel, applyModelPropsToInstanceClass } from './StandardInstance'
+
+import Query from './store/Query'
+import Cursor from './store/Cursor'
+import Hydrator from './store/Hydrator'
+import Store from './store/Store'
 
 import Observable from './rx/Observable'
 import Subject from './rx/Subject'
 import * as RxUtil from './rx/RxUtil'
-import Hydrator from './rx/Hydrator'
 import Reducible from './rx/Reducible'
 import Collector from './rx/Collector'
+import HydratingCollector from './rx/HydratingCollector'
 
 # String field type.
 export STRING = 'STRING'
@@ -42,8 +45,9 @@ export {
 	Observable, Subject
 	Model, Corpus, Backend, BoundModel
 	Field, Instance, BoundInstance,
-	Util, Cursor
-	Migration, ResultSet, Query
+	Util
+	Migration, ResultSet
 	createStandardInstanceClassForBoundModel, applyModelPropsToInstanceClass
-	RxUtil, Hydrator, Reducible, Collector
+	RxUtil, Reducible, Collector, HydratingCollector
+	Query, Cursor, Hydrator, Store
 }

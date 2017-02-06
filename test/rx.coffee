@@ -40,10 +40,6 @@ describe 'RxUtil', ->
 		)
 		inj.next('hello'); inj.next('world')
 
-	it 'should mapWithSideEffects', ->
-		obj = { method: expectHello }
-		RxUtil.mapWithSideEffects(Observable.of('hello'), obj.method, obj).subscribe(expectHello)
-
 describe 'Reducible', ->
 	class Payloader extends ormojo.Reducible
 		reduce: (action) ->
@@ -75,24 +71,24 @@ describe 'Reducible', ->
 		inj.next({ type: 'ACTION', payload: 5 })
 		expect(pl2.payload).to.equal(6)
 
-describe 'Hydrator', ->
+describe 'HydratingCollector', ->
 	it 'should CUD', ->
 		{ BWidget: Widget } = makeCorpus()
 		inj = new RxUtil.Subject
-		hyd = new ormojo.Hydrator({ boundModel: Widget })
+		hyd = new ormojo.HydratingCollector({ hydrator: Widget.hydrator })
 		o1 = hyd.connectAfter(inj)
 		inj.next({ type: 'CREATE', payload: [ { id: 1, name: 'widget1'}]})
 		inst = hyd.getById(1)
 		expect(inst.name).to.equal('widget1')
 		inj.next({ type: 'UPDATE', payload: [ { id: 1, name: 'widget2'}]})
 		expect(inst.name).to.equal('widget2')
-		inj.next({ type: 'DELETE', payload: [ 1 ]})
+		inj.next({ type: 'DELETE', payload: [ { id: 1 } ] })
 		expect(inst.wasDeleted).to.equal(true)
 
 	it 'should reset, no store', ->
 		{ BWidget: Widget } = makeCorpus()
 		inj = new RxUtil.Subject
-		hyd = new ormojo.Hydrator({ boundModel: Widget })
+		hyd = new ormojo.HydratingCollector({ hydrator: Widget.hydrator })
 		o1 = hyd.connectAfter(inj)
 		inj.next({ type: 'CREATE', payload: [ { id: 1, name: 'widget1'}]})
 		inst = hyd.getById(1)
@@ -120,7 +116,7 @@ describe 'Hydrator', ->
 		{ BWidget: Widget } = makeCorpus()
 		inj = new RxUtil.Subject
 		sto = new MyStore({'1': { id: 1, name: 'widget2'}})
-		hyd = new ormojo.Hydrator({ boundModel: Widget })
+		hyd = new ormojo.HydratingCollector({ hydrator: Widget.hydrator })
 		o1 = sto.connectAfter(inj)
 		o2 = hyd.connectAfter(sto)
 		inj.next({ type: 'CREATE', payload: [ { id: 1, name: 'widget1'}]})
@@ -137,7 +133,7 @@ describe 'Collector', ->
 	it 'should sort', ->
 		{ BWidget: Widget } = makeCorpus()
 		inj = new RxUtil.Subject
-		hyd = new ormojo.Hydrator({ boundModel: Widget })
+		hyd = new ormojo.HydratingCollector({ hydrator: Widget.hydrator })
 		sort = new ormojo.Collector
 		sort.updater = ->
 			@getArray().sort( (a,b) -> if a.name > b.name then 1 else -1 )
