@@ -32,6 +32,10 @@ describe 'RxUtil', ->
 		inj = new RxUtil.Subject
 		RxUtil.merge(null, inj).subscribe(expectHello)
 		inj.next('hello')
+		RxUtil.merge(inj, null).subscribe(expectHello)
+		inj.next('hello')
+		sub = RxUtil.merge(inj, inj).subscribe(expectSequence(['hello', 'hello']))
+		sub.unsubscribe()
 
 	it 'should inject stream', ->
 		inj = new RxUtil.Subject
@@ -46,6 +50,9 @@ describe 'Reducible', ->
 			@payload = action.payload
 			Object.assign({}, action, {payload: action.payload + 1})
 
+		actionFilter: (action) ->
+			if action?.type is 'FILTER_ME_OUT' then false else true
+
 	it 'should reduce its own state properly', ->
 		pl = new Payloader
 		pl.connectAfter(Observable.of({
@@ -54,10 +61,12 @@ describe 'Reducible', ->
 		}))
 		expect(pl.payload).to.equal(5)
 
-	it 'should polymorph action', ->
+	it 'should polymorph and filter action', ->
 		pl = new Payloader
 		inj = new RxUtil.Subject
 		pl.connectAfter(inj)
+		inj.next({ type: 'FILTER_ME_OUT', payload: 5})
+		expect(pl.payload).to.not.be.ok
 		pl.subscribe(expectTests([ (x) -> x.payload is 6 ]))
 		inj.next({ type: 'ACTION', payload: 5 })
 		expect(pl.payload).to.equal(5)

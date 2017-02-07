@@ -16,6 +16,8 @@ import { Subject } from './RxUtil'
 # action into another action, and then returns the action, which is passed
 # down the observable chain.
 export default class Reducible extends Subject
+	### istanbul ignore next ###
+	
 	# Reducer function. Given an action, it (optionally) performs an appropriate
 	# operation on the internal state of the reducer, (optionally) transforms
 	# the action to a new action, then returns the transformed action, which
