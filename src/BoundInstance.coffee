@@ -55,10 +55,14 @@ export default class BoundInstance extends Instance
 
 	# Invoked when this object was updated.
 	_wasUpdated: ->
+		if @_observers
+			observer.next(@) for observer in @_observers
+		undefined
 
 	# @see Instance#get
 	get: (key) ->
 		# Some libraries call this on the Prototype; early out in that case.
+		### istanbul ignore if ###
 		if not @boundModel then return
 		if key isnt undefined
 			# Get value for the given prop.
@@ -76,6 +80,7 @@ export default class BoundInstance extends Instance
 	# @see Instance#set
 	set: (key, value) ->
 		# Some libraries call this on the Prototype; early out in that case.
+		### istanbul ignore if ###
 		if not @boundModel then return
 		if (value isnt undefined)
 			# Run single setter, if exists.
@@ -107,17 +112,12 @@ export default class BoundInstance extends Instance
 	destroy: ->
 		@boundModel.destroy(@)
 
-# Observability
-_observableWasUpdated = ->
-	observer.next(@) for observer in @_observers
-	undefined
-
+# Observability for BoundInstances
 defineObservableSymbol(BoundInstance.prototype, ->
 	if @_observable then return @_observable
 	instance = @
+	### istanbul ignore else ###
 	if not instance._observers then instance._observers = []
-	if instance._wasUpdated is BoundInstance.prototype._wasUpdated
-		instance._wasUpdated = _observableWasUpdated
 	@_observable = new Observable (observer) ->
 		instance._observers.push(observer)
 		-> removeFromList(instance._observers, observer)
