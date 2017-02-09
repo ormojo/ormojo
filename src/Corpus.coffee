@@ -50,6 +50,7 @@ export default class Corpus
 		if @models[spec.name] then throw new Error("createModel: duplicate model name `#{spec.name}`")
 
 		m = new Model(@, spec)
+		m._checkAndThrow()
 		@models[m.name] = m
 		m
 

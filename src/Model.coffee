@@ -17,3 +17,11 @@ export default class Model
 	# @return [BoundModel] A BoundModel tying this model to the given backend.
 	forBackend: (backendName, bindingOptions) ->
 		@_forBackend(@corpus.getBackend(backendName), bindingOptions)
+
+	# Check this model for errors and throw them.
+	_checkAndThrow: ->
+		if not (@spec?) then throw new Error('Model has no spec')
+		if not (@spec.fields?) then throw new Error('Model must define at least one field')
+		# Create nonce field objects - these will throw if the field is invalid.
+		for k, fieldSpec of @spec.fields
+			new Field().fromSpec(k, fieldSpec)
