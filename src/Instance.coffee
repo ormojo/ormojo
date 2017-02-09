@@ -13,7 +13,7 @@ export default class Instance
 				@set(field.name, def)
 		@
 
-	### !pragma coverage-skip-next ###
+	### istanbul ignore next ###
 
 	# Get the raw value from the value store. No getters are called.
 	#
@@ -23,7 +23,7 @@ export default class Instance
 	getDataValue: (key) ->
 		throw new Error('ormojo: `getDataValue` called on abstract instance')
 
-	### !pragma coverage-skip-next ###
+	### istanbul ignore next ###
 
 	# Set a raw value in the value store. No setters are called.
 	#
@@ -33,7 +33,7 @@ export default class Instance
 	setDataValue: (key, value) ->
 		throw new Error('ormojo: `setDataValue` called on abstract instance')
 
-	### !pragma coverage-skip-next ###
+	### istanbul ignore next ###
 
 	# Get properties of this instance.
 	#
@@ -49,7 +49,7 @@ export default class Instance
 	get: (key) ->
 		throw new Error('ormojo: `get` called on abstract instance')
 
-	### !pragma coverage-skip-next ###
+	### istanbul ignore next ###
 
 	# Set properties of this instance.
 	#
@@ -65,7 +65,7 @@ export default class Instance
 	set: (key, value) ->
 		throw new Error('ormojo: `set` called on abstract instance')
 
-	### !pragma coverage-skip-next ###
+	### istanbul ignore next ###
 
 	# Determine whether changes have been made to this instance since its last
 	# synchronization with the backing store.
@@ -82,7 +82,7 @@ export default class Instance
 	changed: (key) ->
 		throw new Error('ormojo: `changed` called on abstract instance')
 
-	### !pragma coverage-skip-next ###
+	### istanbul ignore next ###
 
 	# Persist this instance to the backend.
 	#
@@ -91,7 +91,7 @@ export default class Instance
 	save: ->
 		@boundModel.corpus.Promise.reject(new Error('ormojo: `save` called on abstract instance'))
 
-	### !pragma coverage-skip-next ###
+	### istanbul ignore next ###
 
 	# Destroy the corresponding instance in the backend.
 	#
@@ -99,6 +99,8 @@ export default class Instance
 	# @return [Promise<bool>] A `Promise` that resolves to `true` if the object is deleted or `false` otherwise. The Promise rejects on a database error.
 	destroy: ->
 		@boundModel.corpus.Promise.reject(new Error('ormojo: `destroy` called on abstract instance'))
+
+	### istanbul ignore next ###
 
 	# Notify that data values are in sync with the most recent database call.
 	_clearChanges: ->

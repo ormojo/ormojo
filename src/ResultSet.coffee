@@ -5,17 +5,21 @@ export default class ResultSet
 	# @private
 	constructor: ->
 
+	### istanbul ignore next ###
+
 	# Determine if this result set is empty.
 	#
 	# @return [Boolean] `true` if empty.
 	isEmpty: -> (@getResultCount() is 0)
+
+	### istanbul ignore next ###
 
 	# Retrieve the number of results in this set.
 	#
 	# @return [Number] The count of results.
 	getResultCount: -> if @results then @results.length else 0
 
-	### !pragma coverage-skip-next ###
+	### istanbul ignore next ###
 
 	# Get the total number of results from the query that produced this `ResultSet`,
 	# including results in future pages.
@@ -26,12 +30,14 @@ export default class ResultSet
 	getTotalResultCount: ->
 		throw new Error('`getTotalResultCount` called on abstract ResultSet')
 
+	### istanbul ignore next ###
+
 	# Retrieve the array of results in this set.
 	#
 	# @return [Array<Instance>] The collection of results.
 	getResults: -> @results or []
 
-	### !pragma coverage-skip-next ###
+	### istanbul ignore next ###
 
 	# Retrieve a cursor representing this set, which can be used to continue a paginated
 	# query.
@@ -41,7 +47,7 @@ export default class ResultSet
 	getCursor: ->
 		throw new Error('`getCursor` called on abstract ResultSet')
 
-	### !pragma coverage-skip-next ###
+	### istanbul ignore next ###
 
 	# Determine if the query that generated this `ResultSet` has more results beyond what
 	# are available in this set.

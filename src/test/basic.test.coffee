@@ -12,8 +12,42 @@ describe 'basic tests: ', ->
 	it 'should error on duplicate model name', ->
 		{ corpus } = makeCorpus()
 		expect(->
-			corpus.createModel({name: 'Widget', fields: { id: type: ormojo.STRING } })
+			corpus.createModel({
+				name: 'Widget'
+				fields: {
+					id: {
+						type: ormojo.STRING
+					}
+				}
+			})
 		).to.throw("createModel: duplicate model name `Widget`")
+
+	it 'should error on invalid field specs', ->
+		{ corpus } = makeCorpus()
+		expect(->
+			corpus.createModel({
+				name: 'Fail1'
+				fields: {
+					_id: { type: ormojo.STRING }
+				}
+			})
+		).to.throw("cannot begin with _")
+		expect(->
+			corpus.createModel({
+				name: 'Fail2'
+				fields: {
+					get: { type: ormojo.STRING }
+				}
+			})
+		).to.throw("reserved word")
+		expect(->
+			corpus.createModel({
+				name: 'Fail3'
+				fields: {
+					name: { }
+				}
+			})
+		).to.throw("specify a type")
 
 	it 'should create trivial bound model', ->
 		corpus = new ormojo.Corpus({
@@ -25,10 +59,26 @@ describe 'basic tests: ', ->
 			name: 'Widget'
 			fields: {
 				id: { type: ormojo.STRING }
+				nonsense: { type: ormojo.STRING, default: 'none' }
+			}
+			properties: {
+				derived: { get: -> 3 }
+				nonsense: null
+			}
+			statics: {
+				staticMethod: -> console.log "staticMethod"
+			}
+			methods: {
+				instanceMethod: -> console.log "instanceMethod #{@id}"
 			}
 		}).forBackend('test')
 		inst = zz.createInstance({id: 1})
 		expect(inst.id).to.equal(1)
+		expect(inst.derived).to.equal(3)
+		console.log(inst.get())
+		console.log(inst._getDataValues())
+		zz.staticMethod()
+		inst.instanceMethod()
 
 	it 'should extend properly', ->
 		{ corpus } = makeCorpus()

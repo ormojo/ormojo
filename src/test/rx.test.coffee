@@ -80,6 +80,21 @@ describe 'Reducible', ->
 		inj.next({ type: 'ACTION', payload: 5 })
 		expect(pl2.payload).to.equal(6)
 
+describe 'ObservableBoundInstance', ->
+	it 'should be observable', ->
+		{ BWidget: Widget } = makeCorpus()
+		Widget.create({name: 'name1', qty: 1})
+		.then (widg) ->
+			sub1 = Observable.from(widg).subscribe( (next) -> console.log {next} )
+			sub2 = Observable.from(widg).subscribe(
+				expectTests([
+					(x) -> x.name is 'name2'
+				])
+			)
+			widg.name = 'name2'
+			sub1.unsubscribe()
+			sub2.unsubscribe()
+
 describe 'HydratingCollector', ->
 	it 'should CUD', ->
 		{ BWidget: Widget } = makeCorpus()
@@ -124,7 +139,10 @@ describe 'HydratingCollector', ->
 
 		{ BWidget: Widget } = makeCorpus()
 		inj = new RxUtil.Subject
-		sto = new MyStore({'1': { id: 1, name: 'widget2'}})
+		sto = new MyStore({
+			'1': { id: 1, name: 'widget2'}
+			'3': { id: 3, name: 'widget3'}
+		})
 		hyd = new ormojo.HydratingCollector({ hydrator: Widget.hydrator })
 		o1 = sto.connectAfter(inj)
 		o2 = hyd.connectAfter(sto)
@@ -137,8 +155,32 @@ describe 'HydratingCollector', ->
 		expect(inst.wasDeleted).to.equal(undefined)
 		expect(inst.name).to.equal('widget2')
 		expect(inst2.wasDeleted).to.equal(true)
+		expect(hyd.getById(3).name).to.equal('widget3')
 
 describe 'Collector', ->
+	it 'should ignore non-CRUD actions', ->
+		{ BWidget: Widget } = makeCorpus()
+		inj = new RxUtil.Subject
+		hyd = new ormojo.HydratingCollector({ hydrator: Widget.hydrator })
+		hyd.connectAfter(inj)
+		inj.next({ type: 'NUNYA_BIZNESS' })
+
+	it 'should filter', ->
+		{ BWidget: Widget } = makeCorpus()
+		inj = new RxUtil.Subject
+		hyd = new ormojo.HydratingCollector({ hydrator: Widget.hydrator })
+		hyd.connectAfter(inj)
+		hyd.filter = (entity) -> entity?.name is 'alpha'
+		inj.next({ type: 'CREATE', payload: [ { id: 1 } ]})
+		expect(hyd.getById(1)).to.not.be.ok
+		inj.next({ type: 'CREATE', payload: [ { id: 1, name: 'alpha' } ]})
+		expect(hyd.getById(1)).to.be.ok
+		inj.next({ type: 'UPDATE', payload: [ { id: 1, name: 'beta' } ]})
+		expect(hyd.getById(1)).to.not.be.ok
+		inj.next({ type: 'UPDATE', payload: [ { id: 2, name: 'alpha' } ]})
+		expect(hyd.getById(2)).to.be.ok
+		hyd.forEach (v,k) -> console.log {k, v}
+
 	it 'should sort', ->
 		{ BWidget: Widget } = makeCorpus()
 		inj = new RxUtil.Subject

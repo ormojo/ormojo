@@ -21,10 +21,13 @@ export default class Collector extends Reducible
 	# Default hydration implementation just fetches the entity, presumably
 	# already hydrated, from the anterior store. Overload to perform hydration
 	# inside the collector.
+	### istanbul ignore next ###
 	willCreateEntity: (store, entity) ->
 		store.getById(entity.id)
+	### istanbul ignore next ###
 	willUpdateEntity: (store, previousEntity, entity) ->
 		store.getById(entity.id)
+	### istanbul ignore next ###
 	willDeleteEntity: (store, entity) ->
 
 	_createAction: (store, entity) ->

@@ -97,7 +97,7 @@ export default class BoundModel
 		else
 			instance
 
-	### !pragma coverage-skip-next ###
+	### istanbul ignore next ###
 
 	# Invoked when an `Instance` wants to persist itself to the backend.
 	#
@@ -108,6 +108,8 @@ export default class BoundModel
 	save: (instance) ->
 		@corpus.Promise.reject(new Error('abstract method called.'))
 
+	### istanbul ignore next ###
+
 	# Attempt to persist the given dataValues object to the backing store.
 	#
 	# @param dataValues [Object] Raw data for the instance.
@@ -116,7 +118,7 @@ export default class BoundModel
 	put: (dataValues, shouldCreate = true) ->
 		@corpus.Promise.reject(new Error('abstract method called.'))
 
-	### !pragma coverage-skip-next ###
+	### istanbul ignore next ###
 
 	# Invoked to destroy an object from persistent storage by id.
 	#
@@ -127,6 +129,8 @@ export default class BoundModel
 	destroyById: (id) ->
 		@corpus.Promise.reject(new Error('abstract method called.'))
 
+	### istanbul ignore next ###
+
 	# Invoked when an `Instance` wants to delete from the backend.
 	#
 	# @abstract
@@ -135,6 +139,8 @@ export default class BoundModel
 	# @return [Promise<Boolean>] A `Promise` whose fate is settled depending on the performance of the operation, and whose value is true if an instance existed and was deleted, or false otherwise.
 	destroy: (instance) ->
 		@destroyById(instance.id)
+
+	### istanbul ignore next ###
 
 	# Retrieve an instance from the backing store from id or ids.
 	#
@@ -150,12 +156,16 @@ export default class BoundModel
 	findById: (id) ->
 		@corpus.Promise.reject(new Error('abstract method called.'))
 
+	### istanbul ignore next ###
+
 	# Retrieve a single instance from the backing store using query options.
 	#
 	# @param querySpec [Object] Query options. *NB* Not all backends need support all options. See the documentation for your backend for specifics.
 	# @return [Promise<Instance>] A `Promise` of the `Instance` matching the query, if found. If not found, the `Promise` will resolve with the value `undefined`. The `Promise` is only rejected in the event of a database error.
 	find: (querySpec) ->
 		@corpus.Promise.reject(new Error('abstract method called.'))
+
+	### istanbul ignore next ###
 
 	# Retrieve many instances from the backing store using query options.
 	#
