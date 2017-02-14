@@ -97,8 +97,6 @@ export default class BoundModel
 		else
 			instance
 
-	### istanbul ignore next ###
-
 	# Invoked when an `Instance` wants to persist itself to the backend.
 	#
 	# @abstract
@@ -106,19 +104,24 @@ export default class BoundModel
 	#
 	# @return [Promise<Instance>] A `Promise` whose fate is settled depending on the performance of the save operation. If the save operation succeeds, it should resolve with the updated Instance.
 	save: (instance) ->
-		@corpus.Promise.reject(new Error('abstract method called.'))
+		if instance.isNewRecord
+			@put(instance, true)
+		else
+			@put(instance, false)
 
-	### istanbul ignore next ###
-
-	# Attempt to persist the given dataValues object to the backing store.
+	# Attempt to persist the given Instance to the backing store.
 	#
-	# @param dataValues [Object] Raw data for the instance.
-	# @return [Promise<Object>] A `Promise` of an object containing the new
-	# dataValues for this object after it is persisted.
-	put: (dataValues, shouldCreate = true) ->
-		@corpus.Promise.reject(new Error('abstract method called.'))
-
-	### istanbul ignore next ###
+	# @param instance [Instance] Raw data for the instance.
+	# @return [Promise<Instance>] A `Promise` of the instance
+	put: (instance, shouldCreate = true) ->
+		if shouldCreate
+			@store.create([ @hydrator.willCreate(instance) ])
+			.then (createdData) =>
+				@hydrator.didCreate(instance, createdData[0])
+		else
+			@store.update([ @hydrator.willUpdate(instance) ])
+			.then (updatedData) =>
+				@hydrator.didUpdate(instance, updatedData[0])
 
 	# Invoked to destroy an object from persistent storage by id.
 	#
@@ -127,7 +130,8 @@ export default class BoundModel
 	#
 	# @return [Promise<Boolean>] A `Promise` whose fate is settled depending on the performance of the operation, and whose value is true if an instance with the given id existed and was deleted, or false otherwise.
 	destroyById: (id) ->
-		@corpus.Promise.reject(new Error('abstract method called.'))
+		@store.delete([id])
+		.then (rst) -> rst[0]
 
 	### istanbul ignore next ###
 
@@ -138,7 +142,9 @@ export default class BoundModel
 	#
 	# @return [Promise<Boolean>] A `Promise` whose fate is settled depending on the performance of the operation, and whose value is true if an instance existed and was deleted, or false otherwise.
 	destroy: (instance) ->
-		@destroyById(instance.id)
+		@store.delete([instance.id])
+		.then (rst) =>
+			if rst then @hydrator.didDelete(instance) else instance
 
 	### istanbul ignore next ###
 

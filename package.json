@@ -15,7 +15,7 @@
     "doc:build": "node_modules/.bin/codo src/",
     "prepublish": "npm run clean && npm run build",
     "test": "node_modules/.bin/mocha --recursive lib/test/*.test.js",
-    "test:debug": "node --inspect --debug-brk node_modules/.bin/_mocha --recursive --compilers coffee:coffee-script/register lib/test/*.test.js",
+    "test:debug": "node --inspect --debug-brk node_modules/.bin/_mocha --recursive lib/test/*.test.js",
     "coverage:build": "npm run build:babel:istanbul",
     "coverage:test": "node_modules/.bin/_mocha --recursive -- coverage/build/test/*.test.js",
     "coverage:report": "nyc --reporter=lcov npm run coverage:test",
