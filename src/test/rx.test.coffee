@@ -186,7 +186,10 @@ describe 'Collector', ->
 		inj = new RxUtil.Subject
 		hyd = new ormojo.HydratingCollector({ hydrator: Widget.hydrator })
 		sort = new ormojo.Collector
+		sort.getArray = -> @instances
 		sort.updater = ->
+			@instances = []
+			@forEach (v,k) => @instances.push(v)
 			@getArray().sort( (a,b) -> if a.name > b.name then 1 else -1 )
 		o1 = hyd.connectAfter(inj)
 		o2 = sort.connectAfter(hyd)

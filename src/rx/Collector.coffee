@@ -7,16 +7,18 @@ export default class Collector extends Reducible
 
 	reset: ->
 		@byId = Object.create(null)
-		@instances = []
 
 	# The Updater is called every time the entities in the Collector's internal
 	# store are changed. Use this opportunity to, e.g., sort the data.
 	updater: ->
 
 	# Implement Store interface
+	has: (id) -> id of @byId
 	getById: (id) -> @byId[id]
 	forEach: (func) -> func(v,k) for k,v of @byId; undefined
-	getArray: -> @instances
+	# Implement SynchronousStore
+	set: (id, val) -> @byId[id] = val
+	remove: (id) -> delete @byId[id]
 
 	# Default hydration implementation just fetches the entity, presumably
 	# already hydrated, from the anterior store. Overload to perform hydration
@@ -33,19 +35,17 @@ export default class Collector extends Reducible
 	_createAction: (store, entity) ->
 		storedEntity = @willCreateEntity(store, entity)
 		if (not @filter(storedEntity)) then return
-		if not (storedEntity.id of @byId)
-			@byId[storedEntity.id] = storedEntity
-			@instances.push(storedEntity)
+		if not @has(storedEntity.id)
+			@set(storedEntity.id, storedEntity)
 		@dirty = true
 
 	_updateAction: (store, entity) ->
 		# If the entity is within our store...
-		if entity.id of @byId
-			previousEntity = @byId[entity.id]
+		if (previousEntity = @getById(entity.id))?
 			# Re-up and reapply the filter
 			nextEntity = @willUpdateEntity(store, previousEntity, entity)
 			if @filter(nextEntity)
-				@byId[entity.id] = nextEntity
+				@set(entity.id, nextEntity)
 				@dirty = true
 			else
 				return @_deleteAction(store, entity)
@@ -53,30 +53,29 @@ export default class Collector extends Reducible
 			# Not in the store, do a create action
 			return @_createAction(store, entity)
 
-	_deleteAction: (store, entity, shouldUpdateInstances = true) ->
-		if (id = entity.id) of @byId
+	_deleteAction: (store, entity) ->
+		if @has(id = entity.id)
 			@willDeleteEntity(store, @byId[id])
-			delete @byId[id]
-			if shouldUpdateInstances then @instances = (v for k,v of @byId)
+			@remove(id)
 			@dirty = true
 
 	# Update and delete extant entities, based on values from a store.
 	_diffUpdateDelete: (store) ->
 		# For each extant entity..
-		for k,v of @byId
+		@forEach (v,k) =>
 			# If it exists on the remote store...
 			if (nextEntity = store.getById(k))
 				# Process as an update.
 				@_updateAction(store, nextEntity)
 			else
 				# Remove from local store
-				@_deleteAction(store, v, false)
+				@_deleteAction(store, v)
 		undefined
 
 	# Create missing entities that exist on the store, but not this collector.
 	_diffCreate: (store) ->
 		store.forEach (v, k) =>
-			if not (k of @byId) then @_createAction(store, v)
+			if not @has(k) then @_createAction(store, v)
 
 	_resetAction: (store) ->
 		@dirty = true
@@ -88,8 +87,7 @@ export default class Collector extends Reducible
 			# Total wipeout
 			for k,v of @byId
 				@willDeleteEntity(null, v)
-				delete @byId[k]
-			@instances = []
+				@remove(k)
 
 	augmentAction: (action) -> {
 		type: action.type
