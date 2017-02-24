@@ -144,7 +144,7 @@ export default class BoundModel
 	destroy: (instance) ->
 		@store.delete([instance.id])
 		.then (rst) =>
-			if rst then @hydrator.didDelete(instance) else instance
+			if rst?[0] then @hydrator.didDelete(instance) else instance
 
 	### istanbul ignore next ###
 
@@ -160,7 +160,11 @@ export default class BoundModel
 	#   @param id [Array<String | Number>] The ids of the `Instance`s as understood by the backing store.
 	#   @return [Promise< Array<Instance> >] A `Promise` of an array whose entries correspond to the entries of the `ids` array. In each position, the array will contain the `Instance` with the given id, if found. If not found, the entry will be `undefined`. The `Promise` is only rejected in the event of a database error.
 	findById: (id) ->
-		@corpus.Promise.reject(new Error('abstract method called.'))
+		multiple = Array.isArray(id)
+		@store.read(@backend.createQuery().byId(id))
+		.then (readData) =>
+			hydrated = (@hydrator.didRead(null, datum) for datum in readData)
+			if multiple then hydrated else hydrated[0]
 
 	### istanbul ignore next ###
 

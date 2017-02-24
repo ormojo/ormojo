@@ -1,4 +1,5 @@
 import BoundModel from './BoundModel'
+import Query from './store/Query'
 
 # Driver that intermediates between the ormojo API and some underlying data layer.
 export default class Backend
@@ -26,3 +27,6 @@ export default class Backend
 	# @param [Model] model The model to bind to this backend.
 	bindModel: (model, bindingOptions) ->
 		new BoundModel(model, @, bindingOptions)
+
+	# Create a Query object appropriate to this backend.
+	createQuery: -> new Query

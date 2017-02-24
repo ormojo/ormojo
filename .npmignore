@@ -7,3 +7,4 @@ coffeelint.json
 .editorconfig
 lib/test/
 es/test/
+.nyc_output/

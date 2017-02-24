@@ -1,5 +1,5 @@
 export default class Store
-  constructor: ({@corpus}) ->
+  constructor: ({@corpus, @backend}) ->
 
 
   ### istanbul ignore next ###

@@ -47,22 +47,14 @@ class TestHydrator extends Hydrator
 	constructor: -> super
 
 class TestQuery extends Query
-	constructor: (id) ->
-		if Array.isArray(id) then @ids = id else @ids = [id]
+	constructor: -> super
 
 class TestBoundModel extends BoundModel
 	constructor: (model, backend, bindingOptions) ->
 		super
-		@store = new TestStore({@corpus})
+		@store = new TestStore({@corpus, backend})
 		@hydrator = new TestHydrator({boundModel: @})
 		backend.storage[@name] = @storage
-
-	findById: (id) ->
-		query = new TestQuery(id)
-		@store.read(query)
-		.then (readData) =>
-			hydrated = (@hydrator.didRead(null, datum) for datum in readData)
-			if Array.isArray(id) then hydrated else hydrated[0]
 
 class TestBackend extends Backend
 	constructor: ->
@@ -74,5 +66,8 @@ class TestBackend extends Backend
 		m = new TestBoundModel(model, @, bindingOptions)
 		m.instanceClass = createStandardInstanceClassForBoundModel(m)
 		m
+
+	createQuery: ->
+		new TestQuery
 
 module.exports = TestBackend

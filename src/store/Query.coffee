@@ -22,3 +22,10 @@ export default class Query
 
 	# Resume this query from the given Cursor.
 	resumeFrom: (cursor) ->
+
+	### istanbul ignore next ###
+
+	# Identify specific instances to be retrieved by id or primary key.
+	byId: (id) ->
+		if Array.isArray(id) then @ids = id else @ids = [id]
+		@
