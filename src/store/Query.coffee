@@ -29,3 +29,8 @@ export default class Query
 	byId: (id) ->
 		if Array.isArray(id) then @ids = id else @ids = [id]
 		@
+
+	### istanbul ignore next ###
+
+	# Request the backend to limit the number of results it returns.
+	setLimit: (@limit) -> @

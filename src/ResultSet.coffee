@@ -54,3 +54,9 @@ export default class ResultSet
 	#
 	# @return [Boolean] `true` if more results are available.
 	hasMore: -> (@getCursor()?)
+
+	# Hydrate raw results.
+	_hydrateResults: (hydrator) ->
+		for i in [0...@results.length]
+			@results[i] = hydrator.didRead(null, @results[i])
+		undefined

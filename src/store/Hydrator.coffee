@@ -34,6 +34,9 @@ export default class Hydrator
 		instance._clearChanges()
 		instance
 
+	willDelete: (instance) ->
+		instance.id
+
 	didDelete: (instance) ->
 		instance.wasDeleted = true
 		instance

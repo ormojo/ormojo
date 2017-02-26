@@ -1,5 +1,8 @@
-{ Backend, BoundModel, createStandardInstanceClassForBoundModel, Store, Query, Hydrator } = require '../..'
+{ Backend, BoundModel, createStandardInstanceClassForBoundModel, Store, Query, Hydrator, ResultSet } = require '../..'
 cuid = require 'cuid'
+
+class TestResultSet extends ResultSet
+	constructor: (@results) ->
 
 class TestStore extends Store
 	constructor: ->
@@ -17,7 +20,7 @@ class TestStore extends Store
 	read: (query) ->
 		@corpus.Promise.resolve().then =>
 			if not query?.ids? then throw new Error("invalid query format")
-			@storage[id] for id in query.ids
+			new TestResultSet( (@storage[id] for id in query.ids) )
 
 	create: (data) ->
 		@crupsert(data, true)

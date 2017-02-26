@@ -70,6 +70,10 @@ export default class BoundModel
 	getFields: ->
 		@fields
 
+	# Create a query targeted at this boundModel.
+	createQuery: ->
+		@backend.createQuery()
+
 	# Create a raw instance of this boundModel with the given dataValues.
 	# Synchronous and does not interact with the persistence framework.
 	# Generally only backends should be calling this method; you probably want
@@ -142,7 +146,7 @@ export default class BoundModel
 	#
 	# @return [Promise<Boolean>] A `Promise` whose fate is settled depending on the performance of the operation, and whose value is true if an instance existed and was deleted, or false otherwise.
 	destroy: (instance) ->
-		@store.delete([instance.id])
+		@store.delete([ @hydrator.willDelete(instance) ])
 		.then (rst) =>
 			if rst?[0] then @hydrator.didDelete(instance) else instance
 
@@ -161,19 +165,27 @@ export default class BoundModel
 	#   @return [Promise< Array<Instance> >] A `Promise` of an array whose entries correspond to the entries of the `ids` array. In each position, the array will contain the `Instance` with the given id, if found. If not found, the entry will be `undefined`. The `Promise` is only rejected in the event of a database error.
 	findById: (id) ->
 		multiple = Array.isArray(id)
-		@store.read(@backend.createQuery().byId(id))
-		.then (readData) =>
-			hydrated = (@hydrator.didRead(null, datum) for datum in readData)
-			if multiple then hydrated else hydrated[0]
+		@findAll(@createQuery().byId(id))
+		.then (resultSet) ->
+			if multiple
+				resultSet.getResults()
+			else
+				(resultSet.getResults())[0]
 
 	### istanbul ignore next ###
 
 	# Retrieve a single instance from the backing store using query options.
 	#
-	# @param querySpec [Object] Query options. *NB* Not all backends need support all options. See the documentation for your backend for specifics.
+	# @param query [query] A Query created by `this.createQuery()`.
 	# @return [Promise<Instance>] A `Promise` of the `Instance` matching the query, if found. If not found, the `Promise` will resolve with the value `undefined`. The `Promise` is only rejected in the event of a database error.
-	find: (querySpec) ->
-		@corpus.Promise.reject(new Error('abstract method called.'))
+	find: (query) ->
+		query.setLimit(1)
+		@findAll(query)
+		.then (resultSet) ->
+			if resultSet.isEmpty()
+				undefined
+			else
+				(resultSet.getResults())[0]
 
 	### istanbul ignore next ###
 
@@ -181,5 +193,8 @@ export default class BoundModel
 	#
 	# @param querySpec [Object] Query options. *NB* Not all backends need support all options. See the documentation for your backend for specifics.
 	# @return [Promise<ResultSet>] A `Promise` of the `ResultSet` matching the query
-	findAll: (querySpec) ->
-		@corpus.Promise.reject(new Error('abstract method called.'))
+	findAll: (query) ->
+		@store.read(query)
+		.then (resultSet) =>
+			resultSet._hydrateResults(@hydrator)
+			resultSet
