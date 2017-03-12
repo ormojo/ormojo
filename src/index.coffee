@@ -51,3 +51,15 @@ export {
 	RxUtil, Reducible, Collector, HydratingCollector
 	Query, Cursor, Hydrator, Store
 }
+
+export default ormojo = {
+	Observable, Subject
+	Model, Corpus, Backend, BoundModel
+	Field, Instance, BoundInstance,
+	Util
+	Migration, ResultSet
+	createStandardInstanceClassForBoundModel, applyModelPropsToInstanceClass
+	RxUtil, Reducible, Collector, HydratingCollector
+	Query, Cursor, Hydrator, Store
+	STRING, TEXT, BOOLEAN, INTEGER, FLOAT, OBJECT, ARRAY, DATE, ANY
+}

@@ -25,7 +25,7 @@ export default class Collector extends Reducible
 	# inside the collector.
 	### istanbul ignore next ###
 	willCreateEntity: (store, entity) ->
-		store.getById(entity.id)
+		store.getById(entity.id) or entity
 	### istanbul ignore next ###
 	willUpdateEntity: (store, previousEntity, entity) ->
 		store.getById(entity.id)
@@ -97,9 +97,12 @@ export default class Collector extends Reducible
 	}
 
 	reduce: (action) ->
+		# Pass erroneous actions without checking
+		if action.error? then return action
+
 		# A collector may optionally be connected after another Store, in which case
 		# it obtains its values from that store.
-		store = action.meta?.store
+		store = action.meta?.store or @
 
 		switch action.type
 			when 'CREATE'
@@ -109,9 +112,10 @@ export default class Collector extends Reducible
 			when 'DELETE'
 				@_deleteAction(store, entity) for entity in action.payload
 			when 'RESET'
-				@_resetAction(store)
+				# Reset from anterior store. If no anterior store, reset to blank state.
+				@_resetAction(action.meta?.store)
 			else
 				return action
 
-		if @dirty then @updater(); @dirty = false
+		if @dirty then @updater(action); @dirty = false
 		@augmentAction(action)

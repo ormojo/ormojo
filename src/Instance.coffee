@@ -33,6 +33,10 @@ export default class Instance
 	setDataValue: (key, value) ->
 		throw new Error('ormojo: `setDataValue` called on abstract instance')
 
+	setMetadata: (md) -> Object.assign(@, md)
+
+	getMetadata: (key) -> @[key]
+
 	### istanbul ignore next ###
 
 	# Get properties of this instance.

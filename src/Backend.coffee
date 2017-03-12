@@ -27,6 +27,3 @@ export default class Backend
 	# @param [Model] model The model to bind to this backend.
 	bindModel: (model, bindingOptions) ->
 		new BoundModel(model, @, bindingOptions)
-
-	# Create a Query object appropriate to this backend.
-	createQuery: -> new Query

@@ -7,8 +7,9 @@ import Observable from './rx/Observable'
 # of essential functionality.
 export default class BoundInstance extends Instance
 	# @private
-	constructor: (boundModel, @dataValues = {}) ->
+	constructor: (boundModel, @dataValues = {}, metadata) ->
 		super(boundModel)
+		@setMetadata(metadata)
 
 	# @see Instance#getDataValue
 	getDataValue: (key) ->
@@ -27,6 +28,11 @@ export default class BoundInstance extends Instance
 			# Notify wasUpdated
 			@_wasUpdated()
 		undefined
+
+	setMetadata: (md) ->
+		if md?
+			Object.assign(@, md)
+			@_wasUpdated()
 
 	# Notify that data values are in sync with the most recent database call.
 	_clearChanges: ->
@@ -120,5 +126,6 @@ defineObservableSymbol(BoundInstance.prototype, ->
 	if not instance._observers then instance._observers = []
 	@_observable = new Observable (observer) ->
 		instance._observers.push(observer)
+		observer.next?(instance) # "BehaviorSubject" behavior.
 		-> removeFromList(instance._observers, observer)
 )

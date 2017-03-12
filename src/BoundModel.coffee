@@ -72,14 +72,14 @@ export default class BoundModel
 
 	# Create a query targeted at this boundModel.
 	createQuery: ->
-		@backend.createQuery()
+		@store.createQuery()
 
 	# Create a raw instance of this boundModel with the given dataValues.
 	# Synchronous and does not interact with the persistence framework.
 	# Generally only backends should be calling this method; you probably want
 	# `BoundModel.create()`.
-	createInstance: (dataValues) ->
-		new @instanceClass(@, dataValues)
+	createInstance: (dataValues, metadata) ->
+		new @instanceClass(@, dataValues, metadata)
 
 	# Create a new instance
 	#

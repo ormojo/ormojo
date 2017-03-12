@@ -37,15 +37,18 @@ export default class ResultSet
 	# @return [Array<Instance>] The collection of results.
 	getResults: -> @results or []
 
+	replaceResults: (@results) -> @
+
+	getMetadata: -> undefined
+
 	### istanbul ignore next ###
 
 	# Retrieve a cursor representing this set, which can be used to continue a paginated
 	# query.
 	#
 	# @abstract
-	# @return [Cursor] A cursor that can be used to get the next ResultSet. A null return indicates no further results are available.
-	getCursor: ->
-		throw new Error('`getCursor` called on abstract ResultSet')
+	# @return [Cursor] A cursor that can be used to get the next ResultSet. An undefined return indicates no further results are available.
+	getCursor: -> undefined
 
 	### istanbul ignore next ###
 
@@ -56,7 +59,7 @@ export default class ResultSet
 	hasMore: -> (@getCursor()?)
 
 	# Hydrate raw results.
-	_hydrateResults: (hydrator) ->
+	_hydrateResults: (hydrator, instances) ->
 		for i in [0...@results.length]
-			@results[i] = hydrator.didRead(null, @results[i])
+			@results[i] = hydrator.didRead((if instances then instances[i] else null), @results[i])
 		undefined
