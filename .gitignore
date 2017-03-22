@@ -1,14 +1,13 @@
 /node_modules
-/build
-/coverage
-/.nyc_output
-/doc
-/logs
-/es
-/lib
+/packages/*/node_modules
+/packages/*/build
+/packages/*/lib
+/packages/*/es
 npm-debug.log
 
 .v8flags.*
 .npm/
 .vagrant/
 *.sublime-workspace
+lerna-debug.log
+.nyc_output/
