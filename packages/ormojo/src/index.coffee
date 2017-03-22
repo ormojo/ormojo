@@ -5,7 +5,6 @@ import BoundModel from './BoundModel'
 import Field from './Field'
 import Instance from './Instance'
 import BoundInstance from './BoundInstance'
-import * as Util from './Util'
 import Migration from './Migration'
 import ResultSet from './ResultSet'
 import { createStandardInstanceClassForBoundModel, applyModelPropsToInstanceClass } from './StandardInstance'
@@ -15,9 +14,6 @@ import Cursor from './store/Cursor'
 import Hydrator from './store/Hydrator'
 import Store from './store/Store'
 
-import Observable from './rx/Observable'
-import Subject from './rx/Subject'
-import * as RxUtil from './rx/RxUtil'
 import Reducible from './rx/Reducible'
 import Collector from './rx/Collector'
 import HydratingCollector from './rx/HydratingCollector'
@@ -42,24 +38,20 @@ export DATE = 'DATE'
 export ANY = 'ANY'
 
 export {
-	Observable, Subject
 	Model, Corpus, Backend, BoundModel
 	Field, Instance, BoundInstance,
-	Util
 	Migration, ResultSet
 	createStandardInstanceClassForBoundModel, applyModelPropsToInstanceClass
-	RxUtil, Reducible, Collector, HydratingCollector
+  Reducible, Collector, HydratingCollector
 	Query, Cursor, Hydrator, Store
 }
 
 export default ormojo = {
-	Observable, Subject
 	Model, Corpus, Backend, BoundModel
 	Field, Instance, BoundInstance,
-	Util
 	Migration, ResultSet
 	createStandardInstanceClassForBoundModel, applyModelPropsToInstanceClass
-	RxUtil, Reducible, Collector, HydratingCollector
+  Reducible, Collector, HydratingCollector
 	Query, Cursor, Hydrator, Store
 	STRING, TEXT, BOOLEAN, INTEGER, FLOAT, OBJECT, ARRAY, DATE, ANY
 }

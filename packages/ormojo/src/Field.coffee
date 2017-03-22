@@ -1,4 +1,4 @@
-import reservedWords from './reservedWords'
+import reservedWords from './util/reservedWords'
 
 # Declarative representation of a field in a `Model`
 export default class Field

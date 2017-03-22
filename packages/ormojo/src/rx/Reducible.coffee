@@ -1,4 +1,4 @@
-import { Subject } from './RxUtil'
+import createSubject from 'observable-utils/lib/createSubject'
 
 # Reducibles are a fundamental unit of composition in reactive component
 # chains within ormojo. They receive objects called "actions", which have
@@ -15,33 +15,40 @@ import { Subject } from './RxUtil'
 # mutates some internal state of the reducible, optionally transforms the
 # action into another action, and then returns the action, which is passed
 # down the observable chain.
-export default class Reducible extends Subject
-	### istanbul ignore next ###
-	
-	# Reducer function. Given an action, it (optionally) performs an appropriate
-	# operation on the internal state of the reducer, (optionally) transforms
-	# the action to a new action, then returns the transformed action, which
-	# is passed on to the observer chain.
-	#
-	# A reducer MUST return an action -- usually you will want to return
-	# the same action passed in.
-	reduce: (action) -> action
+export default class Reducible
+  constructor: ->
+    subject = createSubject()
+    @subscribe = subject.subscribe
+    @error = subject.error
+    @complete = subject.complete
+    @_internalNext = subject.next
 
-	next: (action) ->
-		# If our reducer isn't interested in the action, pass it through unmodified.
-		if not @actionFilter(action) then return super(action)
-		# Reduce by the action, then pass the result down the observable chain.
-		super(@reduce(action))
+  ### istanbul ignore next ###
 
-	# Helper function to connect this reducer after an observable. Equivalent to
-	# observable.subscribe(this)
-	connectAfter: (observable) -> observable.subscribe(@)
+  # Reducer function. Given an action, it (optionally) performs an appropriate
+  # operation on the internal state of the reducer, (optionally) transforms
+  # the action to a new action, then returns the transformed action, which
+  # is passed on to the observer chain.
+  #
+  # A reducer MUST return an action -- usually you will want to return
+  # the same action passed in.
+  reduce: (action) -> action
 
-	# Entity filter function - used by the reducer to determine which entities
-	# should be acted upon.
-	filter: (entity) -> true
+  next: (action) ->
+    # If our reducer isn't interested in the action, pass it through unmodified.
+    if not @actionFilter(action) then return @_internalNext(action)
+    # Reduce by the action, then pass the result down the observable chain.
+    @_internalNext(@reduce(action))
 
-	# Action filter function - used prior to the reducer call to determine
-	# whether an incoming action object should be fed to the reducer or passed
-	# through unmodified.
-	actionFilter: (action) -> true
+  # Helper function to connect this reducer after an observable. Equivalent to
+  # observable.subscribe(this)
+  connectAfter: (observable) -> observable.subscribe(@)
+
+  # Entity filter function - used by the reducer to determine which entities
+  # should be acted upon.
+  filter: (entity) -> true
+
+  # Action filter function - used prior to the reducer call to determine
+  # whether an incoming action object should be fed to the reducer or passed
+  # through unmodified.
+  actionFilter: (action) -> true

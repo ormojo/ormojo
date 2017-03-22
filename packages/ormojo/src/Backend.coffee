@@ -1,5 +1,4 @@
 import BoundModel from './BoundModel'
-import Query from './store/Query'
 
 # Driver that intermediates between the ormojo API and some underlying data layer.
 export default class Backend

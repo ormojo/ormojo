@@ -6,16 +6,17 @@
   "module": "es/index.js",
   "jsnext:main": "es/index.js",
   "scripts": {
-    "clean": "rimraf lib build es coverage",
-    "build": "npm run build:coffee && npm run build:babel:commonjs && npm run build:babel:es",
+    "clean": "rimraf lib build es",
+    "build": "npm run build:coffee && npm run build:babel:commonjs",
     "build:babel:commonjs": "cross-env BABEL_ENV=commonjs babel build --out-dir lib",
-    "build:babel:es": "cross-env BABEL_ENV=es babel build --out-dir es",
-    "build:babel:istanbul": "mkdir -p coverage/build && cross-env BABEL_ENV=istanbul babel build --out-dir coverage/build",
-    "build:coffee": "mkdir -p build && coffee --compile --output build/ src/",
+    "build:babel:istanbul": "mkdirp coverage/build && cross-env BABEL_ENV=istanbul babel build --out-dir coverage/build",
+    "build:coffee": "mkdirp build && coffee --compile --output build/ src/",
     "doc:build": "node_modules/.bin/codo src/",
     "prepublish": "npm run clean && npm run build",
-    "test": "node_modules/.bin/mocha --recursive lib/test/*.test.js",
-    "test:debug": "node --inspect --debug-brk node_modules/.bin/_mocha --recursive lib/test/*.test.js",
+    "test": "npm run test:mocha",
+    "test:debug": "npm run test:mocha:debug",
+    "test:mocha": "mocha --recursive lib/_tests_/*.js",
+    "test:mocha:debug": "node --inspect --debug-brk node_modules/.bin/_mocha --recursive lib/_tests_/*.js",
     "coverage:build": "npm run build:babel:istanbul",
     "coverage:test": "node_modules/.bin/_mocha --recursive -- coverage/build/test/*.test.js",
     "coverage:report": "nyc --reporter=lcov npm run coverage:test",
@@ -51,12 +52,13 @@
     "cuid": "^1.3.8",
     "husky": "^0.11.9",
     "mocha": "^2.4.5",
-    "rimraf": "^2.6.1"
+    "rimraf": "^2.6.1",
+    "mkdirp": "^0.5.1",
+    "rxjs": "^5.0.3"
   },
   "dependencies": {
     "merge-options": "0.0.64",
-    "symbol-observable": "^1.0.4",
-    "rxjs": "^5.0.3",
-    "nanotools": "^0.1.2"
+    "nanotools": "^0.1.2",
+    "observable-utils": "^0.1.2"
   }
 }

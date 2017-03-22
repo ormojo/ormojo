@@ -1,4 +1,4 @@
-# Converts raw JSON data from the Store into ormojo instances, and vice versa.
+# Converts raw data from the Store into ormojo instances, and vice versa.
 export default class Hydrator
 	constructor: ({@boundModel}) ->
 		@backend = @boundModel.backend
