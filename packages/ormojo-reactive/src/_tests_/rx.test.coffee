@@ -1,10 +1,12 @@
 { expect } = require 'chai'
-ormojo = require '..'
-makeCorpus = require './helpers/makeCorpus'
+ormojo = require 'ormojo'
+makeCorpus = require 'ormojo/lib/_tests_/helpers/makeCorpus'
 { Observable } = require 'rxjs/Observable'
 require 'rxjs/add/observable/of'
 require 'rxjs/add/observable/from'
 { Subject } = require 'rxjs/Subject'
+
+import { Reducible, Collector, HydratingCollector } from '..'
 
 expectHello = (x) -> expect(x).to.equal('hello')
 expectSequence = (seq) ->
@@ -23,7 +25,7 @@ expectTests = (tests) ->
   }
 
 describe 'Reducible', ->
-  class Payloader extends ormojo.Reducible
+  class Payloader extends Reducible
     reduce: (action) ->
       @payload = action.payload
       Object.assign({}, action, {payload: action.payload + 1})
@@ -78,7 +80,7 @@ describe 'HydratingCollector', ->
   it 'should CUD', ->
     { BWidget: Widget } = makeCorpus()
     inj = new Subject
-    hyd = new ormojo.HydratingCollector({ hydrator: Widget.hydrator })
+    hyd = new HydratingCollector({ hydrator: Widget.hydrator })
     o1 = hyd.connectAfter(inj)
     inj.next({ type: 'CREATE', payload: [ { id: 1, name: 'widget1'}]})
     inst = hyd.getById(1)
@@ -91,7 +93,7 @@ describe 'HydratingCollector', ->
   it 'should reset, no store', ->
     { BWidget: Widget } = makeCorpus()
     inj = new Subject
-    hyd = new ormojo.HydratingCollector({ hydrator: Widget.hydrator })
+    hyd = new HydratingCollector({ hydrator: Widget.hydrator })
     o1 = hyd.connectAfter(inj)
     inj.next({ type: 'CREATE', payload: [ { id: 1, name: 'widget1'}]})
     inst = hyd.getById(1)
@@ -100,7 +102,7 @@ describe 'HydratingCollector', ->
     expect(inst.wasDeleted).to.equal(true)
 
   it 'should reset, with store', ->
-    class MyStore extends ormojo.Reducible
+    class MyStore extends Reducible
       constructor: (@storage) ->
         super()
 
@@ -122,7 +124,7 @@ describe 'HydratingCollector', ->
       '1': { id: 1, name: 'widget2'}
       '3': { id: 3, name: 'widget3'}
     })
-    hyd = new ormojo.HydratingCollector({ hydrator: Widget.hydrator })
+    hyd = new HydratingCollector({ hydrator: Widget.hydrator })
     o1 = sto.connectAfter(inj)
     o2 = hyd.connectAfter(sto)
     inj.next({ type: 'CREATE', payload: [ { id: 1, name: 'widget1'}]})
@@ -140,14 +142,14 @@ describe 'Collector', ->
   it 'should ignore non-CRUD actions', ->
     { BWidget: Widget } = makeCorpus()
     inj = new Subject
-    hyd = new ormojo.HydratingCollector({ hydrator: Widget.hydrator })
+    hyd = new HydratingCollector({ hydrator: Widget.hydrator })
     hyd.connectAfter(inj)
     inj.next({ type: 'NUNYA_BIZNESS' })
 
   it 'should filter', ->
     { BWidget: Widget } = makeCorpus()
     inj = new Subject
-    hyd = new ormojo.HydratingCollector({ hydrator: Widget.hydrator })
+    hyd = new HydratingCollector({ hydrator: Widget.hydrator })
     hyd.connectAfter(inj)
     hyd.filter = (entity) -> entity?.name is 'alpha'
     inj.next({ type: 'CREATE', payload: [ { id: 1 } ]})
@@ -163,8 +165,8 @@ describe 'Collector', ->
   it 'should sort', ->
     { BWidget: Widget } = makeCorpus()
     inj = new Subject
-    hyd = new ormojo.HydratingCollector({ hydrator: Widget.hydrator })
-    sort = new ormojo.Collector
+    hyd = new HydratingCollector({ hydrator: Widget.hydrator })
+    sort = new Collector
     sort.getArray = -> @instances
     sort.updater = ->
       @instances = []

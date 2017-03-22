@@ -14,10 +14,6 @@ import Cursor from './store/Cursor'
 import Hydrator from './store/Hydrator'
 import Store from './store/Store'
 
-import Reducible from './rx/Reducible'
-import Collector from './rx/Collector'
-import HydratingCollector from './rx/HydratingCollector'
-
 # String field type.
 export STRING = 'STRING'
 # Text field type. On nosql backends this is usually the same as STRING.
@@ -42,7 +38,6 @@ export {
 	Field, Instance, BoundInstance,
 	Migration, ResultSet
 	createStandardInstanceClassForBoundModel, applyModelPropsToInstanceClass
-  Reducible, Collector, HydratingCollector
 	Query, Cursor, Hydrator, Store
 }
 
@@ -51,7 +46,6 @@ export default ormojo = {
 	Field, Instance, BoundInstance,
 	Migration, ResultSet
 	createStandardInstanceClassForBoundModel, applyModelPropsToInstanceClass
-  Reducible, Collector, HydratingCollector
 	Query, Cursor, Hydrator, Store
 	STRING, TEXT, BOOLEAN, INTEGER, FLOAT, OBJECT, ARRAY, DATE, ANY
 }
