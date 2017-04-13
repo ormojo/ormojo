@@ -10,6 +10,7 @@ import { Reducible } from '..'
 describe('Reducible', ->
   class Payloader extends Reducible:
     reduce(action) ->
+      console.log("Payloader saw", action)
       this.payload = action.payload
       Object.assign({}, action, {payload: action.payload + 1})
 
@@ -22,13 +23,14 @@ describe('Reducible', ->
       type: 'ACTION'
       payload: 5
     }))
+    console.log("here", pl)
     expect(pl.payload).to.equal(5)
   )
 
   it('should polymorph and filter action', ->
     pl = new Payloader
     inj = new Subject
-    pl.connectAfter(inj)
+    inj.subscribe(pl)
     inj.next({ type: 'FILTER_ME_OUT', payload: 5})
     expect(pl.payload).to.not.be.ok
     testObservable(pl, null, [ (x) -> x.payload == 6 ])

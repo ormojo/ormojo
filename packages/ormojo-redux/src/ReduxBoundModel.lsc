@@ -1,15 +1,15 @@
 import { BoundModel, applyModelPropsToInstanceClass, Store, Hydrator, ResultSet } from 'ormojo'
 import ReduxInstance from './ReduxInstance'
 import cuid from 'cuid'
-import { shallowDiff } from './Util'
-import OrmojoStore from './OrmojoStore'
+import shallowEqual from 'nanotools/lib/shallowEqual'
+import EntityStore from 'redux-components-essentials/lib/EntityStore'
 
 class ReduxStore extends Store:
   constructor(opts) ->
     super(opts)
     { equalityTest } = opts
-    this.component = new OrmojoStore
-    this.component.equalityTest = equalityTest
+    Clazz = EntityStore((x) -> x.id, (x) -> x, equalityTest or shallowEqual)
+    this.component = new Clazz
 
   crupsert(data, isCreate) ->
     this.corpus.Promise.resolve().then(=>
@@ -62,8 +62,7 @@ class ReduxStore extends Store:
 export default class ReduxBoundModel extends BoundModel:
   constructor(model, backend, bindingOptions) ->
     super(model, backend, bindingOptions)
-    equalityTest = this.spec.equalityTest or ( (a,b) -> not shallowDiff(a,b) )
-    this.store = new ReduxStore({corpus: this.corpus, equalityTest})
+    this.store = new ReduxStore({corpus: this.corpus, equalityTest: this.spec.equalityTest})
     this.hydrator = new Hydrator({boundModel: this})
 
   initialize() ->

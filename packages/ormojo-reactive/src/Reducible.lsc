@@ -34,7 +34,7 @@ export default class Reducible:
   // the same action passed in.
   reduce(action) -> action
 
-  next(action) ->
+  next(action) =>
     // If our reducer isn't interested in the action, pass it through unmodified.
     if not this.actionFilter(action): return this._internalNext(action)
     // Reduce by the action, then pass the result down the observable chain.
@@ -44,6 +44,7 @@ export default class Reducible:
   // observable.subscribe(this)
   connectAfter(observable) -> observable.subscribe(this)
 
+  /* eslint-disable no-unused-vars */
   // Entity filter function - used by the reducer to determine which entities
   // should be acted upon.
   filter(entity) -> true
@@ -52,3 +53,4 @@ export default class Reducible:
   // whether an incoming action object should be fed to the reducer or passed
   // through unmodified.
   actionFilter(action) -> true
+  /* eslint-enable no-unused-vars */

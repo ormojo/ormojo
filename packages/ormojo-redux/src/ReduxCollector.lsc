@@ -1,4 +1,4 @@
-import { HydratingCollector } from 'ormojo'
+import { HydratingCollector } from 'ormojo-reactive'
 
 export default class ReduxCollector extends HydratingCollector:
   constructor(opts) ->

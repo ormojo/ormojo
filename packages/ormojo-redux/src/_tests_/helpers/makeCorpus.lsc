@@ -3,8 +3,9 @@ import { ReduxBackend, ReduxCollector } from '../..'
 import { applyMiddleware, createStore } from 'redux'
 import ReduxFreeze from 'redux-freeze'
 import ReduxDebug from 'redux-debug'
+import { mountRootComponent } from 'redux-components'
 
-makeCorpus = ->
+export default makeCorpus() ->
   { corpus, Widget } = ormojoMakeCorpus()
   reduxBackend = new ReduxBackend
   corpus.registerBackend('redux', reduxBackend)
@@ -17,5 +18,3 @@ makeCorpus = ->
   widgetCollector = new ReduxCollector({component: reduxWidget.getReduxComponent(), hydrator: reduxWidget.hydrator })
 
   { corpus, Widget: reduxWidget, store, widgetCollector }
-
-module.exports = makeCorpus
