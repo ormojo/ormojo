@@ -3,7 +3,8 @@
   "hoist": true,
   "packages": [
     "packages/*",
-    "submodules/toolbelt/packages/*"
+    "submodules/toolbelt/packages/*",
+    "submodules/redux-components/packages/*"
   ],
   "version": "independent"
 }
