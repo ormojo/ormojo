@@ -1,2 +1,2 @@
-# ormojo
-A multi-backend ORM for node.js and the browser.
+# ormojo-reactive
+Reactive programming tools for ormojo.

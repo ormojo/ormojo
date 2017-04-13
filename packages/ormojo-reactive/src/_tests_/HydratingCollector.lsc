@@ -1,0 +1,97 @@
+import { expect } from 'chai'
+import 'rxjs/add/observable/of'
+import 'rxjs/add/observable/from'
+import { Subject } from 'rxjs/Subject'
+import makeCorpus from 'ormojo/lib/_tests_/helpers/makeCorpus'
+
+import { HydratingCollector, Reducible } from '..'
+
+describe('HydratingCollector', ->
+  it('should CUD', ->
+    { BWidget: Widget } = makeCorpus()
+    inj = new Subject
+    hyd = new HydratingCollector({ hydrator: Widget.hydrator })
+    hyd.connectAfter(inj)
+    inj.next({ type: 'CREATE', payload: [ { id: 1, name: 'widget1'}]})
+    inst = hyd.getById(1)
+    expect(inst.name).to.equal('widget1')
+    inj.next({ type: 'UPDATE', payload: [ { id: 1, name: 'widget2'}]})
+    expect(inst.name).to.equal('widget2')
+    inj.next({ type: 'DELETE', payload: [ { id: 1 } ] })
+    expect(inst.wasDeleted).to.equal(true)
+  )
+
+  it('should reset, no store', ->
+    { BWidget: Widget } = makeCorpus()
+    inj = new Subject
+    hyd = new HydratingCollector({ hydrator: Widget.hydrator })
+    hyd.connectAfter(inj)
+    inj.next({ type: 'CREATE', payload: [ { id: 1, name: 'widget1'}]})
+    inst = hyd.getById(1)
+    expect(inst.name).to.equal('widget1')
+    inj.next({ type: 'RESET'})
+    expect(inst.wasDeleted).to.equal(true)
+  )
+
+  it('should reset, with store', ->
+    class MyStore extends Reducible:
+      constructor(storage) ->
+        super()
+        this.storage = storage
+
+      reduce(action) -> ({
+        type: action.type
+        payload: action.payload
+        meta: Object.assign({}, action.meta, {store: this})
+      })
+
+      getById(id) -> this.storage[id]
+      forEach(func) ->
+        for key k, val v in this.storage: func(v, k)
+
+    { BWidget: Widget } = makeCorpus()
+    inj = new Subject
+    sto = new MyStore({
+      '1': { id: 1, name: 'widget2'}
+      '3': { id: 3, name: 'widget3'}
+    })
+    hyd = new HydratingCollector({ hydrator: Widget.hydrator })
+    sto.connectAfter(inj)
+    hyd.connectAfter(sto)
+    inj.next({ type: 'CREATE', payload: [ { id: 1, name: 'widget1'}]})
+    inj.next({ type: 'CREATE', payload: [ { id: 2, name: 'widget2'}]})
+    inst = hyd.getById(1)
+    inst2 = hyd.getById(2)
+    expect(inst.name).to.equal('widget1')
+    inj.next({ type: 'RESET'})
+    expect(inst.wasDeleted).to.equal(undefined)
+    expect(inst.name).to.equal('widget2')
+    expect(inst2.wasDeleted).to.equal(true)
+    expect(hyd.getById(3).name).to.equal('widget3')
+  )
+
+  it('should ignore non-CRUD actions', ->
+    { BWidget: Widget } = makeCorpus()
+    inj = new Subject
+    hyd = new HydratingCollector({ hydrator: Widget.hydrator })
+    hyd.connectAfter(inj)
+    inj.next({ type: 'NUNYA_BIZNESS' })
+  )
+
+  it('should filter', ->
+    { BWidget: Widget } = makeCorpus()
+    inj = new Subject
+    hyd = new HydratingCollector({ hydrator: Widget.hydrator })
+    hyd.connectAfter(inj)
+    hyd.filter = (entity) -> entity?.name == 'alpha'
+    inj.next({ type: 'CREATE', payload: [ { id: 1 } ]})
+    expect(hyd.getById(1)).to.not.be.ok
+    inj.next({ type: 'CREATE', payload: [ { id: 1, name: 'alpha' } ]})
+    expect(hyd.getById(1)).to.be.ok
+    inj.next({ type: 'UPDATE', payload: [ { id: 1, name: 'beta' } ]})
+    expect(hyd.getById(1)).to.not.be.ok
+    inj.next({ type: 'UPDATE', payload: [ { id: 2, name: 'alpha' } ]})
+    expect(hyd.getById(2)).to.be.ok
+    hyd.forEach( (v,k) -> console.log({k, v}) )
+  )
+)

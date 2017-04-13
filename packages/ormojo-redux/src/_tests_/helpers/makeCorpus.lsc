@@ -1,0 +1,21 @@
+import ormojoMakeCorpus from 'ormojo/lib/_tests_/helpers/makeCorpus'
+import { ReduxBackend, ReduxCollector } from '../..'
+import { applyMiddleware, createStore } from 'redux'
+import ReduxFreeze from 'redux-freeze'
+import ReduxDebug from 'redux-debug'
+
+makeCorpus = ->
+  { corpus, Widget } = ormojoMakeCorpus()
+  reduxBackend = new ReduxBackend
+  corpus.registerBackend('redux', reduxBackend)
+  reduxWidget = Widget.forBackend('redux')
+
+  component = reduxBackend.getReduxComponent()
+  store = applyMiddleware(ReduxDebug(console.log), ReduxFreeze)(createStore)( (x) -> x )
+  mountRootComponent(store, component)
+
+  widgetCollector = new ReduxCollector({component: reduxWidget.getReduxComponent(), hydrator: reduxWidget.hydrator })
+
+  { corpus, Widget: reduxWidget, store, widgetCollector }
+
+module.exports = makeCorpus

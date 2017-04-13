@@ -1,0 +1,29 @@
+import { expect } from 'chai'
+import makeCorpus from 'ormojo/lib/_tests_/helpers/makeCorpus'
+import 'rxjs/add/observable/of'
+import 'rxjs/add/observable/from'
+import { Subject } from 'rxjs/Subject'
+
+import { Collector, HydratingCollector } from '..'
+
+describe('Collector', ->
+  it('should sort', ->
+    { BWidget: Widget } = makeCorpus()
+    inj = new Subject
+    hyd = new HydratingCollector({ hydrator: Widget.hydrator })
+    sort = new Collector
+    sort.getArray = -> this.instances
+    sort.updater = ->
+      this.instances = []
+      this.forEach((v) => this.instances.push(v))
+      this.getArray().sort( (a,b) -> if a.name > b.name: 1 else: -1 )
+    hyd.connectAfter(inj)
+    sort.connectAfter(hyd)
+    inj.next({ type: 'CREATE', payload: [ { id: 1, name: 'zed'}]})
+    expect(sort.getArray()[0].name).to.equal('zed')
+    inj.next({ type: 'CREATE', payload: [ { id: 2, name: 'alpha'}]})
+    expect(sort.getArray()[0].name).to.equal('alpha')
+    inj.next({ type: 'CREATE', payload: [ { id: 3, name: 'beta'}]})
+    expect(sort.getArray()[0].name).to.equal('alpha')
+  )
+)

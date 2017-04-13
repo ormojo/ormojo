@@ -1,0 +1,45 @@
+import reservedWords from './util/reservedWords'
+
+// Declarative representation of a field in a `Model`
+export default class Field:
+  // Create a field from a specification object.
+  //
+  // @param name [String] The name of the field. May not begin with `_`.
+  // @param spec [Object] An object giving a declarative specification for the field. *NB* Options for fields and their meanings can vary with the backend used! Please consult backend docs.
+  // @option spec [FieldType] type The type of the field.
+  // @option spec [Boolean] allowNull Whether the field is nullable. Default `true`.
+  // @option spec [Any | => Any] defaultValue The default value for this field on a new instance, or a function which will produce that value.
+  fromSpec(name, spec) ->
+    this.name = name
+    this.spec = spec
+
+    if typeof(name) != 'string': throw new Error("Invalid field name: must be a string")
+    if name.substr(0, 1) == '_': throw new Error("Invalid field name `//{@name}`: cannot begin with _")
+    if reservedWords[name]: throw new Error("Invalid field name `//{@name}`: reserved word")
+    if not spec?.type: throw new Error("Invalid field spec for `//{@name}`: must specify a type")
+    this.type = this.spec.type
+    this.get = this.spec.get
+    this.set = this.spec.set
+    this.defaulter = this.spec.defaultValue
+    this
+
+  // Copy another field object. Mainly useful for backend implementors deriving
+  // a subclass of Field.
+  //
+  // @param field [Field] The field to copy.
+  // @return this [Field] This field.
+  fromField(field) ->
+    this.fromSpec(field.name, field.spec)
+    this
+
+  // Get database column/field name
+  getBackendFieldName() -> this.name
+
+  // Get the default value of this field for the given Instance.
+  // @private
+  // @param instance [Instance]
+  _getDefault(instance) ->
+    if this.defaulter != undefined:
+      if typeof(this.defaulter) == 'function': this.defaulter(instance) else: this.defaulter
+    else:
+      undefined

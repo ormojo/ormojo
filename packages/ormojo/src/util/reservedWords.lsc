@@ -1,0 +1,13 @@
+// Fields can't be named after reserved words.
+reservedWords = {
+  dataValues: true
+  set: true
+  get: true
+  setDataValue: true
+  getDataValue: true
+  changed: true
+  save: true
+  destroy: true
+}
+
+export default reservedWords

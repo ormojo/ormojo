@@ -1,0 +1,19 @@
+import { Backend } from 'ormojo'
+import ReduxBoundModel from './ReduxBoundModel'
+import { createComponent } from 'redux-components'
+
+export default class ReduxBackend extends Backend:
+  constructor(...args) ->
+    super(...args)
+    this.boundModels = {}
+
+  bindModel(model, bindingOptions) ->
+    m = new ReduxBoundModel(model, this, bindingOptions)
+    if this.boundModels[m.name]: throw new Error("duplicate bound model named #{m.name}")
+    this.boundModels[m.name] = m
+    m
+
+  getReduxComponent() ->
+    if this._reduxComponent: return this._reduxComponent
+    structure = { for key k, val v in this.boundModels: (k, v.getReduxComponent()) }
+    this._reduxComponent = createComponent(structure)
