@@ -1,0 +1,73 @@
+import { BoundModel, createStandardInstanceClassForBoundModel } from 'ormojo'
+import ESField from './ESField'
+import esTypeMap from './esTypeMap'
+import ESStore from './store/Store'
+import ESHydrator from './store/Hydrator'
+
+export default class ESBoundModel extends BoundModel:
+  constructor(model, backend, bindingOptions) ->
+    super(model, backend, bindingOptions)
+    if typeof(this.name) != 'string': throw new Error('ESBoundModel: Cannot bind unnamed model.')
+    if typeof(this.spec.type) != 'string': throw new Error("ESBoundModel: bound model derived from Model named #{model.name} must specify an elasticsearch type")
+    this.esIndex = (this.spec.index or this.name).toLowerCase()
+    // Apply index auto-prefixing.
+    if backend.indexPrefix and (not (bindingOptions?.indexIsRaw)):
+      this.esIndex = backend.indexPrefix + this.esIndex
+    this.esType = (this.spec.type).toLowerCase()
+    this.instanceClass = createStandardInstanceClassForBoundModel(this)
+    this.store = new ESStore({
+      corpus: this.corpus
+      backend
+      defaultIndex: this.esIndex
+      defaultType: this.esType
+    })
+    this.hydrator = new ESHydrator({boundModel: this})
+
+  _deriveFields() ->
+    this.fields = {}
+    for key k, val fieldSpec in this.spec.fields:
+      f = new ESField().fromSpec(k, fieldSpec)
+      this.fields[k] = f
+    if not this.fields['id']:
+      throw new Error("ESBoundModel: bound model derived from Model named `#{this.model.name}` must have an id field.")
+
+  getIndex() -> this.esIndex
+  getDefaultType() -> this.esType
+
+  bindChildModel(model, bindingOptions = {}) ->
+    // Child index must be the same as this index.
+    bindingOptions.index = this.getIndex()
+    bindingOptions.indexIsRaw = true // Parent index is raw and already prefixed
+    bindingOptions.parentBoundModel = this
+    this.backend.bindChildModel(model, bindingOptions)
+
+  // Create a query addressing this boundModel.
+  createQuery() ->
+    q = this.backend.createQuery()
+    q.index = this.getIndex()
+    q.type = this.getDefaultType()
+    q
+
+  // Generate Elasticsearch mapping properties
+  generateMapping() ->
+    m = {}
+    props = {}
+
+    for key k, val field in this.getFields():
+      if k != 'id':
+        mapping = field.spec.elasticsearch?.mapping or {}
+        // Merge missing keys from typemap defaults
+        for key mk, val mv in esTypeMap(field.spec.type):
+          if not (mk in mapping): mapping[mk] = mv
+
+        props[field.getBackendFieldName()] = mapping
+
+    m.properties = props
+    m
+
+  // Generate Elasticsearch analysis properties
+  generateAnalysisProps() ->
+    props = {}
+    if this.spec.analyzer: props.analyzer = this.spec.analyzer
+    if this.spec.filter: props.filter = this.spec.filter
+    props

@@ -1,0 +1,23 @@
+import { Query } from 'ormojo'
+
+export default class ESQuery extends Query:
+  constructor() ->
+    super()
+
+  setQueryDsl(body) ->
+    this.body = body
+    this
+
+  setLimit(limit) ->
+    this.limit = limit
+    this
+
+  setCursor(cursor) ->
+    this.body = cursor.query?.getQueryDsl()
+    this.offset = cursor.offset
+    this.limit = cursor.limit
+    this
+
+  // Get Elasticsearch Query DSL JSON for this query.
+  getQueryDsl() ->
+    this.body

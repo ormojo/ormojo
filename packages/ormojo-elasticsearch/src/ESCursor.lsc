@@ -1,0 +1,12 @@
+import { Cursor } from 'ormojo'
+
+export default class ESCursor extends Cursor:
+  constructor(query) ->
+    super()
+    this.query = query
+
+  setFromOffset(offset, limit, total) ->
+    this.offset = offset
+    this.limit = limit
+    this.total = total
+    this

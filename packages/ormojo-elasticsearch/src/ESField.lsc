@@ -1,0 +1,20 @@
+import { Field, STRING, INTEGER } from 'ormojo'
+
+_idGetter = -> this._id
+_idSetter = (k,v) ->
+  if this._id: throw new Error('ESInstance: cannot reassign `id` - create a new Instance instead')
+  this._id = v
+
+export default class ESField extends Field:
+  fromSpec(name, spec) ->
+    super.fromSpec(name, spec)
+    // Special handling for es id fields
+    if name == 'id':
+      if spec.get or spec.set:
+        throw new Error('ESField: `id` field may not have custom getter or setter.')
+      if (spec.type != STRING) and (spec.type != INTEGER):
+        throw new Error('ESField: `id` field must be `ormojo.STRING` or `ormojo.INTEGER`')
+      this.get = _idGetter
+      this.set = _idSetter
+
+    this

@@ -1,0 +1,10 @@
+coverage/
+build/
+doc/
+node_modules/
+coffeelint.json
+.git*
+.editorconfig
+lib/test/
+es/test/
+.nyc_output/

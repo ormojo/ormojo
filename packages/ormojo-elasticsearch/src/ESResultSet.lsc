@@ -1,0 +1,18 @@
+import { ResultSet } from 'ormojo'
+import Cursor from './ESCursor'
+
+export default class ESResultSet extends ResultSet:
+  constructor(data, total, offset, originalQuery, maxScore = 0) ->
+    super()
+    this.maxScore = maxScore
+    this.results = data or []
+    this.total = total or this.results.length
+    nextOffset = (offset or 0) + this.results.length
+    if nextOffset < this.total:
+      this.cursor = new Cursor(originalQuery).setFromOffset(nextOffset, this.results.length, this.total)
+
+  getTotalResultCount() -> this.total
+
+  getCursor() -> this.cursor
+
+  getMaxScore() -> this.maxScore
