@@ -1,6 +1,7 @@
-import { Migration, Util } from 'ormojo'
+import { Migration } from 'ormojo'
 import lodash from 'lodash'
 import deepDiff from 'deep-diff'
+import set from 'nanotools/lib/set'
 
 _getMigrationCounter(indexList) ->
   let maxn = 0
@@ -58,7 +59,7 @@ class MigrationPlan:
       else:
         this.indexStatus = 'AUTOMIGRATED'
         this.migrationCounter = n
-        this.mostRecentIndex = "//{this.index.name}_ormojo//{n}"
+        this.mostRecentIndex = `${this.index.name}_ormojo${n}`
       // Get details of most recent index
       details = result[this.mostRecentIndex]
       this.currentSettings = {
@@ -74,14 +75,14 @@ class MigrationPlan:
     // Elasticsearch annoyingly stringifies numbers. We must do the same.
     for elem difference in this.migrationDiff:
       if difference.kind == 'E' and (JSON.stringify(difference.rhs) == difference.lhs):
-        Util.set(this.targetSettings, difference.path, difference.lhs)
+        set(this.targetSettings, difference.path, difference.lhs)
     // If mappings are the same, migration is unnecessary.
     if lodash.isEqual(this.currentSettings, this.targetSettings):
       this.migrationStrategy = 'NOT_NEEDED'
       return
     else:
       this.migrationDiff = deepDiff.diff(this.currentSettings, this.targetSettings)
-      this.backend.corpus.log.trace ('migration diff', this.migrationDiff)
+      this.backend.corpus.log.trace('migration diff', JSON.stringify(this.migrationDiff, undefined, 2))
     // Determine a migration strategy.
     this.migrationStrategy = 'CANT_MIGRATE'
     if this.indexStatus == 'UNKNOWN' or this.indexStatus == 'NOT_ALIASED' or this.indexStatus == 'NOT_MIGRATED':
@@ -92,14 +93,14 @@ class MigrationPlan:
       this.migrationStrategy = 'REINDEX'
 
   executeCreateStrategy() ->
-    if this.migrationStrategy == 'CREATE': throw new Error('executeCreateStrategy() called in invalid state')
+    if this.migrationStrategy != 'CREATE': throw new Error('executeCreateStrategy() called in invalid state')
     aliases = {}
     aliases[this.index.name] = {}
     body = Object.assign({}, this.targetSettings, { aliases })
-    this.backend.corpus.log.trace('es.indices.create >', body)
+    this.backend.corpus.log.trace('es.indices.create >', JSON.stringify(body, undefined, 2))
     this.backend.corpus.Promise.resolve(
       this.backend.es.indices.create({
-        index: "//{this.index.name}_ormojo1"
+        index: `${this.index.name}_ormojo1`
         body
       })
     )
@@ -110,9 +111,9 @@ class MigrationPlan:
 
   executeReindexStrategy() ->
     if this.migrationStrategy != 'REINDEX': throw new Error('executeReindexStrategy() called in invalid state')
-    prevIndex = "//{this.index.name}_ormojo//{this.migrationCounter}"
-    nextIndex = "//{this.index.name}_ormojo//{this.migrationCounter + 1}"
-    alias = "//{this.index.name}"
+    prevIndex = `${this.index.name}_ormojo${this.migrationCounter}`
+    nextIndex = `${this.index.name}_ormojo${this.migrationCounter + 1}`
+    alias = `${this.index.name}`
     this.backend.corpus.log.trace('es.indices.create >', this.targetSettings)
     this.backend.corpus.Promise.resolve(
       this.backend.es.indices.create({

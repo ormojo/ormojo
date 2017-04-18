@@ -13,10 +13,10 @@
     "build": "npm run build:babel:commonjs",
     "test": "npm run build && npm run test:mocha",
     "test:debug": "npm run build:babel:debug && npm run test:mocha:debug",
-    "test:mocha": "mocha --recursive lib/_tests_/*.js",
-    "test:mocha:debug": "node --inspect --debug-brk node_modules/.bin/_mocha --recursive lib/_tests_/*.js",
+    "test:mocha": "mocha --recursive lib/_tests_",
+    "test:mocha:debug": "node --inspect --debug-brk node_modules/.bin/_mocha --recursive lib/_tests_",
     "coverage:build": "npm run build:babel:istanbul",
-    "coverage:test": "node_modules/.bin/_mocha --recursive -- build/coverage/_tests_/*.js",
+    "coverage:test": "node_modules/.bin/_mocha --recursive -- build/coverage/_tests_",
     "coverage:report": "nyc --reporter=lcov npm run coverage:test",
     "coverage": "npm run coverage:build && npm run coverage:report"
   },
@@ -58,6 +58,7 @@
   "dependencies": {
     "lodash": "^4.17.4",
     "deep-diff": "^0.3.4",
+    "nanotools": "^0.1.0",
     "ormojo": "^0.2.0"
   }
 }

@@ -1,0 +1,86 @@
+import { expect } from 'chai'
+import es_client from '../helpers/es_client'
+import Blackbird from 'blackbird-promises'
+import makeCorpus from '../helpers/makeCorpus'
+import ESQ from 'esq'
+
+describe('find', ->
+  it('should delete all indices from prior tests', ->
+    es_client.indices.delete({
+      index: ['widget_ormojo*', 'widget']
+      ignore: [404]
+    })
+  )
+
+  it('should create mapping', ->
+    { corpus } = makeCorpus()
+    mig = corpus.getBackend('main').getMigration()
+    mig.prepare().then(-> mig.execute())
+  )
+
+  it('should create stuff to find', ->
+    { Widget } = makeCorpus()
+    promises = [for let i=0;i<10;i++:
+      Widget.create({name: "findAll #{i}", tags: ['findAll'], qty: i})
+    ]
+    promises.push(Widget.create({name: 'uniquely named thing', qty: 50}))
+    Blackbird.all(promises).delay(1000)
+  )
+
+  it('should find one by keyword', ->
+    { Widget } = makeCorpus()
+    Widget.find(Widget.createQuery().setQueryDsl({
+      query: { match: { name: 'uniquely' } }
+    }))
+    .then((widg) ->
+      expect(widg.qty).to.equal(50)
+    )
+  )
+
+  it('should find nothing', ->
+    { Widget } = makeCorpus()
+    Widget.find(Widget.createQuery().setQueryDsl({
+      query: { match: { name: 'frobozz' } }
+    }))
+    .then((nothing) ->
+      expect(nothing).to.equal(undefined)
+    )
+  )
+
+  it('should find many', ->
+    { Widget } = makeCorpus()
+    Widget.findAll(Widget.createQuery().setQueryDsl({
+      query: { match: { tags: 'findAll' } }
+    })).then((results) ->
+      expect(results.getResultCount()).to.equal(10)
+    )
+  )
+
+  it('should paginate', ->
+    { Widget } = makeCorpus()
+    query = Widget.createQuery().setLimit(3).setQueryDsl({
+      query: { match: { tags: 'findAll' } }
+      sort: { qty: 'asc' }
+    })
+    Widget.findAll(query)
+    .then((results) ->
+      expect(results.getResults()[0].qty).to.equal(0)
+      Widget.findAll(Widget.createQuery().setCursor(results.getCursor()))
+    ).then((results) ->
+      expect(results.getResults()[0].qty).to.equal(3)
+    )
+  )
+
+  it('should perform filtering', ->
+    { Widget } = makeCorpus()
+    Widget.find(
+      Widget.createQuery().setQueryDsl({
+        query: (new ESQ).query('constant_score', 'filter', 'term', { 'tags.raw': 'findAll' })
+      })
+    )
+    .then((results) ->
+      expect(results.tags).to.deep.equal(['findAll'])
+    )
+  )
+
+)

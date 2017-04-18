@@ -1,4 +1,4 @@
-import { Hydrator, Util } from 'ormojo'
+import { Hydrator, getDelta } from 'ormojo'
 
 // Move between Elasticsearch Json API and ormojo instances.
 export default class ESHydrator extends Hydrator:
@@ -41,7 +41,7 @@ export default class ESHydrator extends Hydrator:
     this.updateInstanceWithData(instance, data)
 
   willUpdate(instance) ->
-    delta = Util.getDelta(instance)
+    delta = getDelta(instance)
     if not delta: return undefined
     this.getDataForInstance(instance, delta)
 

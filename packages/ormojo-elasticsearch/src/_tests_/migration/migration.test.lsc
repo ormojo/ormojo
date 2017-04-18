@@ -1,6 +1,6 @@
 import { expect } from 'chai'
-{ ESBackend: es_backend } = require('..')
-import es_client from './es_client'
+import es_client from '../helpers/es_client'
+import { ESBackend } from '../..'
 import ormojo from 'ormojo'
 import Blackbird from 'blackbird-promises'
 
@@ -16,7 +16,7 @@ makeCorpus() ->
       trace: logger
     }
     backends: {
-      'main': new es_backend(es_client)
+      'main': new ESBackend(es_client)
     }
   })
 
@@ -84,7 +84,7 @@ describe('migration tests: ', ->
 
   it('should have static migration plan', ->
     corpus = makeCorpus()
-    Widget = makeModel(corpus)
+    makeModel(corpus)
     mig = corpus.getBackend('main').getMigration()
     mig.prepare()
     .then(->
@@ -95,7 +95,7 @@ describe('migration tests: ', ->
 
   it('should do a create migration', ->
     corpus = makeCorpus()
-    Widget = makeModel(corpus)
+    makeModel(corpus)
     mig = corpus.getBackend('main').getMigration()
     mig.prepare()
     .then(->

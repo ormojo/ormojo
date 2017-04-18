@@ -14,6 +14,8 @@ import Cursor from './store/Cursor'
 import Hydrator from './store/Hydrator'
 import Store from './store/Store'
 
+import getDelta from './util/getDelta'
+
 // String field type.
 export STRING = 'STRING'
 // Text field type. On nosql backends this is usually the same as STRING.
@@ -38,7 +40,8 @@ export {
   Field, Instance, BoundInstance,
   Migration, ResultSet,
   createStandardInstanceClassForBoundModel, applyModelPropsToInstanceClass,
-  Query, Cursor, Hydrator, Store
+  Query, Cursor, Hydrator, Store,
+  getDelta
 }
 
 const ormojo = {
@@ -46,7 +49,8 @@ const ormojo = {
   Field, Instance, BoundInstance,
   Migration, ResultSet
   createStandardInstanceClassForBoundModel, applyModelPropsToInstanceClass
-  Query, Cursor, Hydrator, Store
+  Query, Cursor, Hydrator, Store,
+  getDelta,
   STRING, TEXT, BOOLEAN, INTEGER, FLOAT, OBJECT, ARRAY, DATE, ANY
 }
 

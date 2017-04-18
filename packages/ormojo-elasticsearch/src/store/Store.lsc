@@ -13,10 +13,11 @@ export default class Store extends OrmojoStore:
     // Store dataValues that we used to create the instance.
     createdValues = data.data
     this.api.create(data.index, data.type, data.data, data.id, data.parent)
-    .then (res) ->
+    .then((res) ->
       // Elasticsearch does not return the new values; pull them from the original doc.
       res._source = createdValues
       res
+    )
 
   updateOne(data) ->
     if not data:
