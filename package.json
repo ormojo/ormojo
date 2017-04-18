@@ -5,14 +5,14 @@
   "scripts": {},
   "repository": {
     "type": "git",
-    "url": "https://github.com/wcjohnson/redux-components.git"
+    "url": "https://github.com/ormojo/ormojo.git"
   },
   "author": "William C. Johnson <wcjohnson@oigroup.net> (https://github.com/wcjohnson)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/wcjohnson/redux-components/issues"
+    "url": "https://github.com/ormojo/ormojo/issues"
   },
-  "homepage": "https://github.com/wcjohnson/redux-components",
+  "homepage": "https://github.com/ormojo/ormojo",
   "dependencies": {
     "lerna": "2.0.0-beta.38"
   }
