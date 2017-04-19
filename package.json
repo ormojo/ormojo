@@ -2,7 +2,9 @@
   "name": "ormojo-monorepo",
   "version": "0.0.1",
   "description": "Lerna mono-repo for ormojo and related packages",
-  "scripts": {},
+  "scripts": {
+    "full-monty": "rimraf node_modules && lerna clean --yes && lerna bootstrap && lerna run test"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/ormojo/ormojo.git"
@@ -14,6 +16,7 @@
   },
   "homepage": "https://github.com/ormojo/ormojo",
   "dependencies": {
-    "lerna": "2.0.0-beta.38"
+    "lerna": "2.0.0-beta.38",
+    "rimraf": "^2.6.1"
   }
 }
