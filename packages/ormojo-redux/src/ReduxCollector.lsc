@@ -3,8 +3,15 @@ import { HydratingCollector } from 'ormojo-reactive'
 export default class ReduxCollector extends HydratingCollector:
   constructor(opts) ->
     super(opts)
-    { component } = opts
+    { model, component } = opts
+    this.model = model
     this.component = component
+
+  // Create an instance that is anticipated to be filled with data later.
+  createOptimisticInstance(id) ->
+    inst = this.model.createInstance({id})
+    this.set(id, inst)
+    inst
 
   set(id, val) ->
     // Val is a ReduxBoundInstance here...
