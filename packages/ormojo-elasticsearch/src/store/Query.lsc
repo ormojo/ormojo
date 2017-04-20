@@ -12,6 +12,10 @@ export default class ESQuery extends Query:
     this.limit = limit
     this
 
+  setOffset(offset) ->
+    this.offset = offset
+    this
+
   setCursor(cursor) ->
     this.body = cursor.query?.getQueryDsl()
     this.offset = cursor.offset
