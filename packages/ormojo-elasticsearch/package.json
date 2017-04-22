@@ -58,7 +58,7 @@
   "dependencies": {
     "lodash": "^4.17.4",
     "deep-diff": "^0.3.4",
-    "nanotools": "^0.1.0",
+    "nanotools": "^0.1.4",
     "ormojo": "^0.3.0"
   }
 }

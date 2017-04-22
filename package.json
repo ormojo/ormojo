@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Lerna mono-repo for ormojo and related packages",
   "scripts": {
-    "full-monty": "rimraf node_modules && lerna clean --yes && lerna bootstrap && lerna run test"
+    "rebuild:full": "rimraf node_modules && npm install && lerna clean --yes && lerna bootstrap && lerna run test"
   },
   "repository": {
     "type": "git",
