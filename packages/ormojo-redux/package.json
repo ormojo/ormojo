@@ -59,7 +59,7 @@
     "ormojo": "^0.3.0",
     "ormojo-reactive": "^0.3.0",
     "nanotools": "^0.1.1",
-    "observable-utils": "^0.1.1",
+    "observable-utils": "^0.1.5",
     "redux-components": "^0.4.3",
     "redux-components-essentials": "^0.4.1",
     "babel-runtime": "^6.23.0",
