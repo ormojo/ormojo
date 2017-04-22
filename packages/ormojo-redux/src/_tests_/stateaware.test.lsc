@@ -1,0 +1,23 @@
+import { expect } from 'chai'
+import makeCorpus from './helpers/makeCorpus'
+
+describe('state awareness: ', ->
+  it('should be tied to the state', ->
+    {Widget} = makeCorpus()
+    awidget = Widget.createInstance()
+    awidget.id = 1
+
+    bwidget = Widget.create()
+    bwidget.id = 1
+    bwidget.name = 'here'
+    bwidget.save().then(->
+      console.log(awidget._getDataValues())
+      expect(awidget.name).to.equal('here')
+      awidget.name = 'nextName'
+      awidget.save()
+    ).then(->
+      console.log(bwidget._getDataValues())
+      expect(bwidget.name).to.equal('nextName')
+    )
+  )
+)

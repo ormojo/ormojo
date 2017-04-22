@@ -1,6 +1,9 @@
 import { expect } from 'chai'
 import { Subject } from 'rxjs/Subject'
+import { Observable } from 'rxjs/Observable'
+import 'rxjs/add/observable/from'
 import makeCorpus from './helpers/makeCorpus'
+import test from 'observable-utils/lib/test'
 
 describe('rx', ->
   it('CRUD actions affect Redux store', ->
@@ -10,11 +13,39 @@ describe('rx', ->
     widgetCollector.connectAfter(inj)
     sel = Widget.getReduxComponent().byId
 
+    stateful = Widget.createInstance()
+    stateful.id = 1
+
     inj.next({ type: 'CREATE', payload:[ { id: 1, name: 'document number one' } ] } )
     expect(sel()['1'].name).to.equal('document number one')
+    expect(stateful.name).to.equal('document number one')
     inj.next({ type: 'UPDATE', payload:[ { id: 1, name: 'updated'}]})
     expect(sel()['1'].name).to.equal('updated')
+    expect(stateful.name).to.equal('updated')
     inj.next({ type: 'DELETE', payload:[ { id: 1 } ]})
     expect(sel()['1']).to.be.not.ok
+  )
+
+  it('observable', ->
+    { Widget } = makeCorpus()
+
+    stateful = Widget.createInstance()
+    stateful.id = 1
+    obs = Observable.from(stateful)
+
+    test(obs, console.log.bind(console), [
+      (x) -> x == stateful
+      (x) -> x.name == 'here'
+    ])
+
+    bwidget = Widget.create()
+    bwidget.id = 1
+    bwidget.name = 'here'
+    bwidget.save().then(->
+      cwidget = Widget.create()
+      cwidget.id = 2
+      cwidget.name = 'hereward'
+      cwidget.save()
+    )
   )
 )
