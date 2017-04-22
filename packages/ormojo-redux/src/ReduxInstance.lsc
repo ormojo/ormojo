@@ -1,4 +1,28 @@
 import { BoundInstance } from 'ormojo'
 
-// Nonce class to tag ReduxInstances in case the user wants to discern them from other instances.
-export default class ReduxInstance extends BoundInstance {}
+// ReduxInstances pull their dataValues from the Redux store.
+export default class ReduxInstance extends BoundInstance:
+  constructor(boundModel, dataValues, metadata) ->
+    super(boundModel, undefined, metadata)
+    if dataValues:
+      if dataValues.id:
+        this.id = dataValues.id
+      else:
+        throw new Error("invalid attempt to create ReduxInstance with dataValues.")
+
+  get dataValues() {
+    id = this.id
+    if not id: return null
+    // ugh
+    this.boundModel.store.component.getById(id)
+  }
+
+  _setDataValues() ->
+    throw new Error("cannot _setDataValues on a ReduxInstance")
+
+  _getDataValues() ->
+    let dvs = this.dataValues
+    if this._nextDataValues or (this.id and not dvs?.id):
+      now dvs = Object.assign({}, dvs, this._nextDataValues)
+      if this.id and not dvs.id: dvs.id = this.id
+    dvs

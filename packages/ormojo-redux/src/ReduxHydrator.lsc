@@ -1,0 +1,28 @@
+import { Hydrator } from 'ormojo'
+import cuid from 'cuid'
+{ assign } = Object
+
+// Mediates between raw Store data and hydrated BoundModel instances.
+export default class ReduxHydrator extends Hydrator:
+  constructor(opts) ->
+    super(opts)
+
+  didRead(instance, data) ->
+    if data == undefined: return undefined
+    if instance:
+      this.didUpdate(instance, data)
+    else:
+      inst = this.boundModel.createInstance()
+      inst.id = data.id or cuid()
+      inst._nextDataValues = ({}~assign(data))
+      inst
+
+  willCreate(instance) ->
+    dvs = instance._getDataValues()
+    if not dvs.id: ({}~assign(dvs, { id: cuid() })) else: dvs
+
+  // Store most recent Redux state on object.
+  didUpdate(instance, data) ->
+    instance.id = data.id
+    instance._clearChanges()
+    instance

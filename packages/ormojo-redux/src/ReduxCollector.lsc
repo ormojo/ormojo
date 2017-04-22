@@ -7,16 +7,23 @@ export default class ReduxCollector extends HydratingCollector:
     this.model = model
     this.component = component
 
+  willUpdateEntity(store, previousEntity, entity) ->
+    previousEntity._nextDataValues = entity
+    previousEntity
+
   // Create an instance that is anticipated to be filled with data later.
   createOptimisticInstance(id) ->
-    inst = this.model.createInstance({id})
+    inst = this.model.createInstance()
+    inst.id = id
     this.set(id, inst)
     inst
 
-  set(id, val) ->
+  set(id, instance) ->
     // Val is a ReduxBoundInstance here...
-    this.byId[id] = val
-    this.component.update([val._getDataValues()])
+    this.byId[id] = instance
+    dvs = this.hydrator.willCreate(instance)
+    this.component.update([dvs])
+    this.hydrator.didUpdate(instance, dvs)
 
   remove(id) ->
     delete this.byId[id]

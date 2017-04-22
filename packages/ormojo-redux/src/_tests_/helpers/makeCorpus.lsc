@@ -15,6 +15,6 @@ export default makeCorpus() ->
   store = applyMiddleware(ReduxDebug(console.log), ReduxFreeze)(createStore)( (x) -> x )
   mountRootComponent(store, component)
 
-  widgetCollector = new ReduxCollector({component: reduxWidget.getReduxComponent(), hydrator: reduxWidget.hydrator })
+  widgetCollector = new ReduxCollector({model: reduxWidget, component: reduxWidget.getReduxComponent(), hydrator: reduxWidget.hydrator })
 
   { corpus, Widget: reduxWidget, store, widgetCollector }

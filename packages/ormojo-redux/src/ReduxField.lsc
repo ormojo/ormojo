@@ -1,0 +1,15 @@
+import { Field, STRING, INTEGER } from 'ormojo'
+
+export default class ReduxField extends Field:
+  fromSpec(name, spec) ->
+    super.fromSpec(name, spec)
+    // Special handling for id fields
+    if name == 'id':
+      if this.get or this.set:
+        throw new Error('ReduxField: `id` field may not have custom getter or setter.')
+      if (spec.type != STRING) and (spec.type != INTEGER):
+        throw new Error('ReduxField: `id` field must be `ormojo.STRING` or `ormojo.INTEGER`')
+      // ID fields are stored as plain data on the Instance itself
+      this.raw = true
+
+    this

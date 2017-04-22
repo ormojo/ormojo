@@ -1,6 +1,7 @@
-import { BoundModel, applyModelPropsToInstanceClass, Store, Hydrator, ResultSet } from 'ormojo'
+import { BoundModel, Store, ResultSet } from 'ormojo'
 import ReduxInstance from './ReduxInstance'
-import cuid from 'cuid'
+import ReduxField from './ReduxField'
+import ReduxHydrator from './ReduxHydrator'
 import shallowEqual from 'nanotools/lib/shallowEqual'
 import EntityStore from 'redux-components-essentials/lib/EntityStore'
 
@@ -14,10 +15,9 @@ class ReduxStore extends Store:
   crupsert(data, isCreate) ->
     this.corpus.Promise.resolve().then(=>
       for elem datum in data:
-        if (not datum): throw new Error("invalid create format")
-        if not datum.id: datum.id = cuid()
+        if (not datum) or (not datum.id): throw new Error("invalid create format")
         if isCreate and this.component.state[datum.id]: throw new Error("duplicate id")
-        datum
+
       if isCreate: this.component.create(data) else: this.component.update(data)
       stateNow = this.component.state
       [ for elem datum in data: stateNow[datum.id] ]
@@ -39,8 +39,8 @@ class ReduxStore extends Store:
       for elem datum in data:
         if not datum?.id: throw new Error("invalid update format")
         if not stateNow[datum.id]: throw new Error("update of nonexistent object")
-      this.component.update(data)
 
+      this.component.update(data)
       stateAfter = this.component.state
       [for elem datum in data: stateAfter[datum.id]]
     )
@@ -63,9 +63,17 @@ export default class ReduxBoundModel extends BoundModel:
   constructor(model, backend, bindingOptions) ->
     super(model, backend, bindingOptions)
     this.store = new ReduxStore({corpus: this.corpus, equalityTest: this.spec.equalityTest})
-    this.hydrator = new Hydrator({boundModel: this})
+    this.hydrator = new ReduxHydrator({boundModel: this})
 
-  initialize() ->
-    this.instanceClass = applyModelPropsToInstanceClass(this, (class BoundReduxInstance extends ReduxInstance {}))
+  _deriveFields() ->
+    this.fields = {}
+    for key k, val fieldSpec in this.spec.fields:
+      f = new ReduxField().fromSpec(k, fieldSpec)
+      this.fields[k] = f
+    if not this.fields['id']:
+      throw new Error("ReduxBoundModel: bound model derived from Model named `#{this.model.name}` must have an id field.")
+
+  _deriveInstanceClass() ->
+    return class extends ReduxInstance {}
 
   getReduxComponent() -> this.store.component
