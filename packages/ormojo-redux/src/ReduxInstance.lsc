@@ -1,5 +1,11 @@
 import { BoundInstance } from 'ormojo'
 
+import defineObservableSymbol from 'observable-utils/lib/defineObservableSymbol'
+import map from 'observable-utils/lib/map'
+import memoize from 'observable-utils/lib/memoize'
+import filter from 'observable-utils/lib/filter'
+import toBehaviorSubject from 'observable-utils/lib/toBehaviorSubject'
+
 // ReduxInstances pull their dataValues from the Redux store.
 export default class ReduxInstance extends BoundInstance:
   constructor(boundModel, dataValues, metadata) ->
@@ -26,3 +32,16 @@ export default class ReduxInstance extends BoundInstance:
       now dvs = Object.assign({}, dvs, this._nextDataValues)
       if this.id and not dvs.id: dvs.id = this.id
     dvs
+
+defineObservableSymbol(ReduxInstance.prototype, ->
+  if not this._observable:
+    this._observable =
+      this.boundModel.store.component.byId
+      ~map( (entities) => if this.id: entities?[this.id] )
+      ~memoize(1)
+      ~filter( (memory) -> (memory.length == 1) || (memory[0] != memory[1]) )
+      ~map( => this )
+      ~toBehaviorSubject()
+
+  this._observable
+)
