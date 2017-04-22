@@ -63,6 +63,7 @@ export default class ReduxBoundModel extends BoundModel:
   constructor(model, backend, bindingOptions) ->
     super(model, backend, bindingOptions)
     this.store = new ReduxStore({corpus: this.corpus, equalityTest: this.spec.equalityTest})
+    this.component = this.store.component
     this.hydrator = new ReduxHydrator({boundModel: this})
 
   _deriveFields() ->
@@ -76,4 +77,4 @@ export default class ReduxBoundModel extends BoundModel:
   _deriveInstanceClass() ->
     return class extends ReduxInstance {}
 
-  getReduxComponent() -> this.store.component
+  getReduxComponent() -> this.component

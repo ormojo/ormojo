@@ -18,9 +18,8 @@ export default class ReduxInstance extends BoundInstance:
 
   get dataValues() {
     id = this.id
-    if not id: return null
-    // ugh
-    this.boundModel.store.component.getById(id)
+    if (id == null) || (id == undefined): return null
+    this.boundModel.component.getById(id)
   }
 
   _setDataValues() ->
@@ -36,7 +35,7 @@ export default class ReduxInstance extends BoundInstance:
 defineObservableSymbol(ReduxInstance.prototype, ->
   if not this._observable:
     this._observable =
-      this.boundModel.store.component.byId
+      this.boundModel.component.byId
       ~map( (entities) => if this.id: entities?[this.id] )
       ~memoize(1)
       ~filter( (memory) -> (memory.length == 1) || (memory[0] != memory[1]) )
