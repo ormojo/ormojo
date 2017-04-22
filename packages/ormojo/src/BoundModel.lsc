@@ -1,6 +1,6 @@
 import mergeOptions from 'merge-options'
 import Field from './Field'
-import { createStandardInstanceClassForBoundModel } from './StandardInstance'
+import BoundInstance from './BoundInstance'
 
 // A model bound to a backend or backends.
 export default class BoundModel:
@@ -14,10 +14,14 @@ export default class BoundModel:
     this.name = this.model.name
     // Construct spec from model spec + binding options
     this.spec = mergeOptions(this.model.spec, bindingOptions or {})
+    // Overridable initialization procedure
+    this.initialize()
+
+  // Perform initialization after the spec has been read.
+  initialize() ->
     this._deriveFields()
     this._deriveProperties()
-    this.initialize()
-    this._deriveInstanceClass()
+    this.instanceClass = this._deriveInstanceClass()
     this._deriveInstanceClassProperties()
 
   // Derive fields from spec.
@@ -31,37 +35,44 @@ export default class BoundModel:
   // Derive getters and setters from spec.
   // @private
   _deriveProperties() ->
-    this.getters = {}; this.setters = {}; this.instanceProps = {}
-
-    for key k, val field in this.fields:
-      this.getters[k] = field.get; this.setters[k] = field.set; this.instanceProps[k] = true
-
-    // Pure properties (getter/setter only)
-    for key k, val v in (this.spec.properties or {}):
-      if not v:
-        delete this.instanceProps[k]
-      else:
-        this.getters[k] = v.get; this.setters[k] = v.set; this.instanceProps[k] = true
-
-  // Perform initialization after the spec has been read.
-  initialize() ->
-    this.instanceClass = createStandardInstanceClassForBoundModel(this)
-
-  _deriveInstanceClass() -> {}
-
-  _deriveInstanceClassProperties() ->
+    // Statics
     for key name, val method in (this.spec.statics or {}):
       Object.defineProperty(this, name, {
         configurable: true, enumerable: false, writable: true
         value: method
       })
 
+  _deriveInstanceClass() ->
+    return class extends BoundInstance {}
+
+  _deriveInstanceClassProperties() ->
+    Object.defineProperty(this.instanceClass, 'name', {
+      writable: false, enumerable: false, configurable: true
+      value: `${this.name}Instance`
+    })
+
     for key name, val method in (this.spec.methods or {}):
       Object.defineProperty(this.instanceClass.prototype, name, {
-        configurable: true, enumerable: false, writable: true
+        configurable: true, enumerable: true, writable: true
         value: method
       })
 
+    for val field in this.fields: field.attach(this.instanceClass)
+
+    this.instanceProps = {}
+
+    for key k in this.fields: this.instanceProps[k] = true
+
+    // Pure properties (getter/setter only)
+    for key k, val v in (this.spec.properties or {}):
+      if not v:
+        delete this.instanceProps[k]
+      else:
+        descriptor = { enumerable: true, configurable: true }
+        if v.get: descriptor.get = v.get
+        if v.set: descriptor.set = v.set
+        Object.defineProperty(this.instanceClass.prototype, k, descriptor)
+        this.instanceProps[k] = true
 
   // Retrieves a hash of fields by name.
   //

@@ -7,7 +7,6 @@ import Instance from './Instance'
 import BoundInstance from './BoundInstance'
 import Migration from './Migration'
 import ResultSet from './ResultSet'
-import { createStandardInstanceClassForBoundModel, applyModelPropsToInstanceClass } from './StandardInstance'
 
 import Query from './store/Query'
 import Cursor from './store/Cursor'
@@ -39,7 +38,6 @@ export {
   Model, Corpus, Backend, BoundModel,
   Field, Instance, BoundInstance,
   Migration, ResultSet,
-  createStandardInstanceClassForBoundModel, applyModelPropsToInstanceClass,
   Query, Cursor, Hydrator, Store,
   getDelta
 }
@@ -48,7 +46,6 @@ const ormojo = {
   Model, Corpus, Backend, BoundModel
   Field, Instance, BoundInstance,
   Migration, ResultSet
-  createStandardInstanceClassForBoundModel, applyModelPropsToInstanceClass
   Query, Cursor, Hydrator, Store,
   getDelta,
   STRING, TEXT, BOOLEAN, INTEGER, FLOAT, OBJECT, ARRAY, DATE, ANY

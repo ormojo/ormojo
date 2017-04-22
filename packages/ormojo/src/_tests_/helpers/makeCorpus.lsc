@@ -28,18 +28,18 @@ export default makeCorpus() ->
       getter: {
         type: ormojo.STRING
         defaultValue: ''
-        get: (k) -> this.getDataValue(k) + ' getter'
+        get: -> this.getDataValue('getter') + ' getter'
       }
       setter: {
         type: ormojo.STRING
         defaultValue: ''
-        set: (k, v) -> this.setDataValue(k, v + ' setter')
+        set: (v) -> this.setDataValue('setter', v + ' setter')
       }
       getterAndSetter: {
         type: ormojo.STRING
         defaultValue: ''
-        get: (k) -> this.getDataValue(k) + ' getter'
-        set: (k, v) -> this.setDataValue(k, v + ' setter')
+        get: -> this.getDataValue('getterAndSetter') + ' getter'
+        set: (v) -> this.setDataValue('getterAndSetter', v + ' setter')
       }
     }
   })

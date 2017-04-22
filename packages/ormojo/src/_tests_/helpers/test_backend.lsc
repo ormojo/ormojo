@@ -1,5 +1,5 @@
 import cuid from 'cuid'
-import { Backend, BoundModel, createStandardInstanceClassForBoundModel, Store, Query, Hydrator, ResultSet } from '../..'
+import { Backend, BoundModel, Store, Query, Hydrator, ResultSet } from '../..'
 
 class TestStore extends Store:
   constructor(...args) ->
@@ -65,7 +65,6 @@ class TestBackend extends Backend:
   bindModel(model, bindingOptions) ->
     if not this.storage[model.name]: this.storage[model.name] = {}
     m = new TestBoundModel(model, this, bindingOptions)
-    m.instanceClass = createStandardInstanceClassForBoundModel(m)
     m
 
   createQuery() ->

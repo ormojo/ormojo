@@ -17,10 +17,10 @@ export default class Field:
     if name.substr(0, 1) == '_': throw new Error("Invalid field name `//{@name}`: cannot begin with _")
     if reservedWords[name]: throw new Error("Invalid field name `//{@name}`: reserved word")
     if not spec?.type: throw new Error("Invalid field spec for `//{@name}`: must specify a type")
-    this.type = this.spec.type
-    this.get = this.spec.get
-    this.set = this.spec.set
+
+    Object.assign(this, spec)
     this.defaulter = this.spec.defaultValue
+
     this
 
   // Copy another field object. Mainly useful for backend implementors deriving
@@ -43,3 +43,16 @@ export default class Field:
       if typeof(this.defaulter) == 'function': this.defaulter(instance) else: this.defaulter
     else:
       undefined
+
+  // Define properties for this field on the instance class prototype.
+  attach(clazz) ->
+    let k = this.name
+
+    if not this.raw:
+      Object.defineProperty(clazz.prototype, k, {
+        enumerable: true
+        configurable: true
+        get: this.get or (-> this.getDataValue(k))
+        set: this.set or ((v) -> this.setDataValue(k, v))
+      })
+    return

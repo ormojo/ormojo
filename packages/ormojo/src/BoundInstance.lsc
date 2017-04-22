@@ -7,9 +7,9 @@ import defineObservableSymbol from 'observable-utils/lib/defineObservableSymbol'
 // of essential functionality.
 export default class BoundInstance extends Instance:
   // @private
-  constructor(boundModel, dataValues = {}, metadata) ->
+  constructor(boundModel, dataValues, metadata) ->
     super(boundModel)
-    this.dataValues = dataValues
+    if dataValues != undefined: this.dataValues = dataValues
     this.setMetadata(metadata)
 
   // @see Instance//getDataValue
@@ -18,11 +18,11 @@ export default class BoundInstance extends Instance:
     if this._nextDataValues and (key in this._nextDataValues):
       this._nextDataValues[key]
     else:
-      this.dataValues[key]
+      this.dataValues?[key]
 
   // @see Instance//setDataValue
   setDataValue(key, value) ->
-    originalValue = this.dataValues[key]
+    originalValue = this.dataValues?[key]
     // If value is different or not comparable...
     if not isPrimitive(value) or (value != originalValue):
       // Create diff cache if needed...
@@ -40,8 +40,8 @@ export default class BoundInstance extends Instance:
 
   // Notify that data values are in sync with the most recent database call.
   _clearChanges() ->
-    delete this.isNewRecord
-    delete this._nextDataValues
+    this.isNewRecord = false
+    this._nextDataValues = null
 
   // Get raw data values as an immutable JS object. This represents the user's
   // DESIRED FUTURE STATE of the object, for persistence to the store.
@@ -74,13 +74,10 @@ export default class BoundInstance extends Instance:
     ////// istanbul ignore if //////
     if not this.boundModel: return
     if key != undefined:
-      // Get value for the given prop.
-      if (key in this.boundModel.instanceProps):
-        getter = this.boundModel.getters[key]
-        if getter: getter.call(this, key) else: this.getDataValue(key)
+      this[key]
     else:
       // Get all values.
-      ({ for key k in this.boundModel.instanceProps: (k, this.get(k)) })
+      ({ for key k in this.boundModel.instanceProps: (k, this[k]) })
 
   // @see Instance//set
   set(key, value) ->
@@ -88,15 +85,13 @@ export default class BoundInstance extends Instance:
     ////// istanbul ignore if //////
     if not this.boundModel: return
     if (value != undefined):
-      // Run single setter, if exists.
-      if key and (key in this.boundModel.instanceProps):
-        setter = this.boundModel.setters[key]
-        if setter: setter.call(this, key, value) else: this.setDataValue(key, value)
+      this[key] = value
+      return
     else:
       // Run setters for each key.
       for key k, val v in key:
         if k in this.boundModel.instanceProps:
-          this.set(k, v)
+          this[k] = v
 
   // @see Instance//changed
   changed(key) ->
