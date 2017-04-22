@@ -1,4 +1,4 @@
-import { BoundModel, createStandardInstanceClassForBoundModel } from 'ormojo'
+import { BoundModel } from 'ormojo'
 import ESField from './ESField'
 import esTypeMap from './esTypeMap'
 import ESStore from './store/Store'
@@ -14,7 +14,6 @@ export default class ESBoundModel extends BoundModel:
     if backend.indexPrefix and (not (bindingOptions?.indexIsRaw)):
       this.esIndex = backend.indexPrefix + this.esIndex
     this.esType = (this.spec.type).toLowerCase()
-    this.instanceClass = createStandardInstanceClassForBoundModel(this)
     this.store = new ESStore({
       corpus: this.corpus
       backend

@@ -3,6 +3,8 @@ import es_client from '../helpers/es_client'
 import makeCorpus from '../helpers/makeCorpus'
 
 describe('CRUD: ', ->
+  this.timeout(10000)
+
   it('should delete all indices from prior tests', ->
     es_client.indices.delete({
       index: ['widget_ormojo*', 'widget']
@@ -45,6 +47,8 @@ describe('CRUD: ', ->
     awidget.name = '12345'
     awidget.id = 12345
 
+    console.log(awidget)
+
     awidget.save()
     .then(->
       Widget.findById(12345)
@@ -80,7 +84,7 @@ describe('CRUD: ', ->
       expect(x).to.equal(undefined)
     )
   )
-  
+
   it('should manage field deltas properly', ->
     { Widget } = makeCorpus()
     Widget.create({name: 'name1', qty: 1})

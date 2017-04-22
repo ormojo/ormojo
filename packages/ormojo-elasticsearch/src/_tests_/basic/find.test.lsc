@@ -5,6 +5,8 @@ import makeCorpus from '../helpers/makeCorpus'
 import ESQ from 'esq'
 
 describe('find', ->
+  this.timeout(10000)
+
   it('should delete all indices from prior tests', ->
     es_client.indices.delete({
       index: ['widget_ormojo*', 'widget']

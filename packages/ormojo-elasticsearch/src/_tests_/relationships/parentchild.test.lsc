@@ -48,6 +48,8 @@ makeCorpus() ->
   { Widget: BWidget, Kidget: BKidget, corpus }
 
 describe('parent-child tests: ', ->
+  this.timeout(10000)
+
   it('should delete all indices from prior tests', ->
     es_client.indices.delete({
       index: 'widget_ormojo*'

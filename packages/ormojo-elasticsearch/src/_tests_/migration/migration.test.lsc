@@ -75,6 +75,8 @@ makeModel = (corpus, modified) ->
 
 
 describe('migration tests: ', ->
+  this.timeout(10000)
+  
   it('should delete all indices from prior tests', ->
     es_client.indices.delete({
       index: 'widget_ormojo*'
