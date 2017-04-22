@@ -1,6 +1,6 @@
 {
   "name": "ormojo-elasticsearch",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Elasticsearch driver for ormojo.",
   "main": "lib/index.js",
   "scripts": {
@@ -59,6 +59,6 @@
     "lodash": "^4.17.4",
     "deep-diff": "^0.3.4",
     "nanotools": "^0.1.4",
-    "ormojo": "^0.3.0"
+    "ormojo": "^0.3.1"
   }
 }

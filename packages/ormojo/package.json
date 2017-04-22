@@ -1,6 +1,6 @@
 {
   "name": "ormojo",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A multi-backend SQL/NoSQL ORM for node.js and the browser.",
   "main": "lib/index.js",
   "scripts": {
