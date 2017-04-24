@@ -15,7 +15,8 @@ class ReduxStore extends Store:
   crupsert(data, isCreate) ->
     this.corpus.Promise.resolve().then(=>
       for elem datum in data:
-        if (not datum) or (not datum.id): throw new Error("invalid create format")
+        if (not datum) or (datum.id == undefined) or (datum.id == null):
+          throw new Error("invalid create format")
         if isCreate and this.component.state[datum.id]: throw new Error("duplicate id")
 
       if isCreate: this.component.create(data) else: this.component.update(data)
