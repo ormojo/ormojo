@@ -7,7 +7,7 @@
     "prepublish": "npm run clean && npm run build",
     "clean": "rimraf lib build",
     "build:babel:base": "babel -x \".js\",\".lsc\"",
-    "build:babel:commonjs": "mkdirp lib && cross-env BABEL_ENV=commonjs npm run build:babel:base -- src --out-dir lib",
+    "build:babel:commonjs": "mkdirp lib && cross-env BABEL_ENV=commonjs NODE_ENV=production npm run build:babel:base -- src --out-dir lib",
     "build:babel:debug": "mkdirp lib && cross-env BABEL_ENV=commonjs npm run build:babel:base -- src --out-dir lib --source-maps",
     "build:babel:istanbul": "mkdirp build/coverage && cross-env BABEL_ENV=istanbul npm run build:babel:base -- src --out-dir build/coverage",
     "build": "npm run build:babel:commonjs",
