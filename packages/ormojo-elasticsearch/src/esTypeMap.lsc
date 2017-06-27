@@ -1,7 +1,7 @@
 import * as ormojo from 'ormojo'
 
 export default esTypeMap(orType) ->
-  let match
+  let mtch
   if orType == ormojo.STRING:
     ({ type: 'string' })
   else if orType == ormojo.TEXT:
@@ -16,7 +16,7 @@ export default esTypeMap(orType) ->
     ({ type: 'object' })
   else if orType == ormojo.DATE:
     ({ type: 'date', format: 'strict_date_optional_time||epoch_millis' })
-  else if (now match = /^ARRAY\((.*)\)$/.exec(orType)):
-    esTypeMap(match[1])
+  else if (now mtch = /^ARRAY\((.*)\)$/.exec(orType)):
+    esTypeMap(mtch[1])
   else:
     undefined

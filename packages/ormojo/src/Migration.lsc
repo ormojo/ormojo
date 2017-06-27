@@ -11,9 +11,9 @@ export default class Migration:
   //
   // @abstract
   // @return [Promise<undefined>] A `Promise` that resolves when preparation is complete.
-  prepare() ->
+  prepare() -> return
 
   // Returns a JSON object representing the migration plan. Backend-specific.
   //
   // @abstract
-  getMigrationPlan() ->
+  getMigrationPlan() -> return

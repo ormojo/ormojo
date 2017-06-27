@@ -11,7 +11,7 @@ export default class Backend:
   //## !pragma coverage-skip-next ###
 
   // Initialize a Backend that has been added to a Corpus.
-  initialize() -> {}
+  initialize() -> return
 
   //## !pragma coverage-skip-next ###
 

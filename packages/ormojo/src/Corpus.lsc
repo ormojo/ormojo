@@ -23,12 +23,12 @@ export default class Corpus:
       this.log = this.config.log
     else:
       this.log = {
-        trace: ->
-        debug: ->
-        info: ->
-        warn: ->
-        error: ->
-        fatal: ->
+        trace: -> return
+        debug: -> return
+        info: -> return
+        warn: -> return
+        error: -> return
+        fatal: -> return
       }
 
     this.models = {}
@@ -36,7 +36,7 @@ export default class Corpus:
     // Get backends
     for key k, val v in this.config.backends or {}:
       this.registerBackend(k, v)
-      
+
   // Create a model within this Corpus with the given spec.
   //
   // @param spec [Object] Specification object for the Model.

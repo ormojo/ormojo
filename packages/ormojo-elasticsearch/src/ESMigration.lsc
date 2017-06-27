@@ -6,10 +6,10 @@ import set from 'nanotools/lib/set'
 _getMigrationCounter(indexList) ->
   let maxn = 0
   for elem index in indexList:
-    match = /ormojo(\d+)$/.exec(index)
+    mtch = /ormojo(\d+)$/.exec(index)
     // Unmigrated indices in the alias = bailout.
-    if not match: return null
-    n = parseInt(match[1])
+    if not mtch: return null
+    n = parseInt(mtch[1])
     if n > maxn: now maxn = n
   maxn
 

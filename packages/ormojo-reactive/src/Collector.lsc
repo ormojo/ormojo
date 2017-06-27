@@ -10,7 +10,7 @@ export default class Collector extends Reducible:
 
   // The Updater is called every time the entities in the Collector's internal
   // store are changed. Use this opportunity to, e.g., sort the data.
-  updater() ->
+  updater() -> return
 
   // Implement Store interface
   has(id) -> id in this.byId
@@ -32,7 +32,7 @@ export default class Collector extends Reducible:
     store.getById(entity.id)
   ////// istanbul ignore next //////
   /* eslint-disable no-unused-vars */
-  willDeleteEntity(store, entity) ->
+  willDeleteEntity(store, entity) -> return
   /* eslint-enable no-unused-vars */
 
   _createAction(store, entity) ->

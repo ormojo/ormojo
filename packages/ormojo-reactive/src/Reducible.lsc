@@ -6,7 +6,7 @@ import defineObservableSymbol from 'observable-utils/lib/defineObservableSymbol'
 // the following standard shape (pattered on Flux Standard Actions):
 //
 // {
-//		type: <String>
+//   type: <String>
 //   payload: <Value>
 //   meta: <Object>
 // }

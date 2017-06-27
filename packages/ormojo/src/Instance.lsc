@@ -120,4 +120,4 @@ export default class Instance:
   _setDataValues(dataValues) -> this.dataValues = dataValues
 
   // Merge raw data values from a JS object.
-  _mergeDataValues(source) ->
+  _mergeDataValues(source) -> return

@@ -63,4 +63,4 @@ export default class ResultSet:
   // Hydrate raw results.
   _hydrateResults(hydrator, instances) ->
     for idx i, elem result in this.results:
-      this.results[i] = hydrator.didRead((if instances: instances[i] else: null), result)
+      this.results[i] = hydrator.didRead((if instances: instances[i]), result)
