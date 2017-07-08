@@ -34,8 +34,9 @@ export default class Hydrator:
   // Given raw data from the store after a successful update, modify the
   // Instance appropriately.
   didUpdate(instance, data) ->
-    instance._setDataValues(data)
-    instance._clearChanges()
+    if data != null and data != undefined:
+      instance._setDataValues(data)
+      instance._clearChanges()
     instance
 
   // Given an instance, return raw data that the Store can use to delete the
