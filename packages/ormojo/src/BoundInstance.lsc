@@ -104,12 +104,12 @@ export default class BoundInstance extends Instance:
       if changes.length > 0: changes else: false
 
   // @see Instance//save
-  save() ->
-    this.boundModel.save(this)
+  save(opts) ->
+    this.boundModel.save(this, opts)
 
   // @see Instance//destroy
-  destroy() ->
-    this.boundModel.destroy(this)
+  destroy(opts) ->
+    this.boundModel.destroy(this, opts)
 
 // Observability for BoundInstances
 defineObservableSymbol(BoundInstance.prototype, ->

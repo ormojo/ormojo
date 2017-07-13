@@ -116,22 +116,22 @@ export default class BoundModel:
   //
   // @return [Promise<Instance>] A `Promise` whose fate is settled depending on the performance of the save operation.
   // If the save operation succeeds, it should resolve with the updated Instance.
-  save(instance) ->
+  save(instance, opts) ->
     if instance.isNewRecord:
-      this.put(instance, true)
+      this.put(instance, true, opts)
     else:
-      this.put(instance, false)
+      this.put(instance, false, opts)
 
   // Attempt to persist the given Instance to the backing store.
   //
   // @param instance [Instance] Raw data for the instance.
   // @return [Promise<Instance>] A `Promise` of the instance
-  put(instance, shouldCreate = true) ->
+  put(instance, shouldCreate = true, opts) ->
     if shouldCreate:
-      this.store.create([ this.hydrator.willCreate(instance) ])
+      this.store.create([ this.hydrator.willCreate(instance) ], opts)
       .then(createdData => this.hydrator.didCreate(instance, createdData[0]))
     else:
-      this.store.update([ this.hydrator.willUpdate(instance) ])
+      this.store.update([ this.hydrator.willUpdate(instance) ], opts)
       .then(updatedData => this.hydrator.didUpdate(instance, updatedData[0]))
 
   // Invoked to destroy an object from persistent storage by id.
@@ -152,8 +152,8 @@ export default class BoundModel:
   // @param instance [Instance] The `Instance` to be deleted
   //
   // @return [Promise<Boolean>] A `Promise` whose fate is settled depending on the performance of the operation, and whose value is true if an instance existed and was deleted, or false otherwise.
-  destroy(instance) ->
-    this.store.delete([ this.hydrator.willDelete(instance) ])
+  destroy(instance, opts) ->
+    this.store.delete([ this.hydrator.willDelete(instance) ], opts)
     .then( rst =>
       if rst?[0]: this.hydrator.didDelete(instance) else: instance
     )

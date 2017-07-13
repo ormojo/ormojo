@@ -94,8 +94,9 @@ export default class Instance:
   // Persist this instance to the backend.
   //
   // @abstract
+  // @param opts [Object] Backend-specific options pertinent to the request.
   // @return [Promise<Instance>] A `Promise` that resolves to this instance after the save operation completes. The Promise rejects on a database error.
-  save() ->
+  save(opts) ->
     this.boundModel.corpus.Promise.reject(new Error('ormojo: `save` called on abstract instance'))
 
   ////// istanbul ignore next //////
@@ -103,8 +104,9 @@ export default class Instance:
   // Destroy the corresponding instance in the backend.
   //
   // @abstract
+  // @param opts [Object] Backend-specific options pertinent to the request.
   // @return [Promise<bool>] A `Promise` that resolves to `true` if the object is deleted or `false` otherwise. The Promise rejects on a database error.
-  destroy() ->
+  destroy(opts) ->
     this.boundModel.corpus.Promise.reject(new Error('ormojo: `destroy` called on abstract instance'))
 
   ////// istanbul ignore next //////
