@@ -1,0 +1,14 @@
+{
+  "parser": "@oigroup/lightscript-eslint",
+  "parserOptions": {
+    "sourceType": "module"
+  },
+  "env": {
+    "jest": true,
+    "node": true
+  },
+  "extends": "eslint:recommended",
+  "rules": {
+    "no-unexpected-multiline": 0
+  }
+}

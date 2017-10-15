@@ -1,0 +1,63 @@
+'use @oigroup/lightscript with flippedImports'
+
+import '@ormojo/ephraim': {
+  entity, field, types, trackDelta, deltaKeys, delta, flushDelta, typeOf, typeFrom
+}
+
+@entity() class E:
+  @field() anyField
+
+@entity() class D extends E:
+  @field(types.string) strField
+
+test! "declared field", ->
+  e = new E
+
+  e.anyField = 3
+  expect(e.hasOwnProperty("anyField")).toBeFalsy()
+  expect(e.__data.anyField).toBe(3)
+  expect(e.anyField).toBe(3)
+
+test! "delta", ->
+  d = new D
+  d~trackDelta!
+
+  expect(d~deltaKeys!).toEqual([])
+  expect(d~delta!).toEqual({})
+
+  d.anyField = 3
+  expect(d.__data.anyField).toBe(undefined)
+  expect(d.anyField).toBe(3)
+  expect(d~deltaKeys!).toEqual(['anyField'])
+  expect(d~delta!).toEqual({'anyField': 3})
+
+  d.strField = "hi"
+  expect(d~deltaKeys!).toEqual(['anyField', 'strField'])
+  expect(d~delta!).toEqual({'anyField': 3, 'strField': "hi"})
+
+  d~flushDelta!
+  expect(d~deltaKeys!).toEqual([])
+
+test! "typeOf.construct", ->
+  d = typeFrom(D).construct()
+  expect(typeOf(d)).toBe(D)
+
+test! "subentity", ->
+  @entity() class S extends D:
+    @field(types.string) stir
+    @field(E) subE
+
+  s = new S()
+  expect(s.subE).toBe(undefined)
+
+  e = new E()
+  s.subE = e
+  expect(e.__entityParent).toBe(s)
+  s.subE = null
+  expect(e.__entityParent).toBe(undefined)
+
+  s.subE = e
+  s.subE.anyField = 31337
+  s.stir = "fry"
+  expect(e.anyField).toBe(31337)
+  expect(s.subE.anyField).toBe(31337)

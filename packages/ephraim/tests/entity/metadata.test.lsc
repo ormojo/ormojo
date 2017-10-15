@@ -1,0 +1,69 @@
+'use @oigroup/lightscript with flippedImports'
+
+import '@ormojo/ephraim': {
+  entity, field, types
+  declaredFields, fieldKeys, flexFieldKeys
+  hasDeclaredField
+}
+
+@entity() class E:
+  @field() anyField
+
+@entity() class D extends E:
+  @field(types.string) strField
+
+test! "fields by class", ->
+  expect! E~declaredFields()['anyField']
+    .toBeTruthy!
+
+  expect! D~declaredFields()['strField']
+    .toBeTruthy!
+
+  expect! E~fieldKeys()
+    .toEqual(['anyField'])
+
+  expect! D~fieldKeys()
+    .toEqual(['anyField', 'strField'])
+
+  expect! D~declaredFields()['nope']
+    .toBeFalsy!
+
+  expect! D~hasDeclaredField('nope')
+    .toBeFalsy!
+
+  expect! D~hasDeclaredField('strField')
+    .toBeTruthy!
+
+
+test! "fields by instance", ->
+  e = new E
+  d = new D
+
+  expect! e~declaredFields()['anyField']
+    .toBeTruthy!
+
+  expect! d~declaredFields()['strField']
+    .toBeTruthy!
+
+  expect! e~fieldKeys()
+    .toEqual(['anyField'])
+
+  expect! d~fieldKeys()
+    .toEqual(['anyField', 'strField'])
+
+test! "no flex fields on classes", ->
+  expect!
+    -> E~flexFieldKeys!
+    .toThrow! "flexFieldKeys is illegal on entity constructors"
+
+test! "flex fields", ->
+  d = new D
+
+  expect! d~flexFieldKeys!
+    .toEqual([])
+
+  d.flexField = 3
+
+  expect! d~flexFieldKeys!
+    .toEqual(['flexField'])
+
