@@ -1,0 +1,59 @@
+import isPrimitive from 'nanotools/lib/isPrimitive'
+
+export default class Entity:
+  constructor(dataValues, metadata) ->
+    if dataValues != undefined: this.dataValues = dataValues
+    this.setMetadata(metadata)
+
+  getDataValue(key) ->
+    // _nextDataValues holds optimistic updates to the instance. Query it first; fallback to dataValues.
+    if this._nextDataValues and (key in this._nextDataValues):
+      this._nextDataValues[key]
+    else:
+      this.dataValues?[key]
+
+  setDataValue(key, value) ->
+    originalValue = this.dataValues?[key]
+    // If value is different or not comparable...
+    if not isPrimitive(value) or (value != originalValue):
+      // Create diff cache if needed...
+      if not this._nextDataValues: this._nextDataValues = Object.create(null)
+      // Add key to diff cache
+      this._nextDataValues[key] = value
+      // Notify wasUpdated
+      this._wasUpdated()
+    undefined
+
+  // @see Instance//get
+  get(key) ->
+    // Some libraries call this on the Prototype; early out in that case.
+    ////// istanbul ignore if //////
+    if not this.boundModel: return
+    if key != undefined:
+      this[key]
+    else:
+      // Get all values.
+      ({ for key k in this.fields: (k, this[k]) })
+
+  // @see Instance//set
+  set(key, value) ->
+    // Some libraries call this on the Prototype; early out in that case.
+    ////// istanbul ignore if //////
+    if not this.boundModel: return
+    if (value != undefined):
+      this[key] = value
+      return
+    else:
+      // Run setters for each key.
+      for key k, val v in key: this[k] = v
+
+  // Determine if the given field changed, or return a list of all changed
+  // fields
+  changed(key) ->
+    if key != undefined:
+      (this._nextDataValues and (key in this._nextDataValues))
+    else:
+      if not this._nextDataValues: return false
+      //changes = (key for key of @dataValues when (key of @_nextDataValues))
+      changes = [for key k in this._nextDataValues: k]
+      if changes.length > 0: changes else: false

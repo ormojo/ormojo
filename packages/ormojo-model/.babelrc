@@ -1,0 +1,17 @@
+{
+  "plugins": [
+    ["transform-runtime"]
+  ],
+  "presets": [
+    [
+      "@oigroup/babel-preset-lightscript",
+      {
+        "env": {
+          "targets": {
+            "ie": 10
+          }
+        }
+      }
+    ]
+  ]
+}
