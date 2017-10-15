@@ -1,13 +1,16 @@
 {
   "name": "ormojo-elasticsearch",
-  "version": "0.2.0",
+  "version": "0.3.1",
   "description": "Elasticsearch driver for ormojo.",
   "main": "lib/index.js",
+  "files": [
+    "lib"
+  ],
   "scripts": {
     "prepublish": "npm run clean && npm run build",
     "clean": "rimraf lib build",
     "build:babel:base": "babel -x \".js\",\".lsc\"",
-    "build:babel:commonjs": "mkdirp lib && cross-env BABEL_ENV=commonjs npm run build:babel:base -- src --out-dir lib",
+    "build:babel:commonjs": "mkdirp lib && cross-env BABEL_ENV=commonjs NODE_ENV=production npm run build:babel:base -- src --out-dir lib",
     "build:babel:debug": "mkdirp lib && cross-env BABEL_ENV=commonjs npm run build:babel:base -- src --out-dir lib --source-maps",
     "build:babel:istanbul": "mkdirp build/coverage && cross-env BABEL_ENV=istanbul npm run build:babel:base -- src --out-dir build/coverage",
     "build": "npm run build:babel:commonjs",
@@ -37,14 +40,11 @@
   },
   "homepage": "https://github.com/ormojo/ormojo",
   "devDependencies": {
-    "@oigroup/babel-plugin-lightscript": "^0.5.0",
-    "@oigroup/lightscript-eslint": "^0.5.0",
-    "babel-cli": "^6.23.0",
-    "babel-preset-env": "^1.2.2",
-    "babel-plugin-istanbul": "^4.1.1",
+    "@oigroup/babel-preset-lightscript": "^2.1.1",
+    "@oigroup/lightscript-eslint": "^2.1.1",
+    "babel-cli": "^6.24.1",
+    "babel-plugin-istanbul": "^4.1.4",
     "babel-plugin-transform-runtime": "^6.23.0",
-    "babel-plugin-transform-class-properties": "^6.23.0",
-    "babel-plugin-transform-decorators-legacy": "^1.3.4",
     "chai": "^3.5.0",
     "cross-env": "^3.1.3",
     "elasticsearch": "^11.0.1",
@@ -56,9 +56,11 @@
     "blackbird-promises": "^0.0.1"
   },
   "dependencies": {
+    "babel-runtime": "^6.23.0",
+    "@oigroup/lightscript-runtime": "^0.1.1",
     "lodash": "^4.17.4",
-    "deep-diff": "^0.3.4",
-    "nanotools": "^0.1.0",
-    "ormojo": "^0.2.0"
+    "deep-diff": "^0.3.8",
+    "nanotools": "^0.1.8",
+    "ormojo": "^0.3.1"
   }
 }
