@@ -1,10 +1,10 @@
 {
-  "lerna": "2.0.0-beta.38",
+  "lerna": "2.0.0",
   "hoist": true,
   "packages": [
-    "packages/*",
-    "submodules/toolbelt/packages/*",
-    "submodules/redux-components/packages/*"
+    "ormojo",
+    "ephraim/ephraim",
+    "ephraim/ephraim-memory"
   ],
   "version": "independent"
 }
