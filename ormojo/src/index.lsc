@@ -1,6 +1,0 @@
-import { transformType } from './transformType'
-
-export { transformType }
-
-export create(T) ->
-  transformType(T).construct()
