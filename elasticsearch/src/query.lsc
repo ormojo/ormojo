@@ -1,0 +1,50 @@
+import { Query, Cursor, ResultSet } from '@ormojo/ormojo'
+
+export class ESQuery extends Query:
+  constructor() ->
+    super()
+
+  setQueryDsl(body) ->
+    this.body = body
+    this
+
+  setLimit(limit) ->
+    this.limit = limit
+    this
+
+  setCursor(cursor) ->
+    this.body = cursor.query?.getQueryDsl()
+    this.offset = cursor.offset
+    this.limit = cursor.limit
+    this
+
+  // Get Elasticsearch Query DSL JSON for this query.
+  getQueryDsl() ->
+    this.body
+
+export class ESCursor extends Cursor:
+  constructor(query) ->
+    super()
+    this.query = query
+
+  setFromOffset(offset, limit, total) ->
+    this.offset = offset
+    this.limit = limit
+    this.total = total
+    this
+
+export class ESResultSet extends ResultSet:
+  constructor(data, total, offset, originalQuery, maxScore = 0) ->
+    super()
+    this.maxScore = maxScore
+    this.results = data or []
+    this.total = total or this.results.length
+    nextOffset = (offset or 0) + this.results.length
+    if nextOffset < this.total:
+      this.cursor = new Cursor(originalQuery).setFromOffset(nextOffset, this.results.length, this.total)
+
+  getTotalResultCount() -> this.total
+
+  getCursor() -> this.cursor
+
+  getMaxScore() -> this.maxScore

@@ -1,0 +1,14 @@
+import { field, entity, listOf, toPlainObject } from '@ormojo/ephraim'
+import { create } from '@ormojo/ephraim-memory'
+
+test! "basic list", ->
+  @entity() class A:
+    @field() a
+
+  listOfA = create(listOf(A))
+
+  listOfA.push(create(A))
+
+  debugger
+  console.log(listOfA~toPlainObject!)
+

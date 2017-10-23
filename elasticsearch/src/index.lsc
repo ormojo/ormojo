@@ -1,0 +1,44 @@
+// Represents an index in Elasticsearch.
+export class ESIndex:
+  constructor(backend, name) ->
+    this.backend = backend
+    this.name = name
+    this.boundModels = []
+    this.types = {}
+
+  addBoundModel(bm) ->
+    this.types[bm.getDefaultType()] = bm
+    this.boundModels.push(bm)
+
+  _deleteIndex() ->
+    this.backend.es.indices.delete({index: this.name})
+
+  ////////////////////////////////////////////////////////////////// MAPPING
+  generateMappings() ->
+    mappings = {}
+    for key type, val boundModel in this.types:
+      mappings[type] = boundModel.generateMapping()
+    mappings
+
+  generateAnalysis() ->
+    analysis = { }
+    for val boundModel in this.types:
+      props = boundModel.generateAnalysisProps()
+      if props.analyzer: analysis.analyzer = Object.assign(analysis.analyzer or {}, props.analyzer)
+      if props.filter: analysis.filter = Object.assign(analysis.filter or {}, props.filter)
+    analysis
+
+// Represents the collection of indices associated with a backend.
+export class ESIndices:
+  constructor(backend) ->
+    this.backend = backend
+    this.indices = {}
+
+  addBoundModel(bm) ->
+    indexName = bm.getIndex()
+    if not this.indices[indexName]:
+      this.indices[indexName] = new ESIndex(this.backend, indexName)
+    this.indices[indexName].addBoundModel(bm)
+
+  getIndices() ->
+    this.indices

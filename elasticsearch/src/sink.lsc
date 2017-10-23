@@ -1,0 +1,93 @@
+import { AsyncSink, SinkEntityAdapter } from '@ormojo/ormojo'
+
+export class ESSink extends AsyncSink:
+  constructor(opts) ->
+    super(opts)
+    this.api = opts.api
+
+  createOne(data) ->
+    // Store dataValues that we used to create the instance.
+    createdValues = data.data
+    this.api.create(data.index, data.type, data.data, data.id, data.parent)
+    .then((res) ->
+      // Elasticsearch does not return the new values; pull them from the original doc.
+      res._source = createdValues
+      res
+    )
+
+  updateOne(data) ->
+    if not data:
+      Promise.resolve(null)
+    else:
+      updateData = data.data
+      this.api.update(data.index, data.type, data.id, updateData, data.parent)
+      .then((res) ->
+        // Return the delta-values we updated with...
+        res._source = updateData
+        res
+      )
+
+  crupsert(data, isCreate) ->
+    // XXX: use Bulk API here.
+    promises = [for elem datum in data:
+      if not datum: throw new Error("invalid create format")
+      if isCreate: this.createOne(datum) else: this.updateOne(datum)
+    ]
+    Promise.all(promises)
+
+  create(data) ->
+    this.crupsert(data, true)
+
+  update(data) ->
+    promises = [for elem datum in data: this.updateOne(datum)]
+    Promise.all(promises)
+
+  upsert(data) ->
+    this.crupsert(data, false)
+
+  delete(data) ->
+    // XXX: bulk api
+    promises = [for elem datum in data:
+      if datum?.id:
+        // Destroy given full object spec.
+        this.api.destroy(datum.index, datum.type, datum.id, datum.parent)
+      else:
+        // XXX: nope, require index/type passdown.
+        // Destroy given only ID.
+        this.api.destroy(this.defaultIndex, this.defaultType, datum)
+    ]
+    Promise.all(promises)
+
+// Move between Elasticsearch Json API and Ephraim instances.
+export class ESSinkEntityAdapter extends SinkEntityAdapter:
+  // Get ES API data for an instance.
+  getDataForInstance(instance, dvs) ->
+    rst = {
+      index: instance._index or this.boundModel.getIndex()
+      type: instance._type or this.boundModel.getDefaultType()
+      data: dvs or instance._getDataValues()
+    }
+    if instance._parent: rst.parent = instance._parent
+    if instance.id: rst.id = instance.id
+    rst
+
+  willCreate(instance) ->
+    this.getDataForInstance(instance)
+
+  didCreate(instance, data) ->
+    this.updateInstanceWithData(instance, data)
+
+  willUpdate(instance) ->
+    delta = getDelta(instance)
+    if not delta: return undefined
+    this.getDataForInstance(instance, delta)
+
+  didUpdate(instance, deltaData) ->
+    // The underlying Store returns the delta sent to Elasticsearch as the _source field.
+    instance._mergeDataValues(deltaData._source)
+    // Re-apply the post-merge data values
+    deltaData._source = instance.dataValues
+    this.updateInstanceWithData(instance, deltaData)
+
+  willDelete(instance) ->
+    this.getDataForInstance(instance)

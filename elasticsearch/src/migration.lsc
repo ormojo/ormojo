@@ -1,0 +1,188 @@
+import { Migration } from 'ormojo'
+import lodash from 'lodash'
+import deepDiff from 'deep-diff'
+import set from 'nanotools/lib/set'
+
+_getMigrationCounter(indexList) ->
+  let maxn = 0
+  for elem index in indexList:
+    mtch = /ormojo(\d+)$/.exec(index)
+    // Unmigrated indices in the alias = bailout.
+    if not mtch: return null
+    n = parseInt(mtch[1])
+    if n > maxn: now maxn = n
+  maxn
+
+//
+// Migration plan for a specific index. Determines if the index can
+// be migrated and how.
+//
+class MigrationPlan:
+  constructor(backend, index) ->
+    this.backend = backend
+    this.index = index
+    this.targetSettings = {
+      mappings: this.index.generateMappings()
+      settings: {
+        analysis: this.index.generateAnalysis()
+      }
+    }
+
+  getTargetSettings() -> this.targetSettings
+
+  prepare() ->
+    this.getIndex()
+    .then(=> this.finalChecks())
+
+  getIndex() ->
+    this.indexStatus = 'UNKNOWN'
+    this.backend.es.indices.get({
+      index: this.index.name
+      ignore: [404]
+    })
+    .then((result) =>
+      this.backend.corpus.log.trace('es.indices.get <', JSON.stringify(result, undefined, 2))
+      // Check for missing index.
+      if result.error:
+        if result.status == 404: this.indexStatus = 'DOESNT_EXIST'
+        return
+      // Check for unaliased index which can't be migrated
+      if result[this.index.name]:
+        this.indexStatus = 'NOT_ALIASED'
+        return
+      // Check for highest-numbered automigrated index
+      matchingIndices = [for key k in result: k]
+      n = _getMigrationCounter(matchingIndices)
+      if n == null:
+        this.indexStatus = 'NOT_MIGRATED'
+        return
+      else:
+        this.indexStatus = 'AUTOMIGRATED'
+        this.migrationCounter = n
+        this.mostRecentIndex = `${this.index.name}_ormojo${n}`
+      // Get details of most recent index
+      details = result[this.mostRecentIndex]
+      this.currentSettings = {
+        mappings: details.mappings
+        settings: {
+          analysis: details.settings?.index?.analysis or {}
+        }
+      }
+    )
+
+  finalChecks() ->
+    this.migrationDiff = deepDiff.diff(this.currentSettings, this.targetSettings)
+    // Elasticsearch annoyingly stringifies numbers. We must do the same.
+    for elem difference in this.migrationDiff:
+      if difference.kind == 'E' and (JSON.stringify(difference.rhs) == difference.lhs):
+        set(this.targetSettings, difference.path, difference.lhs)
+    // If mappings are the same, migration is unnecessary.
+    if lodash.isEqual(this.currentSettings, this.targetSettings):
+      this.migrationStrategy = 'NOT_NEEDED'
+      return
+    else:
+      this.migrationDiff = deepDiff.diff(this.currentSettings, this.targetSettings)
+      this.backend.corpus.log.trace('migration diff', JSON.stringify(this.migrationDiff, undefined, 2))
+    // Determine a migration strategy.
+    this.migrationStrategy = 'CANT_MIGRATE'
+    if this.indexStatus == 'UNKNOWN' or this.indexStatus == 'NOT_ALIASED' or this.indexStatus == 'NOT_MIGRATED':
+      this.reason = 'Index cannot be automigrated.'
+    else if this.indexStatus == 'DOESNT_EXIST':
+      this.migrationStrategy = 'CREATE'
+    else if this.indexStatus == 'AUTOMIGRATED':
+      this.migrationStrategy = 'REINDEX'
+
+  executeCreateStrategy() ->
+    if this.migrationStrategy != 'CREATE': throw new Error('executeCreateStrategy() called in invalid state')
+    aliases = {}
+    aliases[this.index.name] = {}
+    body = Object.assign({}, this.targetSettings, { aliases })
+    this.backend.corpus.log.trace('es.indices.create >', JSON.stringify(body, undefined, 2))
+    this.backend.corpus.Promise.resolve(
+      this.backend.es.indices.create({
+        index: `${this.index.name}_ormojo1`
+        body
+      })
+    )
+    .then((result) =>
+      this.backend.corpus.log.trace('es.indices.create <', result)
+      result
+    )
+
+  executeReindexStrategy() ->
+    if this.migrationStrategy != 'REINDEX': throw new Error('executeReindexStrategy() called in invalid state')
+    prevIndex = `${this.index.name}_ormojo${this.migrationCounter}`
+    nextIndex = `${this.index.name}_ormojo${this.migrationCounter + 1}`
+    alias = `${this.index.name}`
+    this.backend.corpus.log.trace('es.indices.create >', this.targetSettings)
+    this.backend.corpus.Promise.resolve(
+      this.backend.es.indices.create({
+        index: nextIndex
+        body: this.targetSettings
+      })
+    )
+    .then((result) =>
+      this.backend.corpus.log.trace('es.indices.create <', result)
+      this.backend.corpus.log.trace('es.indices.flush >')
+      this.backend.es.indices.flush({ index: prevIndex })
+    ).then((result) =>
+      this.backend.corpus.log.trace('es.indices.flush <', result)
+      this.backend.corpus.log.trace('es.reindex >')
+      this.backend.es.reindex({
+        refresh: true
+        waitForCompletion: true
+        body: {
+          source: { index: prevIndex }
+          dest: { index: nextIndex }
+        }
+      })
+    ).then((result) =>
+      this.backend.corpus.log.trace('es.reindex <', result)
+      this.backend.corpus.log.trace('es.updateAliases >')
+      this.backend.es.indices.updateAliases({
+        body: {
+          actions: [
+            { remove: { index: prevIndex, alias } }
+            { add: { index: nextIndex, alias} }
+          ]
+        }
+      })
+    ).then((result) =>
+      this.backend.corpus.log.trace('es.updateAliases <', result)
+    )
+
+  execute() ->
+    if this.migrationStrategy == 'REINDEX':
+      this.executeReindexStrategy()
+    else if this.migrationStrategy == 'CREATE':
+      this.executeCreateStrategy()
+    else if (not this.migrationStrategy):
+      this.backend.corpus.Promise.reject(new Error('unprepared MigrationPlan'))
+    else:
+      this.backend.corpus.Promise.resolve()
+
+export class ESMigration extends Migration:
+  constructor(corpus, backend) ->
+    super(corpus, backend)
+    this.plans = {}
+    for key name, val index in this.backend.indices.getIndices():
+      this.plans[name] = new MigrationPlan(backend, index)
+
+  prepare() ->
+    // Develop a migration plan for each index.
+    promises = [for val plan in this.plans: plan.prepare()]
+    this.corpus.Promise.all(promises)
+
+  getMigrationPlan() ->
+    [for val plan in this.plans:
+      ({
+        strategy: plan.migrationStrategy
+        index: plan.index.name
+        currentSettings: plan.currentSettings
+        targetSettings: plan.targetSettings
+      })
+    ]
+
+  execute() ->
+    promises = [for val plan in this.plans: plan.execute()]
+    this.corpus.Promise.all(promises)
