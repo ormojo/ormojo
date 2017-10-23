@@ -1,6 +1,6 @@
 // Abstract representation of a database migration.
 // @abstract
-export default class Migration:
+export class Migration:
   // Construct a Migration associated with the given `Corpus` and `Backend`.
   constructor(corpus, backend) ->
     this.corpus = corpus
@@ -11,9 +11,9 @@ export default class Migration:
   //
   // @abstract
   // @return [Promise<undefined>] A `Promise` that resolves when preparation is complete.
-  prepare() ->
+  prepare() -> return
 
   // Returns a JSON object representing the migration plan. Backend-specific.
   //
   // @abstract
-  getMigrationPlan() ->
+  getMigrationPlan() -> return

@@ -1,25 +1,6 @@
-import BoundModel from './BoundModel'
+import { Model } from './model'
 
-// Driver that intermediates between the ormojo API and some underlying data layer.
-export default class Backend:
-  // @private
-  _initialize(corpus, name) ->
-    this.corpus = corpus
-    this.name = name
-    this.initialize()
-
-  //## !pragma coverage-skip-next ###
-
-  // Initialize a Backend that has been added to a Corpus.
-  initialize() -> {}
-
-  //## !pragma coverage-skip-next ###
-
-  // Invoked when a model is being bound to this backend.
-  // Errors thrown from this method indicate that a Model is incompatible with this
-  // particular backend.
-  //
-  // @abstract
-  // @param [Model] model The model to bind to this backend.
-  bindModel(model, bindingOptions) ->
-    new BoundModel(model, this, bindingOptions)
+// Backend
+export class Backend {
+  registerModel(name: string, m: Model) -> return
+}

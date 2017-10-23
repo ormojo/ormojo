@@ -1,73 +1,7 @@
-import mergeOptions from 'merge-options'
-import Field from './Field'
-import { createStandardInstanceClassForBoundModel } from './StandardInstance'
 
-// A model bound to a backend or backends.
-export default class BoundModel:
-  // Should only be called by Backend.bindModel
-  // @private
-  constructor(model, backend, bindingOptions) ->
-    this.model = model
-    this.backend = backend
-    // Basic demographics
-    this.corpus = this.model.corpus
-    this.name = this.model.name
-    // Construct spec from model spec + binding options
-    this.spec = mergeOptions(this.model.spec, bindingOptions or {})
-    this._deriveFields()
-    this._deriveProperties()
-    this.initialize()
-    this._deriveInstanceClass()
-    this._deriveInstanceClassProperties()
-
-  // Derive fields from spec.
-  // @private
-  _deriveFields() ->
-    this.fields = {}
-    for key k, val fieldSpec in this.spec.fields:
-      f = new Field().fromSpec(k, fieldSpec)
-      this.fields[k] = f
-
-  // Derive getters and setters from spec.
-  // @private
-  _deriveProperties() ->
-    this.getters = {}; this.setters = {}; this.instanceProps = {}
-
-    for key k, val field in this.fields:
-      this.getters[k] = field.get; this.setters[k] = field.set; this.instanceProps[k] = true
-
-    // Pure properties (getter/setter only)
-    for key k, val v in (this.spec.properties or {}):
-      if not v:
-        delete this.instanceProps[k]
-      else:
-        this.getters[k] = v.get; this.setters[k] = v.set; this.instanceProps[k] = true
-
-  // Perform initialization after the spec has been read.
-  initialize() ->
-    this.instanceClass = createStandardInstanceClassForBoundModel(this)
-
-  _deriveInstanceClass() -> {}
-
-  _deriveInstanceClassProperties() ->
-    for key name, val method in (this.spec.statics or {}):
-      Object.defineProperty(this, name, {
-        configurable: true, enumerable: false, writable: true
-        value: method
-      })
-
-    for key name, val method in (this.spec.methods or {}):
-      Object.defineProperty(this.instanceClass.prototype, name, {
-        configurable: true, enumerable: false, writable: true
-        value: method
-      })
-
-
-  // Retrieves a hash of fields by name.
-  //
-  // @return [Object<String, Field>] An Object whose keys are the names of the respective fields, with values the corresponding `Field` objects.
-  getFields() -> this.fields
-
+// A Model combines a Store with an EntityAdapter, allowing queries to return
+// collections of entities
+export class Model:
   // Create a query targeted at this boundModel.
   createQuery() -> this.store.createQuery()
 
