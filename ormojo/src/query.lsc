@@ -1,0 +1,128 @@
+//
+// Object representing a declarative request for particular information from a store
+//
+export class Query {
+  ////// istanbul ignore next //////
+
+  // Determine if this query is equal to another query.
+  // @param otherQuery [Query] The query to test against.
+  isEqual(otherQuery) -> false
+
+  ////// istanbul ignore next //////
+
+  // Determine if this query is a narrowing of another query.
+  // A narrowing is a query that would have a set of results that is a subset of
+  // the other query's results, had they been run at the same time.
+  isNarrowingOf(otherQuery) -> false
+
+  ////// istanbul ignore next //////
+
+  // Resume this query from the given Cursor.
+  resumeFrom(cursor) -> this
+
+  ////// istanbul ignore next //////
+
+  // Identify specific instances to be retrieved by id or primary key.
+  byId(id) ->
+    if Array.isArray(id): this.ids = id else: this.ids = [id]
+    this
+
+  ////// istanbul ignore next //////
+
+  // Request the backend to limit the number of results it returns.
+  setLimit(limit) ->
+    this.limit = limit
+    this
+}
+
+// Collection of results from a query that may return multiple results.
+// @abstract
+export class ResultSet {
+  constructor(results) ->
+    this.results = results
+
+  ////// istanbul ignore next //////
+
+  // Determine if this result set is empty.
+  //
+  // @return [Boolean] `true` if empty.
+  isEmpty() -> (this.getResultCount() == 0)
+
+  ////// istanbul ignore next //////
+
+  // Retrieve the number of results in this set.
+  //
+  // @return [Number] The count of results.
+  getResultCount() ->
+    if this.results: this.results.length else: 0
+
+  ////// istanbul ignore next //////
+
+  // Get the total number of results from the query that produced this `ResultSet`,
+  // including results in future pages.
+  // Not possible on all backends.
+  //
+  // @abstract
+  // @return [Number] The total number of results.
+  getTotalResultCount() ->
+    throw new Error('`getTotalResultCount` called on abstract ResultSet')
+
+  ////// istanbul ignore next //////
+
+  // Retrieve the array of results in this set.
+  //
+  // @return [Array<Instance>] The collection of results.
+  getResults() -> this.results or []
+
+  replaceResults(results) ->
+    this.results = results
+    this
+
+  getMetadata() -> undefined
+
+  ////// istanbul ignore next //////
+
+  // Retrieve a cursor representing this set, which can be used to continue a paginated
+  // query.
+  //
+  // @abstract
+  // @return [Cursor] A cursor that can be used to get the next ResultSet. An undefined return indicates no further results are available.
+  getCursor() -> undefined
+
+  ////// istanbul ignore next //////
+
+  // Determine if the query that generated this `ResultSet` has more results beyond what
+  // are available in this set.
+  //
+  // @return [Boolean] `true` if more results are available.
+  hasMore() -> this.getCursor()
+
+  // Hydrate raw results.
+  _hydrateResults(hydrator, instances) ->
+    for idx i, elem result in this.results:
+      this.results[i] = hydrator.didRead((if instances: instances[i] else: null), result)
+} // class ResultSet
+
+
+// Object representing a pagination of results returned from a backend.
+export class Cursor {
+  ////// istanbul ignore next //////
+
+  // Get the total number of results for the query that made this cursor.
+  //
+  // @abstract
+  // @return [Number] The total results.
+  getTotalResultCount(): number -> 0
+
+  ////// istanbul ignore next //////
+
+  // Get the remaining results not yet fetched for the query that made this Cursor.
+  //
+  // @Abstract
+  // @return [Number] The remaining results.
+  getRemainingResultCount(): number -> 0
+
+  // Determine if more results are available.
+  hasMore(): boolean ->
+    this.getRemainingResultCount() != 0
+}

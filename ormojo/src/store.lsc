@@ -1,0 +1,93 @@
+import { Query, ResultSet } from './Query'
+import { toPlainObject, assignPlainObject } from '@ormojo/ephraim'
+
+class Source:
+  // Create a Query suitable for this Store.
+  // @return [Query]
+  createQuery() ->
+    new Query
+
+  // Get objects from the store corresponding to a Query
+  read(query: Query, opts) -> return
+
+export class SynchronousSource extends Source:
+  // Get objects from the store corresponding to a Query
+  read(query: Query, opts): ResultSet -> return
+
+export class AsyncSource extends Source:
+  read(query: Query, opts): Promise<ResultSet> -> return
+
+class Sink:
+  // Create objects in the store with the given JSON data.
+  create(data: Array<{}>, opts) -> return
+
+  // Update objects that already exist, applying the given JSON data.
+  update(data: Array<{}>, opts) -> return
+
+  // Update objects where the given datacorresponds to an extant object, otherwise
+  // create new objects if no object can be located corresponding to the data.
+  upsert(data: Array<{}>, opts) -> return
+
+  // Destroy objects with the given data. Data must be sufficient to identify the object
+  // to the backing store.
+  delete(data: Array<{} | string | number>, opts) -> return
+
+// A store whose methods execute synchronously and return arrays.
+export class SynchronousSink extends Sink {}
+
+// A store whose methods execute async and return Promise<[]>
+export class AsyncSink extends Sink {}
+
+// Mediate between a Source and Ephraim entities.
+export class SourceEntityAdapter:
+  constructor(opts) ->
+    this.source = opts.source
+
+  // Given an optional Instance and data from `Store.read`, update the instance's
+  // internal state appropriately. If no Instance is given, it should be created
+  // from scratch.
+  // `undefined` data implies a nonexistent instance
+  didRead(instance, data) ->
+    if data == undefined: return undefined
+    if instance:
+      this.didUpdate(instance, data)
+    else:
+      this.boundModel.createInstance(data)
+
+// Mediate between Ephraim entities and a Source
+export class SinkEntityAdapter:
+  constructor(opts) ->
+    this.sink = opts.sink
+
+  // Given an Instance, return data values suitable for use with `Store.create`
+  willCreate(instance) ->
+    instance~toPlainObject!
+
+  // Given an Instance and data from Store.create, update the instance's
+  // internal structure appropriately.
+  didCreate(instance, data) ->
+    this.didUpdate(instance, data)
+
+  // Given an Instance, return data values suitable for use with `Store.update` or
+  // `Store.upsert` which will upload the desired future state of the Instance to
+  // the Store.
+  willUpdate(instance) ->
+    instance~toPlainObject!
+
+  // Given raw data from the store after a successful update, modify the
+  // Instance appropriately.
+  didUpdate(instance, data) ->
+    instance~assignPlainObject(data)
+    instance._clearChanges()
+    instance
+
+  // Given an instance, return raw data that the Store can use to delete the
+  // appropriate instance.
+  willDelete(instance) ->
+    instance.id
+
+  // Given an instance successfully deleted by the Store, update its contents
+  // appropriately
+  didDelete(instance) ->
+    instance.wasDeleted = true
+    instance

@@ -1,0 +1,130 @@
+
+// A Model combines a Store with an EntityAdapter, allowing queries to return
+// collections of entities
+export class Model:
+  // Create a query targeted at this boundModel.
+  createQuery() -> this.store.createQuery()
+
+  // Create a raw instance of this boundModel with the given dataValues.
+  // Synchronous and does not interact with the persistence framework.
+  // Generally only backends should be calling this method; you probably want
+  // `BoundModel.create()`.
+  createInstance(dataValues, metadata) ->
+    new this.instanceClass(this, dataValues, metadata)
+
+  // Create a new instance
+  //
+  // @overload create()
+  //   Create a new instance which is not persisted to the database. This method is synchronous.
+  //   @return [Instance] The new instance.
+  //
+  //	@overload create(data)
+  //   Create a new instance which will be immediately persisted to the database. This method is asynchronous
+  //   @param data [Object] Initial data for the instance. This data will be merged to the instance as with `Instance.set()`, calling all setters as needed.
+  //   @return [Promise<Instance>] A `Promise` whose fate is settled depending on whether the Instance was persisted to the database.
+  create(data) ->
+    instance = this.createInstance()
+    instance.isNewRecord = true
+    instance._applyDefaults()
+    if data != undefined:
+      instance.set(data)
+      instance.save()
+    else:
+      instance
+
+  // Invoked when an `Instance` wants to persist itself to the backend.
+  //
+  // @abstract
+  // @param instance [Instance] The `Instance` to be persisted
+  //
+  // @return [Promise<Instance>] A `Promise` whose fate is settled depending on the performance of the save operation.
+  // If the save operation succeeds, it should resolve with the updated Instance.
+  save(instance) ->
+    if instance.isNewRecord:
+      this.put(instance, true)
+    else:
+      this.put(instance, false)
+
+  // Attempt to persist the given Instance to the backing store.
+  //
+  // @param instance [Instance] Raw data for the instance.
+  // @return [Promise<Instance>] A `Promise` of the instance
+  put(instance, shouldCreate = true) ->
+    if shouldCreate:
+      this.store.create([ this.hydrator.willCreate(instance) ])
+      .then(createdData => this.hydrator.didCreate(instance, createdData[0]))
+    else:
+      this.store.update([ this.hydrator.willUpdate(instance) ])
+      .then(updatedData => this.hydrator.didUpdate(instance, updatedData[0]))
+
+  // Invoked to destroy an object from persistent storage by id.
+  //
+  // @abstract
+  // @param id [String|Integer] The id of the object to be deleted from the store.
+  //
+  // @return [Promise<Boolean>] A `Promise` whose fate is settled depending on the performance of the operation, and whose value is true if an instance with the given id existed and was deleted, or false otherwise.
+  destroyById(id) ->
+    this.store.delete([id])
+    .then(rst -> rst[0])
+
+  ////// istanbul ignore next //////
+
+  // Invoked when an `Instance` wants to delete from the backend.
+  //
+  // @abstract
+  // @param instance [Instance] The `Instance` to be deleted
+  //
+  // @return [Promise<Boolean>] A `Promise` whose fate is settled depending on the performance of the operation, and whose value is true if an instance existed and was deleted, or false otherwise.
+  destroy(instance) ->
+    this.store.delete([ this.hydrator.willDelete(instance) ])
+    .then( rst =>
+      if rst?[0]: this.hydrator.didDelete(instance) else: instance
+    )
+
+  ////// istanbul ignore next //////
+
+  // Retrieve an instance from the backing store from id or ids.
+  //
+  // @overload findById(id)
+  //   Locate a single instance by id.
+  //   @param id [String | Number] The id of the `Instance` as understood by the backing store.
+  //   @return [Promise<Instance>] A `Promise` of the `Instance` with the given id, if found. If not found, the `Promise` will resolve with the value `undefined`. The `Promise` is only rejected in the event of a database error.
+  //
+  // @overload findById(ids)
+  //   Locate multiple instances given a list of ids.
+  //   @param id [Array<String | Number>] The ids of the `Instance`s as understood by the backing store.
+  //   @return [Promise< Array<Instance> >] A `Promise` of an array whose entries correspond to the entries of the `ids` array. In each position, the array will contain the `Instance` with the given id, if found. If not found, the entry will be `undefined`. The `Promise` is only rejected in the event of a database error.
+  findById(id) ->
+    multiple = Array.isArray(id)
+    this.findAll(this.createQuery().byId(id))
+    .then(resultSet ->
+      if multiple: resultSet.getResults()
+      else: (resultSet.getResults())[0]
+    )
+
+  ////// istanbul ignore next //////
+
+  // Retrieve a single instance from the backing store using query options.
+  //
+  // @param query [query] A Query created by `this.createQuery()`.
+  // @return [Promise<Instance>] A `Promise` of the `Instance` matching the query, if found. If not found, the `Promise` will resolve with the value `undefined`. The `Promise` is only rejected in the event of a database error.
+  find(query) ->
+    query.setLimit(1)
+    this.findAll(query)
+    .then(resultSet ->
+      if resultSet.isEmpty(): undefined
+      else: (resultSet.getResults())[0]
+    )
+
+  ////// istanbul ignore next //////
+
+  // Retrieve many instances from the backing store using query options.
+  //
+  // @param querySpec [Object] Query options. *NB* Not all backends need support all options. See the documentation for your backend for specifics.
+  // @return [Promise<ResultSet>] A `Promise` of the `ResultSet` matching the query
+  findAll(query) ->
+    this.store.read(query)
+    .then(resultSet =>
+      resultSet._hydrateResults(this.hydrator)
+      resultSet
+    )

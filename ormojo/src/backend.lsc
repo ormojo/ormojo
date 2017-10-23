@@ -1,0 +1,6 @@
+import { Model } from './model'
+
+// Backend
+export class Backend {
+  registerModel(name: string, m: Model) -> return
+}
