@@ -2,15 +2,20 @@
 // A Model combines a Store with an EntityAdapter, allowing queries to return
 // collections of entities
 export class Model:
+  constructor(source: AsyncSource, sea: SourceEntityAdapter, sink: AsyncSink, tea: SinkEntityAdapter) ->
+    this.source = source
+    this.sea = sea
+    this.sink = sink
+    this.tea = tea
+
   // Create a query targeted at this boundModel.
-  createQuery() -> this.store.createQuery()
+  createQuery() -> this.source.createQuery()
 
   // Create a raw instance of this boundModel with the given dataValues.
   // Synchronous and does not interact with the persistence framework.
   // Generally only backends should be calling this method; you probably want
   // `BoundModel.create()`.
-  createInstance(dataValues, metadata) ->
-    new this.instanceClass(this, dataValues, metadata)
+  createInstance(type, dataValues, metadata) -> return
 
   // Create a new instance
   //
@@ -22,13 +27,13 @@ export class Model:
   //   Create a new instance which will be immediately persisted to the database. This method is asynchronous
   //   @param data [Object] Initial data for the instance. This data will be merged to the instance as with `Instance.set()`, calling all setters as needed.
   //   @return [Promise<Instance>] A `Promise` whose fate is settled depending on whether the Instance was persisted to the database.
-  create(data) ->
-    instance = this.createInstance()
-    instance.isNewRecord = true
-    instance._applyDefaults()
+  create(type, data) ->
+    instance = this.createInstance(type)
+    instance._isNewRecord = true
+    instance~initialize()
     if data != undefined:
-      instance.set(data)
-      instance.save()
+      instance~assignPlainObject(data)
+      this.save(instance)
     else:
       instance
 
@@ -40,7 +45,7 @@ export class Model:
   // @return [Promise<Instance>] A `Promise` whose fate is settled depending on the performance of the save operation.
   // If the save operation succeeds, it should resolve with the updated Instance.
   save(instance) ->
-    if instance.isNewRecord:
+    if instance._isNewRecord:
       this.put(instance, true)
     else:
       this.put(instance, false)
@@ -49,13 +54,14 @@ export class Model:
   //
   // @param instance [Instance] Raw data for the instance.
   // @return [Promise<Instance>] A `Promise` of the instance
-  put(instance, shouldCreate = true) ->
+  put(instance, shouldCreate, opts) ->
+    { sink, tea } = this
     if shouldCreate:
-      this.store.create([ this.hydrator.willCreate(instance) ])
-      .then(createdData => this.hydrator.didCreate(instance, createdData[0]))
+      sink.create([ tea.willCreate(instance) ])
+        .then(createdData -> tea.didCreate(instance, createdData[0]))
     else:
-      this.store.update([ this.hydrator.willUpdate(instance) ])
-      .then(updatedData => this.hydrator.didUpdate(instance, updatedData[0]))
+      sink.update([ tea.willUpdate(instance) ])
+        .then(updatedData -> tea.didUpdate(instance, updatedData[0]))
 
   // Invoked to destroy an object from persistent storage by id.
   //
@@ -63,9 +69,9 @@ export class Model:
   // @param id [String|Integer] The id of the object to be deleted from the store.
   //
   // @return [Promise<Boolean>] A `Promise` whose fate is settled depending on the performance of the operation, and whose value is true if an instance with the given id existed and was deleted, or false otherwise.
-  destroyById(id) ->
-    this.store.delete([id])
-    .then(rst -> rst[0])
+  destroyById(type, id) ->
+    this.sink.delete([id])
+      .then(rst -> rst[0])
 
   ////// istanbul ignore next //////
 
@@ -76,10 +82,10 @@ export class Model:
   //
   // @return [Promise<Boolean>] A `Promise` whose fate is settled depending on the performance of the operation, and whose value is true if an instance existed and was deleted, or false otherwise.
   destroy(instance) ->
-    this.store.delete([ this.hydrator.willDelete(instance) ])
-    .then( rst =>
-      if rst?[0]: this.hydrator.didDelete(instance) else: instance
-    )
+    { sink, tea } = this
+    sink.delete([ tea.willDelete(instance) ])
+      .then! rst ->
+        if rst?[0]: tea.didDelete(instance) else: instance
 
   ////// istanbul ignore next //////
 
@@ -94,7 +100,7 @@ export class Model:
   //   Locate multiple instances given a list of ids.
   //   @param id [Array<String | Number>] The ids of the `Instance`s as understood by the backing store.
   //   @return [Promise< Array<Instance> >] A `Promise` of an array whose entries correspond to the entries of the `ids` array. In each position, the array will contain the `Instance` with the given id, if found. If not found, the entry will be `undefined`. The `Promise` is only rejected in the event of a database error.
-  findById(id) ->
+  findById(type, id) ->
     multiple = Array.isArray(id)
     this.findAll(this.createQuery().byId(id))
     .then(resultSet ->

@@ -1,6 +1,6 @@
 import { types, ListType } from '@ormojo/ephraim'
 
-export default esTypeMap(orType) ->
+export esTypeMap(orType) ->
   if orType == types.string:
     ({ type: 'string' })
   else if orType == types.integer:

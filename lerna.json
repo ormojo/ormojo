@@ -3,6 +3,7 @@
   "hoist": true,
   "packages": [
     "ormojo",
+    "elasticsearch",
     "ephraim/ephraim",
     "ephraim/ephraim-memory"
   ],

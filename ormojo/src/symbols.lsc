@@ -1,0 +1,1 @@
+export backendSymbol = Symbol.for("ormojo.backend")

@@ -1,0 +1,7 @@
+import { typeFrom } from '@ormojo/ephraim'
+
+export getIndexForType(T) ->
+  typeFrom(T).entitySpec.index
+
+export getESTypeForType(T) ->
+  typeFrom(T).entitySpec.type

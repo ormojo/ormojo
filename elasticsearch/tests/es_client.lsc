@@ -1,0 +1,9 @@
+// Make the ES client for testing.
+// Do not expose credentials for a live server to git!
+import elasticsearch from 'elasticsearch'
+
+esclient = new elasticsearch.Client({
+  host: 'http://slave1.internal.oigroup.net:9200'
+})
+
+export default esclient

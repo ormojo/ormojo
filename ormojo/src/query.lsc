@@ -103,6 +103,13 @@ export class ResultSet {
       this.results[i] = hydrator.didRead((if instances: instances[i] else: null), result)
 } // class ResultSet
 
+export hydrateResults(resultSet, sourceEntityAdapter, prevInstances): void ->
+  nextResults = [...for idx i, elem result in resultSet.getResults():
+    [sourceEntityAdapter.didRead(
+      (if prevInstances: prevInstances[i] else: null), result
+    )]
+  ]
+  resultSet.replaceResults(nextResults)
 
 // Object representing a pagination of results returned from a backend.
 export class Cursor {

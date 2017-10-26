@@ -1,0 +1,22 @@
+import { typeOf, typeFrom } from '@ormojo/ephraim'
+
+export getBackend(T) ->
+  typeFrom(T).extra.backend
+
+export create(T, data, opts) ->
+  getBackend(T).create(T, data, opts)
+
+export save(entity, opts) ->
+  getBackend(typeOf(entity)).save(entity, opts)
+
+export findById(T, id) ->
+  getBackend(T).findById(T, id)
+
+export destroy(entity, opts) ->
+  getBackend(typeOf(entity)).destroy(entity, opts)
+
+export destroyById(T, id) ->
+  getBackend(T).destroyById(T, id)
+
+export setBackend(T, backend) ->
+  typeFrom(T).extra.backend = backend

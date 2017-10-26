@@ -1,0 +1,72 @@
+import { esTypeMap } from './esTypeMap'
+import { declaredFields } from '@ormojo/ephraim'
+
+// Generate Elasticsearch mapping properties
+generateMappingForType(T) ->
+  m = {}
+  props = {}
+
+  for key k, val field in T~declaredFields():
+    if k != 'id':
+      mapping = field.elasticsearch?.mapping or {}
+      // Merge missing keys from typemap defaults
+      typeMap = esTypeMap(field.type)
+      if typeMap:
+        for key mk, val mv in typeMap:
+          if not (mk in mapping): mapping[mk] = mv
+
+      props[field.key] = mapping
+
+  m.properties = props
+  m
+
+// Generate Elasticsearch analysis props
+generateAnalysisPropsForType(T) ->
+  props = {}
+  { analyzer, filter } = T.entitySpec
+  if analyzer: props.analyzer = analyzer
+  if filter: props.filter = filter
+  props
+
+// Represents an index in Elasticsearch.
+export class ESIndex:
+  constructor(backend, name) ->
+    this.backend = backend
+    this.name = name
+    this.types = {}
+
+  addEntityType(T): void ->
+    this.types[T.entitySpec.type] = T
+
+  _deleteIndex(): void ->
+    this.backend.es.indices.delete({index: this.name})
+
+  ////////////////////////////////////////////////////////////////// MAPPING
+  generateMappings() ->
+    mappings = {}
+    for key type, val T in this.types:
+      mappings[type] = generateMappingForType(T)
+    mappings
+
+  generateAnalysis() ->
+    analysis = { }
+    for val T in this.types:
+      props = generateAnalysisPropsForType(T)
+      if props.analyzer: analysis.analyzer = Object.assign(analysis.analyzer or {}, props.analyzer)
+      if props.filter: analysis.filter = Object.assign(analysis.filter or {}, props.filter)
+    analysis
+
+// Represents the collection of indices associated with a backend.
+export class ESIndices:
+  constructor(backend) ->
+    this.backend = backend
+    this.indices = {}
+
+  addEntityType(T) ->
+    indexName = T.entitySpec.index
+    if not this.indices[indexName]:
+      this.indices[indexName] = new ESIndex(this.backend, indexName)
+    this.indices[indexName].addEntityType(T)
+
+  getIndices() ->
+    this.indices

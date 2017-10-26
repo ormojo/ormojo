@@ -1,30 +1,121 @@
-import { Backend } from '@ormojo/ormojo'
-import { ESIndices } from './ESIndex'
-import ESMigration from './ESMigration'
-import makeESAPI from './store/ESAPI'
-import ESQuery from './store/Query'
+import { Backend, setBackend, getBackend } from '@ormojo/ormojo'
+import { ESIndices } from './indices'
+import { ESMigration } from './migration'
+import { makeESAPI } from './makeESAPI'
+import { ESQuery } from './query'
+import { typeFrom, createMemory as create, assignPlainObject } from '@ormojo/ephraim'
+import { getIndexForType, getESTypeForType } from './metadata'
+import { ESSink, ESSinkEntityAdapter } from './sink'
+import { ESSource, ESSourceEntityAdapter } from './source'
 
-export default class ESBackend extends Backend:
-  constructor(es) ->
+normalizeLoggerObject(log) ->
+  if typeof(log) != "object": now log = {}
+  for elem logger in ["trace", "debug", "info", "warn", "error", "fatal"]:
+    if not log[logger]: log[logger] = -> return
+  log
+
+export class ESBackend extends Backend:
+  constructor(es, opts) ->
     super()
     this.es = es
+    this.log = normalizeLoggerObject(opts?.log)
+    this.api = makeESAPI(this.es, this.log)
     this.indices = new ESIndices(this)
+    this.typeMap = new Map()
+    this.sink = new ESSink({api: this.api})
+    this.sinkAdapter = new ESSinkEntityAdapter({sink: this.sink})
+    this.source = new ESSource({api: this.api})
+    this.sourceAdapter = new ESSourceEntityAdapter({source: this.source})
 
-  initialize() ->
-    this.api = makeESAPI(this.es, this.corpus.log, this.corpus.Promise)
-
-  _bindModel(clazz, model, bindingOptions) ->
-    bm = new clazz(model, this, bindingOptions)
-    this.indices.addBoundModel(bm)
-    bm
-
-  bindModel(model, bindingOptions) ->
-    this._bindModel(ESBoundModel, model, bindingOptions)
-
-  bindChildModel(childModel, bindingOptions) ->
-    this._bindModel(ESChildModel, childModel, bindingOptions)
-
-  createQuery() -> new ESQuery
+  registerType(T): void ->
+    now T = typeFrom(T)
+    if T~getBackend():
+      throw new Error(`ESBackend.registerType(): Type ${T.name} was previously registered with another backend. To register with this backend, create a subclass.`)
+    idx = getIndexForType(T)
+    est = getESTypeForType(T)
+    if not idx:
+      throw new Error(`ESBackend.registerType(): Type ${T.name} was registered without an Elasticsearch index set.`)
+    if not est:
+      throw new Error(`ESBackend.registerType(): Type ${T.name} was registered without an Elasticsearch type set.`)
+    this.typeMap.set(T, true)
+    this.indices.addEntityType(T)
+    T~setBackend(this)
 
   getMigration() ->
-    new ESMigration(this.corpus, this)
+    new ESMigration(this)
+
+  createQuery(): ESQuery ->
+    // Get index and type info...
+    q = new ESQuery()
+
+  create(type, data, opts) ->
+    instance = create(type)
+    instance._isNewRecord = true
+    instance._index = getIndexForType(type)
+    instance._type = getESTypeForType(type)
+    if data != undefined:
+      instance~assignPlainObject(data)
+      this.save(instance)
+    else:
+      instance
+
+  save(instance, opts) ->
+    if instance._isNewRecord:
+      this.put(instance, true)
+    else:
+      this.put(instance, false)
+
+  put(instance, shouldCreate, opts) ->
+    { sink, sinkAdapter } = this
+    if shouldCreate:
+      sink.create([ sinkAdapter.willCreate(instance) ])
+        .then(createdData -> sinkAdapter.didCreate(instance, createdData[0]))
+    else:
+      sink.update([ sinkAdapter.willUpdate(instance) ])
+        .then(updatedData -> sinkAdapter.didUpdate(instance, updatedData[0]))
+
+  destroy(instance, opts) ->
+    { sink, sinkAdapter } = this
+    sink.delete([ sinkAdapter.willDelete(instance) ])
+      .then! rst ->
+        if rst?[0]: sinkAdapter.didDelete(instance) else: instance
+
+  destroyById(type, id) ->
+    // XXX: make this do something
+    return
+
+  find(query) ->
+    query.setLimit(1)
+    this.findAll(query)
+      .then! resultSet ->
+        if resultSet.isEmpty(): undefined
+        else: (resultSet.getResults!)[0]
+
+  findAll(query) ->
+    this.source.read(query)
+      .then! resultSet =>
+        // Convert JSON into entities
+        nextResults = [...for elem result in resultSet.getResults():
+          if result:
+            // XXX: should infer the type of entity to create from the query
+            // result...
+            [this.sourceAdapter.didRead(create(query.ephraimType), result)]
+          else:
+            [undefined]
+        ]
+        resultSet.replaceResults(nextResults)
+        resultSet
+
+  findById(type, id) ->
+    // make query matching type
+    q = this.createQuery()
+    // XXX: factor this out to the query, query.forType(type)
+    q.index = getIndexForType(type)
+    q.type = getESTypeForType(type)
+    q.ephraimType = type
+    if Array.isArray(id):
+      q.ids = id
+      this.findAll(q).then! resultSet -> resultSet.getResults()
+    else:
+      q.ids = [id]
+      this.find(q)

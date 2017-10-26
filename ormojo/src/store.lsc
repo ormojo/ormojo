@@ -48,11 +48,12 @@ export class SourceEntityAdapter:
   // from scratch.
   // `undefined` data implies a nonexistent instance
   didRead(instance, data) ->
-    if data == undefined: return undefined
-    if instance:
-      this.didUpdate(instance, data)
-    else:
-      this.boundModel.createInstance(data)
+    return
+    // if data == undefined: return undefined
+    // if instance:
+    //   this.didUpdate(instance, data)
+    // else:
+    //   this.boundModel.createInstance(data)
 
 // Mediate between Ephraim entities and a Source
 export class SinkEntityAdapter:
@@ -78,7 +79,6 @@ export class SinkEntityAdapter:
   // Instance appropriately.
   didUpdate(instance, data) ->
     instance~assignPlainObject(data)
-    instance._clearChanges()
     instance
 
   // Given an instance, return raw data that the Store can use to delete the
@@ -89,5 +89,5 @@ export class SinkEntityAdapter:
   // Given an instance successfully deleted by the Store, update its contents
   // appropriately
   didDelete(instance) ->
-    instance.wasDeleted = true
+    instance._wasDeleted = true
     instance
