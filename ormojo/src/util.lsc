@@ -1,22 +1,41 @@
 import { typeOf, typeFrom } from '@ormojo/ephraim'
 
+export setBackend(T, backend) ->
+  typeFrom(T).extra.backend = backend
+
 export getBackend(T) ->
   typeFrom(T).extra.backend
 
+// Create a new entity
 export create(T, data, opts) ->
   getBackend(T).create(T, data, opts)
 
+// Save changes to an entity
 export save(entity, opts) ->
   getBackend(typeOf(entity)).save(entity, opts)
 
+// Find an entity of a given type by ID.
 export findById(T, id) ->
-  getBackend(T).findById(T, id)
+  backend = getBackend(T)
+  q = backend.createQuery().setType(T).byId(id)
+  if Array.isArray(id):
+    backend.find(q).then! resultSet -> resultSet.getResults!
+  else:
+    backend.find(q).then! resultSet -> (resultSet.getResults!)[0]
+
+// Find a single object matching a query
+export find(backend, query) ->
+  backend.find(query.setLimit(1))
+    .then! resultSet ->
+      if resultSet.isEmpty!: undefined
+      else: (resultSet.getResults!)[0]
+
+// Find all objects matching a query
+export findAll(backend, query) ->
+  backend.find(query)
 
 export destroy(entity, opts) ->
   getBackend(typeOf(entity)).destroy(entity, opts)
 
-export destroyById(T, id) ->
-  getBackend(T).destroyById(T, id)
-
-export setBackend(T, backend) ->
-  typeFrom(T).extra.backend = backend
+export destroyById(T, id, opts) ->
+  getBackend(T).destroyById(T, id, opts)

@@ -25,9 +25,7 @@ export makeCorpus(extraName) ->
     // Augment the definition of the `tags` field with some special elasticsearch
     // options
     @extendField({
-      elasticsearch: {
-        mapping: (new ESQ).query('fields', 'raw', { type: 'string', index: 'not_analyzed'})
-      }
+      mapping: (new ESQ).query('fields', 'raw', { type: 'string', index: 'not_analyzed'})
     }) tags
 
   backend.registerType(ESWidget)

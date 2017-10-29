@@ -1,18 +1,12 @@
-import { Backend, setBackend, getBackend } from '@ormojo/ormojo'
+import { Backend, setBackend, getBackend, normalizeLoggerObject } from '@ormojo/ormojo'
 import { ESIndices } from './indices'
 import { ESMigration } from './migration'
 import { makeESAPI } from './makeESAPI'
 import { ESQuery } from './query'
 import { typeFrom, createMemory as create, assignPlainObject } from '@ormojo/ephraim'
-import { getIndexForType, getESTypeForType } from './metadata'
+import { getIndexForType, getESTypeForType } from './util'
 import { ESSink, ESSinkEntityAdapter } from './sink'
 import { ESSource, ESSourceEntityAdapter } from './source'
-
-normalizeLoggerObject(log) ->
-  if typeof(log) != "object": now log = {}
-  for elem logger in ["trace", "debug", "info", "warn", "error", "fatal"]:
-    if not log[logger]: log[logger] = -> return
-  log
 
 export class ESBackend extends Backend:
   constructor(es, opts) ->
@@ -26,6 +20,7 @@ export class ESBackend extends Backend:
     this.sinkAdapter = new ESSinkEntityAdapter({sink: this.sink})
     this.source = new ESSource({api: this.api})
     this.sourceAdapter = new ESSourceEntityAdapter({source: this.source})
+    if opts?.indexPrefix: this.indexPrefix = opts.indexPrefix
 
   registerType(T): void ->
     now T = typeFrom(T)
@@ -37,33 +32,32 @@ export class ESBackend extends Backend:
       throw new Error(`ESBackend.registerType(): Type ${T.name} was registered without an Elasticsearch index set.`)
     if not est:
       throw new Error(`ESBackend.registerType(): Type ${T.name} was registered without an Elasticsearch type set.`)
+    T~setBackend(this)
     this.typeMap.set(T, true)
     this.indices.addEntityType(T)
-    T~setBackend(this)
 
   getMigration() ->
     new ESMigration(this)
 
   createQuery(): ESQuery ->
-    // Get index and type info...
-    q = new ESQuery()
+    new ESQuery(this)
 
   create(type, data, opts) ->
     instance = create(type)
     instance._isNewRecord = true
     instance._index = getIndexForType(type)
     instance._type = getESTypeForType(type)
-    if data != undefined:
+    if data~looseNotEq(null):
       instance~assignPlainObject(data)
-      this.save(instance)
+      this.save(instance, opts)
     else:
       instance
 
   save(instance, opts) ->
     if instance._isNewRecord:
-      this.put(instance, true)
+      this.put(instance, true, opts)
     else:
-      this.put(instance, false)
+      this.put(instance, false, opts)
 
   put(instance, shouldCreate, opts) ->
     { sink, sinkAdapter } = this
@@ -80,18 +74,16 @@ export class ESBackend extends Backend:
       .then! rst ->
         if rst?[0]: sinkAdapter.didDelete(instance) else: instance
 
-  destroyById(type, id) ->
-    // XXX: make this do something
-    return
+  destroyById(type, id, opts) ->
+    target = {
+      id
+      type: getESTypeForType(type)
+      index: getIndexForType(type)
+    }
+    if opts?.parent: target.parent = opts.parent
+    this.sink.delete([target]).then! rst -> rst?[0]
 
   find(query) ->
-    query.setLimit(1)
-    this.findAll(query)
-      .then! resultSet ->
-        if resultSet.isEmpty(): undefined
-        else: (resultSet.getResults!)[0]
-
-  findAll(query) ->
     this.source.read(query)
       .then! resultSet =>
         // Convert JSON into entities
@@ -105,17 +97,3 @@ export class ESBackend extends Backend:
         ]
         resultSet.replaceResults(nextResults)
         resultSet
-
-  findById(type, id) ->
-    // make query matching type
-    q = this.createQuery()
-    // XXX: factor this out to the query, query.forType(type)
-    q.index = getIndexForType(type)
-    q.type = getESTypeForType(type)
-    q.ephraimType = type
-    if Array.isArray(id):
-      q.ids = id
-      this.findAll(q).then! resultSet -> resultSet.getResults()
-    else:
-      q.ids = [id]
-      this.find(q)

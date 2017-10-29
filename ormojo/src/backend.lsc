@@ -2,3 +2,9 @@
 export class Backend {
 
 }
+
+export normalizeLoggerObject(log) ->
+  if typeof(log) != "object": now log = {}
+  for elem logger in ["trace", "debug", "info", "warn", "error", "fatal"]:
+    if not log[logger]: log[logger] = -> return
+  log

@@ -94,6 +94,8 @@ class MigrationPlan:
     else if this.indexStatus == 'AUTOMIGRATED':
       this.migrationStrategy = 'REINDEX'
 
+    this
+
   executeCreateStrategy() ->
     if this.migrationStrategy != 'CREATE': throw new Error('executeCreateStrategy() called in invalid state')
     aliases = {}
@@ -172,7 +174,7 @@ export class ESMigration extends Migration:
   prepare() ->
     // Develop a migration plan for each index.
     promises = [...for val plan in this.plans: [plan.prepare()]]
-    Promise.all(promises)
+    Promise.all(promises).then(=> this)
 
   getMigrationPlan() ->
     [...for val plan in this.plans:

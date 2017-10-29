@@ -50,13 +50,7 @@ export class ESSink extends AsyncSink:
   delete(data) ->
     // XXX: bulk api
     promises = [...for elem datum in data:
-      if datum?.id:
-        // Destroy given full object spec.
-        [this.api.destroy(datum.index, datum.type, datum.id, datum.parent)]
-      else:
-        // XXX: nope, require index/type passdown.
-        // Destroy given only ID.
-        [this.api.destroy(this.defaultIndex, this.defaultType, datum)]
+      [this.api.destroy(datum.index, datum.type, datum.id, datum.parent)]
     ]
     Promise.all(promises)
 

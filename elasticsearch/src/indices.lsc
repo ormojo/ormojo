@@ -1,5 +1,6 @@
 import { esTypeMap } from './esTypeMap'
 import { declaredFields } from '@ormojo/ephraim'
+import { getESTypeForType, getIndexForType } from './util'
 
 // Generate Elasticsearch mapping properties
 generateMappingForType(T) ->
@@ -8,7 +9,7 @@ generateMappingForType(T) ->
 
   for key k, val field in T~declaredFields():
     if k != 'id':
-      mapping = field.elasticsearch?.mapping or {}
+      mapping = field.mapping or {}
       // Merge missing keys from typemap defaults
       typeMap = esTypeMap(field.type)
       if typeMap:
@@ -16,6 +17,11 @@ generateMappingForType(T) ->
           if not (mk in mapping): mapping[mk] = mv
 
       props[field.key] = mapping
+
+  // ES parent/child mapping
+  if T.entitySpec?.parent:
+    m._parent = { type: getESTypeForType(T.entitySpec.parent) }
+    m._routing = { required: true }
 
   m.properties = props
   m
@@ -63,7 +69,7 @@ export class ESIndices:
     this.indices = {}
 
   addEntityType(T) ->
-    indexName = T.entitySpec.index
+    indexName = getIndexForType(T)
     if not this.indices[indexName]:
       this.indices[indexName] = new ESIndex(this.backend, indexName)
     this.indices[indexName].addEntityType(T)

@@ -1,7 +1,12 @@
+import { find } from './util'
+
 //
 // Object representing a declarative request for particular information from a store
 //
 export class Query {
+  constructor(backend) ->
+    this.backend = backend
+
   ////// istanbul ignore next //////
 
   // Determine if this query is equal to another query.
@@ -24,7 +29,12 @@ export class Query {
 
   // Identify specific instances to be retrieved by id or primary key.
   byId(id) ->
-    if Array.isArray(id): this.ids = id else: this.ids = [id]
+    if Array.isArray(id):
+      this.setLimit(id.length)
+      this.ids = id
+    else:
+      this.setLimit(1)
+      this.ids = [id]
     this
 
   ////// istanbul ignore next //////
@@ -33,6 +43,18 @@ export class Query {
   setLimit(limit) ->
     this.limit = limit
     this
+
+  // Set ephraim type of this query
+  setType(T) ->
+    this.ephraimType =T
+    this
+
+  // Find one
+  find() ->
+    find(this.backend, this)
+
+  findAll() ->
+    this.backend.find(this)
 }
 
 // Collection of results from a query that may return multiple results.
@@ -96,20 +118,7 @@ export class ResultSet {
   //
   // @return [Boolean] `true` if more results are available.
   hasMore() -> this.getCursor()
-
-  // Hydrate raw results.
-  _hydrateResults(hydrator, instances) ->
-    for idx i, elem result in this.results:
-      this.results[i] = hydrator.didRead((if instances: instances[i] else: null), result)
 } // class ResultSet
-
-export hydrateResults(resultSet, sourceEntityAdapter, prevInstances): void ->
-  nextResults = [...for idx i, elem result in resultSet.getResults():
-    [sourceEntityAdapter.didRead(
-      (if prevInstances: prevInstances[i] else: null), result
-    )]
-  ]
-  resultSet.replaceResults(nextResults)
 
 // Object representing a pagination of results returned from a backend.
 export class Cursor {

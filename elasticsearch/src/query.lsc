@@ -1,19 +1,31 @@
 import { Query, Cursor, ResultSet } from '@ormojo/ormojo'
+import { getIndexForType, getESTypeForType, toParentId } from './util'
 
 export class ESQuery extends Query:
-  constructor() ->
-    super()
+  setType(T) ->
+    super.setType(T)
+    this.index = getIndexForType(T)
+    this.type = getESTypeForType(T)
+    this
+
+  setParent(entOrId) ->
+    this.parent = entOrId~toParentId!
+    this
 
   setQueryDsl(body) ->
     this.body = body
     this
 
-  setLimit(limit) ->
-    this.limit = limit
-    this
+  setQuery(other) ->
+    this.body = other.body
+    this.limit = other.limit
+    this.offset = other.offset
+    this.index = other.index
+    this.type = other.type
+    this.ephraimType = other.ephraimType
 
-  setCursor(cursor) ->
-    this.body = cursor.query?.getQueryDsl()
+  resumeFrom(cursor) ->
+    this.setQuery(cursor.query)
     this.offset = cursor.offset
     this.limit = cursor.limit
     this
@@ -41,7 +53,7 @@ export class ESResultSet extends ResultSet:
     this.total = total or this.results.length
     nextOffset = (offset or 0) + this.results.length
     if nextOffset < this.total:
-      this.cursor = new Cursor(originalQuery).setFromOffset(nextOffset, this.results.length, this.total)
+      this.cursor = new ESCursor(originalQuery).setFromOffset(nextOffset, this.results.length, this.total)
 
   getTotalResultCount() -> this.total
 

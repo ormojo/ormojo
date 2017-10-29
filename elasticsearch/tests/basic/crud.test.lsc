@@ -1,6 +1,6 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
 import { makeCorpus, cleanupCorpus } from '../makeCorpus'
-import { create, save, findById, destroy } from '@ormojo/ormojo'
+import { create, save, findById, destroy, destroyById } from '@ormojo/ormojo'
 import { toPlainObject } from '@ormojo/ephraim'
 
 let backend, Widget
@@ -13,7 +13,7 @@ beforeAll! ->
 afterAll! ->
   cleanupCorpus('crud')
 
-describe('CRUD: ', ->
+describe('CRUD', ->
   it('should create, save, find by id', ->
     awidget = Widget~create()
     awidget.name = "whosit"
@@ -30,7 +30,7 @@ describe('CRUD: ', ->
       expect(widgs[0]~toPlainObject!).toEqual(awidget~toPlainObject!)
   )
 
-  it('should create by specific id', ->
+  it('should create, destroy by specific id', ->
     awidget = Widget~create()
     awidget.name = '12345'
     debugger
@@ -42,6 +42,12 @@ describe('CRUD: ', ->
     ).then((rst) ->
       console.log(rst~toPlainObject!)
       expect(rst.name).toBe('12345')
+      Widget~destroyById('12345')
+    ).then((rst) ->
+      expect(rst).toBeTruthy()
+      Widget~findById('12345')
+    ).then((rst) ->
+      expect(rst).toBe(undefined)
     )
   )
 
@@ -70,19 +76,6 @@ describe('CRUD: ', ->
       expect(x).toBe(undefined)
     )
   )
-
-  // it('should manage field deltas properly', ->
-  //   { Widget } = makeCorpus()
-  //   Widget.create({name: 'name1', qty: 1})
-  //   .then((widg) ->
-  //     expect(widg.changed()).to.equal(false)
-  //     widg.name = 'name2'
-  //     expect(widg.changed()).to.deep.equal(['name'])
-  //     widg.save()
-  //   ).then((widg) ->
-  //     expect(widg.changed()).to.equal(false)
-  //   )
-  // )
 
   it('should CRUD', ->
     let id = null

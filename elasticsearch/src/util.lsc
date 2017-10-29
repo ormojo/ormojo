@@ -1,0 +1,39 @@
+import { typeFrom, assignPlainObject } from '@ormojo/ephraim'
+import { getBackend } from '@ormojo/ormojo'
+
+export getIndexForType(T) ->
+  now T = typeFrom(T)
+  if T.entitySpec.parent:
+    getIndexForType(T.entitySpec.parent)
+  else:
+    be = getBackend(T)
+    if be?.indexPrefix:
+      be.indexPrefix + T.entitySpec.index
+    else:
+      T.entitySpec.index
+
+export getESTypeForType(T) ->
+  typeFrom(T).entitySpec.type
+
+export toParentId(parent) ->
+  if (typeof(parent) == 'string' or typeof(parent) == 'number'):
+    parent.toString()
+  elif parent?.id:
+    parent.id
+  else:
+    throw new Error("bad parent")
+
+export createChild(parent, ChildT, data, opts) ->
+  pid = parent~toParentId!
+  be = getBackend(ChildT)
+  ent = be.create(ChildT, null, opts)
+  ent._parent = pid
+  if data~looseNotEq(null):
+    ent~assignPlainObject(data)
+    be.save(ent, opts)
+  else:
+    ent
+
+export destroyChildById(parent, ChildT, childId) ->
+  be = getBackend(ChildT)
+  be.destroyById(ChildT, childId, { parent: parent.id })

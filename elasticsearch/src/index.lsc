@@ -1,1 +1,2 @@
 export { ESBackend } from './backend'
+export { createChild, destroyChildById } from './util'
