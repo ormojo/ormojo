@@ -1,0 +1,26 @@
+import { getObservableForField } from '../../observe'
+
+export getObservableEntityGhostClass(ET) ->
+  // Cache
+  if ET.observableGhostClass: return ET.observableGhostClass
+
+  observableGhost = class:
+    constructor(observedEntity) ->
+      this._observedEntity = observedEntity
+
+  for key k in ET.fields:
+    Object.defineProperty(observableGhost.prototype, k, {
+      configurable: true
+      enumerable: true
+      get: -> getObservableForField(this._observedEntity, k)
+    })
+
+  // _all_ pseudofield observes a change in any field
+  Object.defineProperty(observableGhost.prototype, '_all_', {
+    configurable: true
+    enumerable: false
+    get: -> getObservableForField(this._observedEntity, '_all_')
+  })
+
+  ET.observableGhostClass = observableGhost
+  observableGhost

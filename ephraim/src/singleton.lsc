@@ -1,0 +1,21 @@
+// Some ephraim objects need to be global singletons
+singletonSymbol = Symbol.for("ephraim.globalSingletons")
+
+getGlobal() ->
+  // eslint-disable-next-line no-undef
+  if (typeof self !== 'undefined') { return self; }
+  // eslint-disable-next-line no-undef
+  if (typeof window !== 'undefined') { return window; }
+  // eslint-disable-next-line no-undef
+  if (typeof global !== 'undefined') { return global; }
+  throw new Error('unable to locate global object');
+
+export singleton(name, builder) ->
+  _G = getGlobal()
+  let singletons = _G[singletonSymbol]
+  if not singletons: now singletons = _G[singletonSymbol] = Object.create(null)
+
+  if singletons[name]:
+    singletons[name]
+  else:
+    singletons[name] = builder()

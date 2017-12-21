@@ -1,0 +1,39 @@
+'use @oigroup/lightscript with flippedImports'
+
+import '@ormojo/ephraim': {
+  entity, listOf, types, field, createMemory as create
+}
+
+{ string, number } = types
+
+test! "list primitive types", ->
+  expect(listOf(string).isKindOf(listOf(number))).toBeFalsy()
+  expect(listOf(number).isKindOf(listOf(number))).toBeTruthy()
+
+
+test! "list entity types", ->
+  @entity() class Animal {}
+  @entity() class Dog extends Animal {}
+
+  expect(listOf(Dog).isKindOf(listOf(Animal))).toBeTruthy()
+  expect(listOf(Animal).isKindOf(listOf(Dog))).toBeFalsy()
+  expect(listOf(Animal).isKindOf(listOf(Animal))).toBeTruthy()
+
+test! "basic list", ->
+  @entity() class A:
+    @field() a
+
+  debugger
+  listOfA = create(listOf(A))
+
+  listOfA.push(create(A))
+
+  console.log(listOfA~toPlainObject!)
+
+test! "list field init", ->
+  @entity() class E:
+    @field(listOf(types.string)) strs = []
+
+  e = create(E)
+  expect(e.strs.length).toBe(0)
+

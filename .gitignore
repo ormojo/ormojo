@@ -11,3 +11,4 @@ npm-debug.log
 *.sublime-workspace
 lerna-debug.log
 .nyc_output/
+.DS_Store

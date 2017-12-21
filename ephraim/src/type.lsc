@@ -1,0 +1,205 @@
+import { singleton } from './singleton'
+import { forEachField } from './fields'
+
+export typeSymbol = Symbol.for("ephraim.type")
+export underlyingTypeSymbol = Symbol.for("ephraim.underlyingType")
+
+export Type = singleton("Type", ->
+  class Type:
+    constructor(baseType) ->
+      this[typeSymbol] = this
+      this.extra = {}
+      if baseType: this.extends(baseType)
+
+    extends(otherT): void ->
+      this.extra = Object.assign({}, otherT?.extra)
+
+    isKindOf(otherT): boolean ->
+      otherT == this
+
+    // Check that x is an instance of this type
+    // eslint-disable-next-line no-unused-vars
+    validate(x): boolean ->
+      false
+
+    // Called when a field of this type was defined on an EntityType.
+    // Used to set up the `defineProperty` hooks, et al.
+    // eslint-disable-next-line no-unused-vars
+    fieldOfTypeWasDefined(defineeType, key, spec): void ->
+      return
+
+    // Descend into this object recursively
+    recurseLeft(left) -> left
+
+    // Descend into another object recursively, mapping it onto this object
+    // eslint-disable-next-line no-unused-vars
+    recurseRight(left, right) -> left
+
+    // Set type extra data. This is inherited (via Object.assign) when a new
+    // type is created based on this one.
+    setExtra(key, value) -> this.extra[key] = value
+
+    // Get type extra data
+    getExtra(key) -> this.extra[key]
+)
+
+export PrimitiveType = singleton("PrimitiveType", ->
+  class PrimitiveType extends Type:
+    constructor(name) ->
+      super(null)
+      this.name = name
+
+    createObservableGhost() ->
+      throw new Error("primitive types cannot be observed")
+
+    initialize(entity, spec, creator, initializer) ->
+      initializer.call(entity)
+)
+
+export ComplexType = singleton("ComplexType", ->
+  class ComplexType extends Type {}
+  ComplexType
+)
+
+export EntityType = singleton("EntityType", ->
+  class EntityType extends ComplexType {
+    defineField(key, spec): void ->
+      spec.key = key
+      this.fields[key] = spec
+      spec.type.fieldOfTypeWasDefined(this, key, spec)
+
+    initialize(entity, spec, creator, initializer) ->
+      creator(this)
+
+    setEntityConstructor(constr): void ->
+      // Wire javascript prototype propertly
+      proto = this.entityPrototype
+      constr.prototype = proto
+      proto.constructor = constr
+
+      // Wire Ephraim type properly
+      setType(constr, this)
+      this.entityConstructor = constr
+
+      // Set constructor name to typename
+      Object.defineProperty(constr, "name", { value: this.name })
+
+    isKindOf(otherT): boolean ->
+      (otherT instanceof EntityType)
+      and (
+        otherT.entityConstructor == this.entityConstructor
+        or this.entityConstructor.prototype instanceof otherT.entityConstructor
+      )
+
+    validate(x): boolean ->
+      x~looseEq(null) or (x instanceof this.entityConstructor)
+
+    createObservableGhost() ->
+      throw new Error("entities without a driver cannot be observed")
+
+    recurseLeft(left, state) ->
+      memo = state.seen(left)
+      if memo: return memo
+      obj = state.create(this)
+      state.remember(left, obj)
+      left~forEachField! (k, v, spec): void -> state.visitField(obj, k, v, spec)
+      obj
+
+    recurseRight(left, right, state): void ->
+      T = this
+      state.remember(right, left)
+      state.iterate(right, (k, v): void ->
+        seen = state.seen(v)
+        if T.fields[k]:
+          state.visitCorrespondingField(left, T.fields[k], right, k, v, seen)
+        else:
+          state.visitUnknownField(left, right, k, v, seen)
+      )
+  }
+  EntityType
+)
+
+export ListType = singleton("ListType", ->
+  class ListType extends ComplexType {
+    constructor(baseType, elementType) ->
+      super(baseType)
+      this.elementType = elementType
+
+    initialize(entity, spec, creator, initializer) ->
+      creator(this)
+
+    isKindOf(otherT): boolean ->
+      (otherT instanceof ListType)
+      and (this.elementType.isKindOf(otherT.elementType))
+
+    validate(x): boolean ->
+      x~looseEq(null) or (
+        x[typeSymbol] and x[typeSymbol].isKindOf(this)
+      )
+
+    recurseLeft(left, state) ->
+      T = this.elementType
+      memo = state.seen(left)
+      if memo: return memo
+      obj = state.create(this)
+      state.remember(left, obj)
+      left.forEach! (v, i): void -> state.visitListEntry(obj, i, v, T)
+      obj
+
+    recurseRight(left, right, state): void ->
+      T = this.elementType
+      state.remember(right, left)
+      if typeof(right.forEach) != "function":
+        throw new Error("ListType.recurseRight: rhs wasn't an array or list. This is most likely caused by using assignPlainObject on an object with a list key, but a non-list value.")
+      right.forEach! (v, i): void ->
+        seen = state.seen(v)
+        state.visitListEntry(left, T, right, i, v, seen)
+  }
+  ListType
+)
+
+export MapType = singleton("MapType", ->
+  class MapType extends ComplexType {
+    constructor(keyType, valueType) ->
+      super()
+      this.keyType = keyType
+      this.valueType = valueType
+  }
+  MapType
+)
+
+export typeFrom(x) ->
+  x[typeSymbol]
+
+export isType(x) ->
+  t = typeof x
+  (t == "function" or t == "object") and (x[typeSymbol] instanceof Type)
+
+export setType(x, T) ->
+  x[typeSymbol] = T
+
+listOfSymbol = Symbol.for("ephraim.listOfType")
+export listOf(T) ->
+  now T = typeFrom(T)
+  if T[listOfSymbol]: return T[listOfSymbol]
+  T[listOfSymbol] = new ListType(null, T)
+
+mapOfSymbol = Symbol.for("ephraim.mapOfType")
+export mapOf(T1, T2) ->
+  now T1 = typeFrom(T1)
+  now T2 = typeFrom(T2)
+  if T1[mapOfSymbol]?[T2.name]: return T1[mapOfSymbol][T2.name]
+  T1[mapOfSymbol] = T1[mapOfSymbol] or {}
+  T1[mapOfSymbol][T2.name] = new MapType(T1, T2)
+
+// Determine if x is-a instance of Type.
+export isa(x, T): boolean ->
+  now T = T[typeSymbol]
+  if T: T.validate(x) else: false
+
+// Determine if a Type is a kindOf anotherType
+export isKindOf(T1, T2): boolean ->
+  now T1 = T1[typeSymbol]
+  now T2 = T2[typeSymbol]
+  if T1: T1.isKindOf(T2) else: false
+

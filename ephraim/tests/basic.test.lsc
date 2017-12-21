@@ -1,0 +1,70 @@
+import { entity, field, augment, toPlainObject, createMemory as create } from '@ormojo/ephraim'
+
+test! 'basic', ->
+  @entity() class E:
+    @field() f
+
+  e = create(E)
+  e.f = 1
+  expect(e.f).toBe(1)
+
+test! 'init', ->
+  @entity() class E:
+    @field() f = 1
+
+  debugger
+  e = create(E)
+  expect(e.f).toBe(1)
+
+test! 'subentity', ->
+  @entity() class E:
+    @field() e
+
+  @entity() class F:
+    @field(E) subE
+
+  f = create(F)
+  f.subE = create(E)
+  f.subE.e = 1
+
+  expect(f.subE.e).toBe(1)
+  expect(f~toPlainObject!).toEqual({ subE: { e: 1 }})
+
+test! 'subentity init', ->
+  @entity() class E:
+    @field() e = 1
+
+  @entity() class F:
+    @field(E) subE = {}
+
+  f = create(F)
+
+  expect(f.subE.e).toBe(1)
+  expect(f~toPlainObject!).toEqual({ subE: { e: 1 }})
+
+test! 'circular', ->
+  @entity() class Parent:
+    @field() child
+
+  @entity() class Child:
+    @field(Parent) parent
+    @field() data
+
+  Parent~augment({ child: { type: Child }})
+
+  debugger
+
+  p = create(Parent)
+  p.child = create(Child)
+  p.child.parent = p
+  p.child.data = 123
+
+  console.log(p~toPlainObject!)
+  expect(p.child.parent).toBe(p)
+  expect(p.child.data).toBe(123)
+  expect(p.child.parent.child).toBe(p.child)
+  debugger
+
+
+
+

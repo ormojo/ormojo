@@ -1,0 +1,85 @@
+import { typeOf } from '../../primitiveTypes'
+import { setType } from '../../type'
+import { observableGhostSymbol } from '../../observe'
+
+// List entry typechecks
+typeCheck(T, ...vals) ->
+  for elem val in vals:
+    if val~looseEq(null) or (not T.validate(val)):
+      throw new Error(`Element added to list must be of type '${T.name}', was of type '${typeOf(val).name}'`)
+
+export class MemoryList:
+  constructor(ListT) ->
+    this~setType(ListT)
+    this.elementType = ListT.elementType
+    this.__data = []
+
+  get length() ->
+    this.__data.length
+
+  // Add entries to the end of the list
+  push(...entries): void ->
+    if entries.length == 0: return
+    typeCheck(this.elementType, ...entries)
+    array = this.__data
+    formerLength = array.length
+    array.push(...entries)
+    this[observableGhostSymbol]?.next({
+      list: this
+      type: "splice"
+      index: formerLength
+      deletions: []
+      insertions: entries
+    })
+
+  // Add entries to the start of the list
+  unshift(...entries): void ->
+    if entries.length == 0: return
+    typeCheck(this.elementType, ...entries)
+    this.__data.unshift(...entries)
+    this[observableGhostSymbol]?.next({
+      list: this
+      type: "splice"
+      index: 0
+      deletions: []
+      insertions: entries
+    })
+
+  // Insert/delet entries at arbitrary point
+  splice(i, n, ...entries): void ->
+    if entries.length == 0: return
+    typeCheck(this.elementType, ...entries)
+    deletions = this.__data.splice(i, n, ...entries)
+    this[observableGhostSymbol]?.next({
+      list: this
+      type: "splice"
+      index: i
+      deletions
+      insertions: entries
+    })
+
+  // Iterate the list
+  forEach(callback, thisArg): void ->
+    this.__data.forEach(callback, thisArg)
+
+  // Get ith entry
+  get(i) ->
+    this.__data[i]
+
+  // Set ith entry
+  set(i, val): void ->
+    lastData = this.__data[i]
+    if lastData == val: return
+    typeCheck(this.elementType, val)
+    this.__data[i] = val
+    this[observableGhostSymbol]?.next({
+      list: this
+      type: "set"
+      index: i
+      previousValue: lastData
+      nextValue: val
+    })
+
+  // Map
+  map(callback, thisArg) ->
+    this.__data.map(callback, thisArg)

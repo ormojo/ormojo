@@ -1,0 +1,62 @@
+import { EntityType, PrimitiveType, typeFrom, underlyingTypeSymbol } from '../../type'
+import { bootstrapPrototype } from '../../define'
+import { declaredFields, dataSymbol } from '../../fields'
+
+import { definePrimitiveField } from './definePrimitiveField'
+import { defineEntityField } from './defineEntityField'
+import { getObservableEntityGhostClass } from './observable'
+import transformedTypeSymbol from '../transformedTypeSymbol'
+import { transformType } from '../transformType'
+
+class MemoryEntityType extends EntityType {
+  defineField(key, spec): void ->
+    spec.key = key
+    this.fields[key] = spec
+    if spec.type instanceof PrimitiveType:
+      definePrimitiveField(this.entityPrototype, spec.type, key, spec)
+    else:
+      spec.type.fieldOfTypeWasDefined(this, key, spec)
+
+  fieldOfTypeWasDefined(targetType, key, spec): void ->
+    defineEntityField(targetType.entityPrototype, spec.type, key, spec)
+
+  construct() -> new (this.entityConstructor)()
+
+  createObservableGhost(entity) ->
+    new (this~getObservableEntityGhostClass!)(entity)
+
+} // class MemoryEntityType
+
+export transformEntityType(ET) ->
+  EClass = ET.entityConstructor
+  class MemoryEntityClass extends EClass {}
+  bootstrapPrototype(MemoryEntityClass.prototype, MemoryEntityType, ET)
+  MT = typeFrom(MemoryEntityClass)
+  MT.name = `memory(${ET.name})`
+
+  // Discard auto-created constructor in favor of simpler model
+  memoryEntityClass = (): void ->
+    this[dataSymbol] = {}
+  // Set constructor name to typename
+  Object.defineProperty(memoryEntityClass, "name", { value: MT.name })
+
+  memoryEntityClass.prototype = MemoryEntityClass.prototype
+  MT.setEntityConstructor(memoryEntityClass)
+
+  // Cache now to prevent cycles/recursion
+  ET[transformedTypeSymbol] = MT
+  MT[transformedTypeSymbol] = MT
+  MT[underlyingTypeSymbol] = ET
+
+  // Update field types; each field type must be memory(previousType)
+  nextFields = {
+    ...for key k, val spec in memoryEntityClass~declaredFields():
+      nextSpec = Object.assign({}, spec)
+      if not (nextSpec.type instanceof PrimitiveType):
+        nextSpec.type = transformType(nextSpec.type)
+      {[k]: nextSpec}
+  }
+  // Apply field definitions
+  for key k, val spec in nextFields: MT.defineField(k, spec)
+
+  MT

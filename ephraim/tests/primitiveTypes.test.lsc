@@ -1,0 +1,46 @@
+'use @oigroup/lightscript with flippedImports'
+
+import '@ormojo/ephraim': {
+  types, isa, typeOf
+}
+
+test! "primitive type validators", ->
+  expect(types.any.validate({})).toBeTruthy()
+  expect(types.any.validate(null)).toBeTruthy()
+  expect(types.any.validate(undefined)).toBeTruthy()
+  expect(types.number.validate(3)).toBeTruthy()
+  expect(types.number.validate("")).toBeFalsy()
+  expect(types.number.validate(null)).toBeTruthy()
+  expect(types.string.validate("3")).toBeTruthy()
+  expect(types.string.validate(3)).toBeFalsy()
+  expect(types.string.validate(null)).toBeTruthy()
+  expect(types.boolean.validate(true)).toBeTruthy()
+  expect(types.boolean.validate(0)).toBeFalsy()
+  expect(types.boolean.validate(null)).toBeTruthy()
+  expect(types.object.validate({})).toBeTruthy()
+  expect(types.object.validate([])).toBeFalsy()
+  expect(types.object.validate(null)).toBeTruthy()
+  expect(types.array.validate([])).toBeTruthy()
+  expect(types.array.validate({})).toBeFalsy()
+  expect(types.array.validate(null)).toBeTruthy()
+  expect(types.date.validate(new Date())).toBeTruthy()
+  expect(types.date.validate([])).toBeFalsy()
+
+  // isa
+  expect("3"~isa(types.string)).toBeTruthy()
+  expect("3"~isa(types.number)).toBeFalsy()
+  expect(3~isa(types.number)).toBeTruthy()
+  expect(3~isa(types.string)).toBeFalsy()
+  expect(true~isa(types.boolean)).toBeTruthy()
+  expect(0~isa(types.boolean)).toBeFalsy()
+  expect([]~isa(types.array)).toBeTruthy()
+  expect({}~isa(types.object)).toBeTruthy()
+
+test! "primitive type typeOf", ->
+  expect(typeOf(null)).toBe(types.nil)
+  expect(typeOf(undefined)).toBe(types.nil)
+  expect(typeOf(3)).toBe(types.number)
+  expect(typeOf("3")).toBe(types.string)
+  expect(typeOf([1])).toBe(types.array)
+  expect(typeOf({})).toBe(types.object)
+  expect(typeOf(new Date())).toBe(types.date)

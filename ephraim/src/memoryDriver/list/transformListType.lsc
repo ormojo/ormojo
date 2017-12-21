@@ -1,0 +1,37 @@
+import { PrimitiveType, ListType, underlyingTypeSymbol } from '../../type'
+import { observableGhostSymbol } from '../../observe'
+
+import createBehaviorSubject from 'observable-utils/lib/createBehaviorSubject'
+
+import { defineEntityField } from '../entity/defineEntityField'
+import transformedTypeSymbol from '../transformedTypeSymbol'
+import { transformType } from '../transformType'
+import { MemoryList } from './memoryList'
+
+class MemoryListType extends ListType {
+  fieldOfTypeWasDefined(targetType, key, spec): void ->
+    defineEntityField(targetType.entityPrototype, spec.type, key, spec)
+
+  construct() -> new MemoryList(this)
+
+  createObservableGhost(ent) ->
+    createBehaviorSubject({
+      initialValue: ent
+      onObserversChanged(observers, added, removed) ->
+        if removed and observers.length == 0:
+          delete ent[observableGhostSymbol]
+    })
+
+}
+
+export transformListType(LT) ->
+  ET = if LT.elementType instanceof PrimitiveType: LT.elementType else: transformType(LT.elementType)
+  MT = new MemoryListType(LT, ET)
+  MT.name = `memory(listOf(${ET.name}))`
+
+  // Cache now to prevent cycles/recursion
+  LT[transformedTypeSymbol] = MT
+  MT[transformedTypeSymbol] = MT
+  MT[underlyingTypeSymbol] = LT
+
+  MT

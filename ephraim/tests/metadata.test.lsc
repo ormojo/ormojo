@@ -1,0 +1,59 @@
+'use @oigroup/lightscript with flippedImports'
+
+import '@ormojo/ephraim': {
+  entity, field, types
+  declaredFields, declaredFieldKeys
+  fieldKeys, flexFieldKeys, forEachField
+  createMemory as create
+}
+
+
+test! "fields by class", ->
+  @entity() class E:
+    @field() anyField
+
+  @entity() class D extends E:
+    @field(types.string) strField
+
+  expect! E~declaredFields()['anyField']
+    .toBeTruthy!
+
+  expect! D~declaredFields()['strField']
+    .toBeTruthy!
+
+  expect! E~declaredFieldKeys()
+    .toEqual(['anyField'])
+
+  expect! D~declaredFieldKeys()
+    .toEqual(['anyField', 'strField'])
+
+  expect! D~declaredFields()['nope']
+    .toBeFalsy!
+
+test! "illegal field names", ->
+  expect!
+    ->
+      @entity() class Bad1:
+        @field() _underscored
+    .toThrow("Field '_underscored' may not begin with '_' or contain '.'")
+  // TODO: dotted example once class properties + decorators work right
+
+test! "instance field metadata", ->
+  @entity() class E:
+    @field() anyField
+
+  @entity() class D extends E:
+    @field(types.string) strField
+
+  e = create(E)
+  d = create(D)
+  d.flex = 1
+  d._notFlex = 2
+  d._veryNotFlex = -> 3
+
+  d~forEachField((k, v, spec) -> console.log(k, v, spec))
+  expect(e~declaredFields()).toEqual(E~declaredFields())
+  expect(d~declaredFields()).toEqual(D~declaredFields())
+  expect(e~fieldKeys()).toEqual(E~declaredFieldKeys())
+  expect(d~fieldKeys()).not.toEqual(D~declaredFieldKeys())
+  expect(d~flexFieldKeys()).toEqual(['flex'])

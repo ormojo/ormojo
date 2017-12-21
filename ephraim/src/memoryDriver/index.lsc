@@ -1,0 +1,10 @@
+import { transformType } from './transformType'
+import { initialize } from '../util'
+import { EntityType, typeFrom } from '../type'
+
+export { transformType }
+
+export create(T, skipInit) ->
+  x = transformType(T).construct()
+  if (not skipInit) and (typeFrom(T) instanceof EntityType): x~initialize(create)
+  x

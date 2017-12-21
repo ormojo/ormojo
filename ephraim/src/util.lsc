@@ -1,0 +1,84 @@
+import { typeOf } from './primitiveTypes'
+import { typeFrom, EntityType, ListType, PrimitiveType } from './type'
+import { declaredFields } from './fields'
+
+// Typecheck an assignment of val to a key of type T, throwing a standard
+// error message if the typecheck fails.
+export typeCheckAssignment(T, key, val) ->
+  if not T.validate(val):
+    throw new Error(`Value assigned to '${key}' must be of type '${T.name}', was of type '${typeOf(val).name}'`)
+
+objectConversionState() -> {
+  seen(x) -> this.map?.get(x)
+  remember(x, val): void ->
+    if not this.map: this.map = new Map()
+    this.map.set(x, val)
+  create(T) ->
+    // TODO: arrays, maps
+    if T instanceof EntityType: {}
+    elif T instanceof ListType: []
+    else: true
+  visitField(obj, k, v, spec): void ->
+    if spec:
+      obj[k] = spec.type.recurseLeft(v, this)
+    else:
+      obj[k] = v
+  visitListEntry(obj, i, v, type): void ->
+    if type:
+      obj[i] = type.recurseLeft(v, this)
+    else:
+      obj[i] = v
+}
+
+// Convert to plain object
+export toPlainObject(x) ->
+  T = typeFrom(typeOf(x))
+  state = objectConversionState()
+  T.recurseLeft(x, state)
+
+// Assign plain object
+objectAssignmentState() -> {
+  seen(x) -> this.map?.get(x)
+  remember(x, val): void ->
+    if not this.map: this.map = new Map()
+    this.map.set(x, val)
+  create() -> true
+  iterate(x, f): void ->
+    if typeof(x) != "object":
+      throw new Error("assignPlainObject: attempt to iterate non-object. This usually means you are assigning an incompatible structure.")
+    for key k, val v in x: f(k, v)
+  visitCorrespondingField(left, lspec, right, k, v, seen): void ->
+    if lspec.type instanceof PrimitiveType:
+      left[k] = v
+    elif seen:
+      left[k] = seen
+    else:
+      if not left[k]: left[k] = lspec.type.construct()
+      lspec.type.recurseRight(left[k], v, this)
+  visitUnknownField(left, right, k, v, seen): void ->
+    left[k] = if seen: seen else: v
+  visitListEntry(list, listET, ary, i, v, seen): void ->
+    if listET instanceof PrimitiveType:
+      list.set(i, v)
+    elif seen:
+      list.set(i, seen)
+    else:
+      let elt = list.get(i)
+      if not elt:
+        now elt = listET.construct()
+        list.set(i, elt)
+      listET.recurseRight(elt, v, this)
+
+}
+
+export assignPlainObject(x, y): void ->
+  T = typeFrom(typeOf(x))
+  state = objectAssignmentState()
+  T.recurseRight(x, y, state)
+
+export initialize(ent, creator): void ->
+  for key k, val spec in ent~declaredFields():
+    if spec.initializer:
+      ent[k] = spec.type.initialize(ent, spec, creator, spec.initializer)
+
+  ent._init?()

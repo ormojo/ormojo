@@ -1,0 +1,40 @@
+import { deltaSymbol, isDeltaSymbol } from '../../delta'
+import { dataSymbol } from '../../fields'
+import { typeCheckAssignment } from '../../util'
+import { observedFieldsSymbol } from '../../observe'
+import { any } from '../../primitiveTypes'
+
+createGetterMethod(proto, type, key) ->
+  () ->
+    if this[isDeltaSymbol]:
+      r = this[deltaSymbol]?[key]
+      if r == undefined: this[dataSymbol][key] else: r
+    else:
+      this[dataSymbol][key]
+
+createSetterMethod(proto, type, key) ->
+  // TODO: special handling for id
+  (val): void ->
+    if type != any: typeCheckAssignment(type, key, val)
+    if this[isDeltaSymbol]:
+      let delta = this[deltaSymbol]
+      if not delta: this[deltaSymbol] = now delta = {}
+      if delta[key] == val: return
+      delta[key] = val
+    else:
+      if this[dataSymbol][key] == val: return
+      this[dataSymbol][key] = val
+    observedFields = this[observedFieldsSymbol]
+    if observedFields:
+      observedFields[key]?.next(this)
+      observedFields._all_?.next({entity: this, key})
+
+getPropertyDescriptor(proto, type, key, spec) -> {
+  configurable: true
+  enumerable: true
+  get: createGetterMethod(proto, type, key, spec)
+  set: createSetterMethod(proto, type, key, spec)
+}
+
+export definePrimitiveField(proto, type, key, spec) ->
+  Object.defineProperty(proto, key, getPropertyDescriptor(proto, type, key, spec))

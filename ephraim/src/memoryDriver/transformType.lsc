@@ -1,0 +1,18 @@
+import { EntityType, PrimitiveType, ListType, typeFrom } from '../type'
+
+import transformedTypeSymbol from './transformedTypeSymbol'
+import { transformEntityType } from './entity/transformEntityType'
+import { transformListType } from './list/transformListType'
+
+export transformType(T) ->
+  now T = typeFrom(T)
+  if T[transformedTypeSymbol]: return T[transformedTypeSymbol]
+
+  if T instanceof PrimitiveType:
+    throw new Error("Cannot convert primitive types")
+  elif T instanceof EntityType:
+    transformEntityType(T)
+  elif T instanceof ListType:
+    transformListType(T)
+  else:
+    throw new Error(`Memory.transformType: unsupported type '${T.name}'`)

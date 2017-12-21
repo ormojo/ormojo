@@ -1,0 +1,32 @@
+'use @oigroup/lightscript with flippedImports'
+
+import '@ormojo/ephraim': {
+  entity, isKindOf, typeFrom, field, extendField
+}
+
+test! "isKindOf", ->
+  @entity() class Animal {}
+  @entity() class Dog extends Animal {}
+  @entity() class Plant {}
+
+  expect(Animal~isKindOf(Animal)).toBeTruthy()
+  expect(Animal~isKindOf(Plant)).toBeFalsy()
+  expect(Dog~isKindOf(Animal)).toBeTruthy()
+  expect(Animal~isKindOf(Dog)).toBeFalsy()
+
+test! "spec inheritance", ->
+  @entity({willInherit: true}) class E {}
+  @entity() class D extends E {}
+  expect(typeFrom(D).entitySpec.willInherit).toBeTruthy()
+
+test! "field extension", ->
+  @entity() class E:
+    @field() f
+
+  @entity() class D extends E:
+    @extendField({extension: true}) f = 3
+
+  expect(typeFrom(E).fields.f.initializer).toBeFalsy()
+  expect(typeFrom(E).fields.f.extension).toBeFalsy()
+  expect(typeFrom(D).fields.f.extension).toBeTruthy()
+  expect(typeFrom(D).fields.f.initializer).toBeTruthy()

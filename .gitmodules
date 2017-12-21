@@ -4,6 +4,3 @@
 [submodule "submodules/redux-components"]
 	path = submodules/redux-components
 	url = https://wcjohnson@github.com/wcjohnson/redux-components.git
-[submodule "ephraim"]
-	path = ephraim
-	url = https://github.com/ormojo/ephraim.git

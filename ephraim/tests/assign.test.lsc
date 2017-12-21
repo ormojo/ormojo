@@ -1,0 +1,92 @@
+import { entity, field, toPlainObject, assignPlainObject, types, listOf, createMemory as create, augment } from '@ormojo/ephraim'
+
+test! "basic assign", ->
+  @entity() class E:
+    @field(types.string) str
+
+  e = create(E)
+  e~assignPlainObject({ str: "str" })
+  console.log(e~toPlainObject!)
+  expect(e~toPlainObject!).toEqual({str: "str"})
+
+test! "deep assign", ->
+  @entity() class E:
+    @field(types.string) str
+
+  @entity() class D:
+    @field(E) subE
+
+  d = create(D)
+  d~assignPlainObject({ subE: { str: "str" } })
+  console.log(d~toPlainObject!)
+  expect(d~toPlainObject!).toEqual({ subE: { str: "str" } })
+
+test! "primitive list assign", ->
+  @entity() class E:
+    @field(listOf(types.string)) strs
+
+  e = create(E)
+  e~assignPlainObject({strs: ["1", "2", "3"]})
+  console.log(e~toPlainObject!)
+  expect(e~toPlainObject!).toEqual({strs: ["1", "2", "3"]})
+
+test! "entity list assign", ->
+  @entity() class E:
+    @field(types.string) str
+
+  @entity() class D:
+    @field(listOf(E)) es
+
+  d = create(D)
+  debugger
+  d~assignPlainObject({ es: [ { str: "1"}, { str: "2"}, { str: "3"} ] })
+  console.log(d~toPlainObject!)
+  expect(d~toPlainObject!).toEqual({ es: [ { str: "1"}, { str: "2"}, { str: "3"} ] })
+
+test! 'circular assign entity', ->
+  @entity() class Parent:
+    @field() child
+
+  @entity() class Child:
+    @field(Parent) parent
+    @field() data
+
+  Parent~augment({ child: { type: Child }})
+
+  debugger
+
+  p = create(Parent)
+  p.child = create(Child)
+  p.child.parent = p
+  p.child.data = 123
+
+  plain = p~toPlainObject!
+
+  p2 = create(Parent)
+  p2~assignPlainObject(plain)
+  expect(p2.child.parent).toBe(p2)
+  expect(p~toPlainObject!).toEqual(p2~toPlainObject!)
+
+test! 'circular assign list', ->
+  @entity() class E:
+    @field(types.string) str
+
+  loe = create(listOf(E))
+  e1 = create(E)
+  e1.str = "hi"
+  e2 = create(E)
+  e2.str = "bye"
+  loe.push(e1, e2, e2)
+  expect(loe.get(1)).toBe(loe.get(2))
+
+  plain = loe~toPlainObject!
+  console.log(plain)
+
+  loe2 = create(listOf(E))
+  debugger
+  loe2~assignPlainObject(plain)
+  console.log(loe2~toPlainObject!)
+  expect(loe2.get(1)).toBe(loe2.get(2))
+
+
+

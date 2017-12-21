@@ -1,0 +1,38 @@
+import { typeFrom, PrimitiveType } from './type'
+
+export fieldsSymbol = Symbol.for("ephraim.fields")
+export dataSymbol = Symbol.for("ephraim.data")
+
+// Get fields
+export declaredFields(x) ->
+  T = typeFrom(x) or typeFrom(x.constructor)
+  T.fields
+
+export declaredFieldKeys(x) ->
+  T = typeFrom(x) or typeFrom(x.constructor)
+  Object.keys(T.fields)
+
+// Get keys of flex fields -- undeclared fields not present on the
+// prototype, but present on the object itself.
+export flexFieldKeys(ent) ->
+  [...for key k, val v in ent:
+    if k.charCodeAt(0) != 95 and typeof(v) != "function": [k]
+  ]
+
+// Get all field keys, flex and declared
+export fieldKeys(ent) ->
+  [
+    ...for key k in ent[fieldsSymbol]: [k]
+    ...for key k, val v in ent:
+      if k.charCodeAt(0) != 95 and typeof(v) != "function": [k]
+  ]
+
+// Iterate over all field keys and values, flex and declared
+export forEachField(ent, f): void ->
+  for key k, val spec in ent[fieldsSymbol]:
+    v = ent[k]
+    if v != undefined: f(k, ent[k], spec)
+
+  for key k, val v in ent:
+    if k.charCodeAt(0) != 95 and typeof(v) != "function":
+      f(k, v)

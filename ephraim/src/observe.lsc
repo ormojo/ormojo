@@ -1,0 +1,42 @@
+import { typeOf } from './primitiveTypes'
+import { typeFrom } from './type'
+import createBehaviorSubject from 'observable-utils/lib/createBehaviorSubject'
+
+export observedFieldsSymbol = Symbol.for("ephraim.observedFields")
+export observableGhostSymbol = Symbol.for("ephraim.observableGhost")
+
+isEmpty(obj) ->
+  Object.keys(obj).length == 0
+
+export observe(ent) ->
+  if ent[observableGhostSymbol]: return ent[observableGhostSymbol]
+  T = typeFrom(typeOf(ent))
+  ent[observableGhostSymbol] = T.createObservableGhost(ent)
+
+export getObservableForField(ent, k) ->
+  // Get from cache
+  let observedFields = ent[observedFieldsSymbol]
+  if not observedFields:
+    now observedFields = ent[observedFieldsSymbol] = {}
+  let observable = observedFields[k]
+  if observable: return observable
+
+  // Initial value is the entity, or for field named _all_, a nonce object
+  // containing the entity
+  initialValue = if k == "_all_": { entity: ent } else: ent
+
+  // Create.
+  // Primitive observable, when unsubbed, deletes itself, and then
+  // the whole observedPrimitives key if empty
+  opts = {
+    initialValue
+    onObserversChanged(observers, added, removed) ->
+      if removed and observers.length == 0:
+        delete ent[observedFieldsSymbol][k]
+        if ent[observedFieldsSymbol]~isEmpty!:
+          ent[observedFieldsSymbol] = undefined
+  }
+  now observable = createBehaviorSubject(opts)
+
+  // Cache and return
+  observedFields[k] = observable
