@@ -1,0 +1,68 @@
+// A minimalistic version of rxjs's Subject, conforming to the ES Observables spec and implemented using
+// closures.
+//
+// Supports an optional onObserversChanged(observers, observerAdded, observerRemoved) method, to be
+// called when the observer list changes.
+import { emptySubscription, defineObservable, subscribeObserverAdapter, createSubscription } from '../util'
+
+pull(list, value) ->
+  if list:
+    i = list.indexOf(value)
+    if i > -1:
+      list.splice(i, 1)
+      return true
+  false
+
+export createSubject(opts) ->
+  onObserversChanged = opts?.onObserversChanged
+  onObserverStarted = opts?.onObserverStarted
+
+  observers = []
+  let hasError = false
+  let thrownError = null
+  let isStopped = false
+
+  observable = {
+    next(x): void ->
+      if not isStopped:
+        for elem observer in observers.slice(): observer.next?(x)
+
+    error(x): void ->
+      if not isStopped:
+        now hasError = true
+        now thrownError = x
+        now isStopped = true
+        for elem observer in observers.slice(): observer.error?(x)
+
+    complete(): void ->
+      if not isStopped:
+        now isStopped = true
+        for elem observer in observers.slice(): observer.complete?()
+
+    subscribe: subscribeObserverAdapter! (observer) ->
+      if hasError:
+        observer.start?(emptySubscription)
+        observer.error?(thrownError)
+        return emptySubscription
+      elif isStopped:
+        observer.start?(emptySubscription)
+        observer.complete?()
+        return emptySubscription
+      else:
+        observers.push(observer)
+        onObserversChanged?(observers, observer, null)
+        // Subscription object
+        sub = createSubscription(observer, ->
+          if pull(observers, observer): onObserversChanged?(observers, null, observer)
+          return
+        )
+        observer.start?(sub)
+        // The "start" event may actually have removed the observer.
+        // Call the onStarted hook only if the observer is still present.
+        if onObserverStarted and observers.indexOf(observer) >= 0: onObserverStarted(observer, observers)
+        // Return the subscription
+        return sub
+  }
+
+  // Attach observable symbol, etc
+  defineObservable(observable)

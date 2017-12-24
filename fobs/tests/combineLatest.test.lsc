@@ -1,0 +1,42 @@
+import { createSubject, combineLatest, test } from '..'
+
+describe! 'combineLatest', ->
+  it! 'should work', ->
+    obs1 = createSubject()
+    obs2 = createSubject()
+
+    array = combineLatest([obs1, obs2])
+    map = combineLatest({first: obs1, second: obs2})
+
+    test(array, console.log.bind(console), [
+      (x) ->
+        expect(x).toEqual([1,1])
+        true
+      (x) ->
+        expect(x).toEqual([2,1])
+        true
+      (x) ->
+        expect(x).toEqual([2,2])
+        true
+      'complete'
+    ])
+
+    test(map, console.log.bind(console), [
+      (x) ->
+        expect(x).toEqual({first: 1, second: 1})
+        true
+      (x) ->
+        expect(x).toEqual({first: 2, second: 1})
+        true
+      (x) ->
+        expect(x).toEqual({first: 2, second: 2})
+        true
+      'complete'
+    ])
+
+    obs1.next(1)
+    obs2.next(1)
+    obs1.next(2)
+    obs2.next(2)
+    obs1.complete()
+    obs2.complete()

@@ -1,0 +1,21 @@
+import { createSubject, changed, test } from '..'
+
+describe! 'changed', ->
+  it! 'should work', ->
+    subj1 = createSubject()
+    ch = changed(subj1)
+
+    test(ch, console.log.bind(console), [
+      (x) -> x == 1
+      (x) -> x == 2
+      (x) -> x == 3
+      'complete'
+      'failure'
+    ])
+
+    subj1.next(1)
+    subj1.next(1)
+    subj1.next(2)
+    subj1.next(2)
+    subj1.next(3)
+    subj1.complete()

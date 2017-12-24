@@ -1,0 +1,94 @@
+import { createSubscription, defineObservable, subscribeObserverAdapter } from '../util'
+
+none = {}
+
+defaultArrayProjection(x) -> x.slice()
+defaultObjectProjection(x) -> Object.assign({}, x)
+
+// Like Rx's combineLatest, supporting any ES7 compatible observable
+// and also supports key-value maps of observables, rather than just arrays.
+export combineLatest(observables, projection) ->
+  // Basic demographics about the observables
+  isArray = Array.isArray(observables)
+  let count = 0
+  if isArray:
+    now count = observables.length
+  else:
+    now count = Object.keys(observables).length
+
+  // Default projections
+  if typeof projection != 'function':
+    now projection = if isArray: defaultArrayProjection else: defaultObjectProjection
+
+  subscribe = subscribeObserverAdapter! (observer) ->
+    // Initial value map
+    let values = if isArray:
+      // eslint-disable-next-line no-unused-vars
+      [...for elem observable in observables: [none]]
+    else:
+      {...for key k in observables: {[k]: none}}
+
+    // Active = # of observables that have not complete()d
+    let active = count
+    // Inactive = # of observables that have not emitted a value
+    let inactive = count
+    // Store upstream subscriptions
+    subscriptions = []
+
+    // Unsubscribe from all upstream objects
+    unsubscribeAll(): void ->
+      for elem subscription in subscriptions:
+        subscription.unsubscribe?()
+
+    // Error and close the subscription
+    error(err) ->
+      if not values: return
+      now values = null
+      unsubscribeAll()
+      observer.error?(err)
+
+    // Emit the combined values on the observer.
+    emit() ->
+      let result
+      // Project; propagate errors caused by projector
+      try:
+        now result = projection(values)
+      catch err:
+        error(err)
+        return
+      observer.next?(result)
+
+    // Complete a single channel.
+    complete() ->
+      if not values: return
+      if (--active == 0):
+        now values = null
+        unsubscribeAll()
+        observer.complete?()
+
+    // Subscribe to one upstream object
+    subscribeOne(index, observable) ->
+      subscriptions.push(observable.subscribe({
+        next(x) ->
+          if not values: return
+          if values[index] == none: --inactive // array/map OK
+          values[index] = x // array/map OK
+          if inactive == 0: emit()
+
+        complete
+        error
+      }))
+
+    // Subscribe to all observers
+    if isArray:
+      observables.forEach! (observable, index) -> subscribeOne(index, observable)
+    else:
+      for key k, val v in observables: subscribeOne(k, v)
+
+    // Create the subscription object.
+    sub = createSubscription(observer, unsubscribeAll)
+    observer.start?(sub)
+    sub
+
+  // Finish the observable object.
+  defineObservable({subscribe})

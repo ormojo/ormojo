@@ -1,0 +1,34 @@
+// Creates a BehaviorSubject that subscribes to a prior observable
+// only when it is subscribed to.
+import { createBehaviorSubject } from './createBehaviorSubject'
+
+export toBehaviorSubject(priorObservable, opts) ->
+  let subscription = undefined
+  let observable = undefined
+
+  unsubscribe() ->
+    subscription?.unsubscribe()
+    now subscription = undefined
+
+  sopts = {
+    onObserverStarted(observer, observers): void ->
+      if observers.length == 1:
+        now subscription = priorObservable.subscribe({
+          next(val) ->
+            observable.next?(val)
+          error(e) ->
+            unsubscribe!
+            observable.error?(e)
+          complete() ->
+            unsubscribe!
+            observable.complete?()
+        })
+
+    onObserversChanged(observers): void ->
+      if observers.length == 0: unsubscribe!
+  }
+  if opts?.onlyWhen: sopts.onlyWhen = opts.onlyWhen
+
+  // Create observable
+  now observable = createBehaviorSubject(sopts)
+  observable

@@ -1,0 +1,60 @@
+// Switch operator
+//
+// Transforms an observable sequence of observable sequences into an observable
+// sequence producing values only from the most recent observable sequence.
+
+import { defineObservable, subscribeObserverAdapter, createSubscription } from '../util'
+
+export switchLatest(priorObservable) ->
+  subscribe = subscribeObserverAdapter((observer) ->
+    let innerSubscription = null
+    let isStopped = false
+    let hasCompleted = false
+
+    unsubscribeInner(): void ->
+      if innerSubscription:
+        innerSubscription.unsubscribe()
+        now innerSubscription = null
+
+    error(err): void ->
+      now isStopped = true
+      unsubscribeInner()
+      observer.error?(err)
+
+    // Observe the outer sequence...
+    outerSubscription = priorObservable.subscribe({
+      // Any time it emits an observable...
+      next(innerObservable): void ->
+        // Unsubscribe from the previous observable emitted...
+        unsubscribeInner()
+        // ...and subscribe to the next one
+        now innerSubscription = innerObservable.subscribe({
+          next(value): void ->
+            if not isStopped: observer.next?(value)
+
+          error
+
+          complete() ->
+            unsubscribeInner()
+            if hasCompleted:
+              now isStopped = true
+              observer.complete?()
+        })
+        return
+
+      error
+
+      complete() ->
+        now hasCompleted = true
+        if not innerSubscription:
+          now isStopped = true
+          observer.complete?()
+    })
+
+    createSubscription(observer, ->
+      unsubscribeInner()
+      outerSubscription.unsubscribe()
+    )
+  )
+
+  defineObservable({subscribe})

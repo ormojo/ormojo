@@ -1,0 +1,17 @@
+import { createBehaviorSubject, map, test } from '..'
+
+describe! 'map', ->
+  it! 'should work', ->
+    obs1 = createBehaviorSubject()
+    obs1.next(0)
+    m = map(obs1, (x) -> x+1)
+
+    sub = test(m, console.log.bind(console), [
+      (x) -> x == 1
+      (x) -> x == 2
+      'complete'
+    ])
+
+    obs1.next(1)
+    obs1.complete()
+    sub.unsubscribe()

@@ -1,0 +1,10 @@
+import { subscribeObserverAdapter, defineObservable, transformNext } from '../util'
+
+export map(priorObservable, f) ->
+  subscribe = subscribeObserverAdapter((observer) ->
+    priorObservable.subscribe(
+      transformNext(observer, (x) -> observer.next(f(x)))
+    )
+  )
+
+  defineObservable({subscribe})

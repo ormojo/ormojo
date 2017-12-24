@@ -1,0 +1,142 @@
+import $$observable from 'symbol-observable'
+
+returnThis() -> this
+
+let observableConstructor = undefined
+
+// Set a global observable constructor. Allows the use of fobs with other
+// observable platforms.
+export setObservableConstructor(constr): void ->
+  now observableConstructor = constr
+
+// Retrieve a global observable constructor.
+export getObservableConstructor() ->
+  observableConstructor
+
+// Convert a subscription function that takes Observers only, to a
+// subscription function that can take
+// either form of subscription as specified by the ES7 standard.
+export subscribeObserverAdapter(subscribe) ->
+  (onNextOrObserver, onError, onComplete) ->
+    if typeof onNextOrObserver == 'function':
+      subscribe({next: onNextOrObserver, error: onError, complete: onComplete})
+    else:
+      subscribe(onNextOrObserver)
+
+// Convert a subscription function that takes Functions only, to a
+// subscription function that can take
+// either form of subscription as specified by the ES7 standard.
+export subscribeFunctionsAdapter(subscribe) ->
+  (onNextOrObserver, onError, onComplete) ->
+    if typeof onNextOrObserver == 'function':
+      subscribe(onNextOrObserver, onError, onComplete)
+    else:
+      subscribe(
+        onNextOrObserver.next?.bind(onNextOrObserver)
+        onNextOrObserver.error?.bind(onNextOrObserver)
+        onNextOrObserver.complete?.bind(onNextOrObserver)
+      )
+
+// Get Symbol.observable on an object (whose value must be a getter function)
+// and return the result of evaluating the getter.
+export getObservableFrom(obj) ->
+  if obj:
+    getter = obj[$$observable]
+    getter?.call(obj)
+  else:
+    null
+
+// Create a standard Subscription object compliant with the observable spec.
+export createSubscription(observer, unsubscriber) ->
+  subscription = {
+    unsubscribe() ->
+      if observer:
+        now observer = undefined
+        unsubscriber()
+  }
+
+  Object.defineProperty(subscription, 'closed', {
+    configurable: true
+    enumerable: true
+    get: -> (not observer)
+  })
+
+// A static Subscription object from the ES7 Observables spec, representing no
+// subscription at all.
+export emptySubscription = Object.defineProperty(
+  { unsubscribe: -> return }
+  'closed'
+  {
+    configurable: true
+    enumerable: true
+    get: -> true
+  }
+)
+
+// Define the observable symbol on an object
+export defineObservableSymbol(obj, observableGetter) ->
+  if typeof observableGetter != 'function': now observableGetter = returnThis
+
+  Object.defineProperty(obj, $$observable, { value: observableGetter, writable: true, configurable: true, enumerable: true })
+  obj
+
+// Define an observable, either by adding Symbol.observable or by calling the
+// configured observable constructor. In either case, the given object must
+// have an Observable-conformant API.
+export defineObservable(opts) ->
+  constr = getObservableConstructor()
+  if constr:
+    originalSubscriber = opts.subscribe
+    subscriber = (observer) ->
+      subscription = originalSubscriber(observer)
+      -> subscription.unsubscribe()
+
+    observable = new constr(subscriber)
+    for key k, val v in opts:
+      if k != 'subscribe': observable[k] = v
+
+    observable
+  else:
+    defineObservableSymbol(opts)
+
+// Replace the `next` method on an observer, preserving other methods intact.
+export transformNext(observer, nextNext) ->
+  nextObserver = {}
+  if observer.start: nextObserver.start(sub) -> observer.start(sub)
+  if observer.error: nextObserver.error(err) -> observer.error(err)
+  if observer.complete: nextObserver.complete() -> observer.complete()
+  if observer.next: nextObserver.next = nextNext
+
+  nextObserver
+
+// Test an Observable against an array describing expected behaviors.
+export test(observable, always, expectations) ->
+  let currentIndex = 0
+
+  subscr = observable.subscribe({
+    start: ->
+      always?('start')
+      if currentIndex > 0: throw new Error("Got value before start")
+      now currentIndex = 0
+
+    next: (x) ->
+      always?('next', x)
+      if not expectations[currentIndex++]?(x):
+        throw new Error(`Expectation[${currentIndex-1}] failed.`)
+
+    complete: ->
+      always?('complete')
+      if not (expectations[currentIndex++] == 'complete'):
+        throw new Error(`Unexpected completion at ${currentIndex}`)
+
+    error: (err) ->
+      always?('error', err)
+      if not (expectations[currentIndex++] == 'error'):
+        throw new Error(`Unexpected error at ${currentIndex}`)
+  })
+
+  nextSubscr = {
+    unsubscribe: ->
+      if currentIndex < expectations.length: throw new Error("Leftover expectations")
+      subscr.unsubscribe()
+  }

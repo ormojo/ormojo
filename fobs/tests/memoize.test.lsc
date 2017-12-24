@@ -1,0 +1,25 @@
+import { createBehaviorSubject, memoize, test } from '..'
+
+describe! 'memoize', ->
+  it! 'should work', ->
+    obs1 = createBehaviorSubject()
+    obs1.next(0)
+    m = memoize(obs1)
+
+    sub = test(m, console.log.bind(console), [
+      (x) ->
+        expect(x).toEqual([0])
+        true
+      (x) ->
+        expect(x).toEqual([1, 0])
+        true
+      (x) ->
+        expect(x).toEqual([2, 1])
+        true
+      'complete'
+    ])
+
+    obs1.next(1)
+    obs1.next(2)
+    obs1.complete()
+    sub.unsubscribe()

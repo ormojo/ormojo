@@ -1,0 +1,67 @@
+import { createSubject, createBehaviorSubject, switchLatest, test } from '..'
+
+describe! 'switch', ->
+  it! 'should work', ->
+    subj1 = createSubject()
+    subj2 = createSubject()
+    subj3 = createSubject()
+    outer = createSubject()
+
+    switched = switchLatest(outer)
+
+    test(switched, console.log.bind(console), [
+      (x) -> x == 1
+      (x) -> x == 2
+      (x) -> x == 3
+      'complete'
+      'failure'
+    ])
+
+    outer.next(subj1)
+    subj1.next(1)
+    outer.next(subj2)
+    subj2.next(2)
+    outer.next(subj3)
+    outer.complete()
+    subj3.next(3)
+    subj3.complete()
+
+  it! 'should work with BehaviorSubject', ->
+    subj1 = createBehaviorSubject()
+    subj1.next(1)
+    subj2 = createBehaviorSubject()
+    subj2.next(2)
+    subj3 = createBehaviorSubject()
+    subj3.next(3)
+    outer = createSubject()
+
+    switched = switchLatest(outer)
+
+    test(switched, console.log.bind(console), [
+      (x) -> x == 1
+      (x) -> x == 2
+      (x) -> x == 3
+      'complete'
+      'failure'
+    ])
+
+    outer.next(subj1)
+    outer.next(subj2)
+    outer.next(subj3)
+
+  it! 'should manage subscriptions properly', ->
+    subj1 = createSubject({
+      onObserversChanged: (obs, added, removed) ->
+        console.log("subj1 observers", obs, "added", added, "removed", removed)
+    })
+    subj2 = createSubject({
+      onObserversChanged: (obs, added, removed) ->
+        console.log("subj2 observers", obs, "added", added, "removed", removed)
+    })
+    outer = createSubject()
+    switched = switchLatest(outer)
+
+    sub = switched.subscribe(-> return)
+    outer.next(subj1)
+    outer.next(subj2)
+    sub.unsubscribe()

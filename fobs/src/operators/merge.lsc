@@ -1,0 +1,39 @@
+import { subscribeObserverAdapter, defineObservable, createSubscription } from '../util'
+
+// Merge multiple observables into one observable.
+export merge(observables) ->
+  count = observables.length
+
+  subscribe = subscribeObserverAdapter! (observer) ->
+    let active = count
+    subscriptions = []
+
+    unsubscribeAll(): void ->
+      for elem sub in subscriptions: sub.unsubscribe?()
+
+    error(err): void ->
+      if active == 0: return
+      now active = 0
+      unsubscribeAll()
+      observer.error(err)
+
+    complete(): void ->
+      if active == 0: return
+      if (--active == 0):
+        unsubscribeAll()
+        observer.complete()
+
+    next(x): void ->
+      if active != 0: observer.next(x)
+
+    subscribeOne(observable): void ->
+      subscriptions.push(observable.subscribe({ next, complete, error }))
+
+    observables.forEach(subscribeOne)
+
+    // Make a subscription
+    sub = createSubscription(observer, unsubscribeAll)
+    observer.start?(sub)
+    sub
+
+  defineObservable({subscribe})

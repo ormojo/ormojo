@@ -1,0 +1,50 @@
+// A minimalistic version of Rx's BehaviorSubject implemented using closures.
+//
+// A BehaviorSubject is a subject that maintains a cached value representing
+// its current state. The current state is pushed to all new subscribers
+// upon subscription. Pushing a new value via `next()` updates the current state
+// and passes it along to all subscribers ala Subject.
+//
+import { createSubject } from './createSubject'
+
+export createBehaviorSubject(opts) ->
+  let nexted = false
+
+  // Initial value of the observable
+  let presentValue = undefined
+  if opts and ("initialValue" in opts):
+    now presentValue = opts.initialValue
+
+  // Create the subject
+  observable = createSubject(opts)
+  subjectNext = observable.next
+  subjectSubscribe = observable.subscribe
+
+  // Replace the Subject's next handler with a new one that caches the value
+  if typeof opts?.onlyWhen == 'function':
+    onlyWhen = opts.onlyWhen
+    // Filter with onlyWhen function
+    observable.next(x): void ->
+      now nexted = true
+      if onlyWhen(x, presentValue):
+        subjectNext.call(this, now presentValue = x)
+  else:
+    observable.next(x): void ->
+      now nexted = true
+      subjectNext.call(this, now presentValue = x)
+
+  // Replace the Subject's subscribe handler with a new one that pushes the
+  // present value to new subscribers.
+  observable.subscribe(observer) ->
+    // Bugfix: subjectSubscribe can trigger a next as a side effect.
+    // In that case, don't want to trigger another. Mark here...
+    now nexted = false
+    sub = subjectSubscribe.call(this, observer)
+    // ...and elide double next if it was called.
+    if (not sub.closed) and (not nexted): observer.next?(presentValue)
+    sub
+
+  // Add getter for current value
+  observable.getValue() -> presentValue
+
+  observable

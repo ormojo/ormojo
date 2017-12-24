@@ -5,7 +5,8 @@
   "packages": [
     "ormojo",
     "elasticsearch",
-    "ephraim"
+    "ephraim",
+    "fobs"
   ],
   "version": "independent"
 }

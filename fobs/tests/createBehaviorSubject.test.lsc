@@ -1,0 +1,40 @@
+import { createBehaviorSubject, test } from '..'
+
+describe! 'createBehaviorSubject', ->
+  it! 'should work', ->
+    subj = createBehaviorSubject()
+
+    subj.next(1)
+
+    test(subj, console.log.bind(console), [
+      (x) -> x == 1
+      (x) -> x == 2
+      (x) -> x == 3
+      'complete'
+      'failure'
+    ])
+
+    subj.next(2); subj.next(3); subj.complete()
+
+  it! 'onlyWhen', ->
+    subj = createBehaviorSubject()
+
+    subj.next(1)
+
+    test(subj, console.log.bind(console), [
+      (x) -> x == 1
+      (x) -> x == 1
+      'complete'
+      'failure'
+    ])
+
+    subj.next(1); subj.complete()
+
+    subj2 = createBehaviorSubject({onlyWhen: (a,b) -> a != b})
+    subj2.next(1)
+    test(subj2, console.log.bind(console), [
+      (x) -> x == 1
+      'complete'
+      'failure'
+    ])
+    subj2.next(1); subj2.complete()
