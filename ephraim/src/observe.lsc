@@ -1,6 +1,6 @@
 import { typeOf } from './primitiveTypes'
 import { typeFrom } from './type'
-import createBehaviorSubject from 'observable-utils/lib/createBehaviorSubject'
+import { createBehaviorSubject } from '@ormojo/fobs'
 
 export observedFieldsSymbol = Symbol.for("ephraim.observedFields")
 export observableGhostSymbol = Symbol.for("ephraim.observableGhost")

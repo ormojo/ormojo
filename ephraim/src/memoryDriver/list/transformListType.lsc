@@ -1,7 +1,7 @@
 import { PrimitiveType, ListType, underlyingTypeSymbol } from '../../type'
 import { observableGhostSymbol } from '../../observe'
 
-import createBehaviorSubject from 'observable-utils/lib/createBehaviorSubject'
+import { createBehaviorSubject } from '@ormojo/fobs'
 
 import { defineEntityField } from '../entity/defineEntityField'
 import transformedTypeSymbol from '../transformedTypeSymbol'

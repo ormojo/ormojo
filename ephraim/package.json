@@ -4,7 +4,7 @@
   "private": true,
   "license": "MIT",
   "description": "A JavaScript entity framework.",
-  "main": "lib/index.cjs.js",
+  "main": "lib/index.js",
   "module": "lib/index.es.js",
   "jsnext:main": "lib/index.es.js",
   "files": ["lib"],
@@ -45,6 +45,6 @@
     "testRegex": "(\\.|/)test\\.lsc$"
   },
   "dependencies": {
-    "observable-utils": "^0.1.10"
+    "@ormojo/fobs": "^1.0.0"
   }
 }
