@@ -1,0 +1,23 @@
+import { createSubject, merge, test, getObservableFrom } from '..'
+
+describe! 'merge', ->
+  it! 'should work', ->
+    subj1 = createSubject()
+    subj2 = createSubject()
+    subj3 = getObservableFrom(createSubject())
+    out = merge([subj1, subj2, subj3])
+
+    sub = test(out, console.log.bind(console), [
+      (x) -> x == 1
+      (x) -> x == 2
+      (x) -> x == 3
+      'complete'
+    ])
+
+    subj1.next(1)
+    subj1.complete()
+    subj2.next(2)
+    subj2.complete()
+    subj3.next(3)
+    subj3.complete()
+    sub.unsubscribe()
