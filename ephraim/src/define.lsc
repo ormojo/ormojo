@@ -4,7 +4,7 @@ import { any } from './primitiveTypes'
 import { fieldsSymbol } from './fields'
 
 // Associate a prototype with an Ephraim EntityType
-export bootstrapPrototype(proto, typeClass, parentType): void ->
+export bootstrapPrototype(proto, typeClass): void ->
   if not proto.hasOwnProperty(fieldsSymbol):
     // Inherit fields from parent by duplicating and assigning
     // to own fields.
@@ -16,11 +16,17 @@ export bootstrapPrototype(proto, typeClass, parentType): void ->
     extendsType = if extendsProto?.constructor: typeFrom(extendsProto.constructor)
 
     // Create EntityType and associate it with the constructor
-    T = new typeClass(parentType)
+    T = new typeClass(proto.constructor.name)
+
+    // Extend the supertype
+    // TODO: factor out to type class
+    if extendsType:
+      T.extends(extendsType)
+      T.javascriptSupertype = extendsType
+
     T.fields = nextFields
-    T.name = proto.constructor.name
     T.entityPrototype = proto
-    T.extendsType = extendsType
+
     T.entitySpec = Object.assign({}, extendsType?.entitySpec)
     proto.constructor~setType(T)
 

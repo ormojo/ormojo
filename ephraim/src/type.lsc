@@ -6,10 +6,10 @@ export underlyingTypeSymbol = Symbol.for("ephraim.underlyingType")
 
 export Type = singleton("Type", ->
   class Type:
-    constructor(baseType) ->
+    constructor(name) ->
       this[typeSymbol] = this
       this.extra = {}
-      if baseType: this.extends(baseType)
+      this.name = name
 
     extends(otherT): void ->
       this.extra = Object.assign({}, otherT?.extra)
@@ -33,7 +33,7 @@ export Type = singleton("Type", ->
 
     // Descend into another object recursively, mapping it onto this object
     // eslint-disable-next-line no-unused-vars
-    recurseRight(left, right) -> left
+    recurseRight(left, right): void -> return
 
     // Set type extra data. This is inherited (via Object.assign) when a new
     // type is created based on this one.
@@ -41,13 +41,17 @@ export Type = singleton("Type", ->
 
     // Get type extra data
     getExtra(key) -> this.extra[key]
+
+    // Function called when the user attempts to create an observable version
+    // of an object of this type.
+    createObservableGhost() ->
+      throw new Error(`Type '${this.name}' does not define an observable interface`)
 )
 
 export PrimitiveType = singleton("PrimitiveType", ->
   class PrimitiveType extends Type:
     constructor(name) ->
-      super(null)
-      this.name = name
+      super(name)
 
     createObservableGhost() ->
       throw new Error("primitive types cannot be observed")
@@ -57,12 +61,29 @@ export PrimitiveType = singleton("PrimitiveType", ->
 )
 
 export ComplexType = singleton("ComplexType", ->
-  class ComplexType extends Type {}
-  ComplexType
+  class ComplexType extends Type:
+    constructor(name) ->
+      super(name)
+      this.typeIdentity = Symbol()
+      this.isa = { [this.typeIdentity]: true }
+
+    extends(otherT): void ->
+      if not (otherT instanceof ComplexType):
+        throw new Error(`Invalid inheritance: complex type '${this.name}' cannot extend non-complex type '${otherT.name}'`)
+      super.extends(otherT)
+      for elem sym in Object.getOwnPropertySymbols(otherT.isa):
+        this.isa[sym] = true
+
+    isKindOf(otherT): boolean ->
+      otherTypeIdentity = otherT.typeIdentity
+      if otherTypeIdentity and this.isa[otherTypeIdentity]: true else: false
 )
 
 export EntityType = singleton("EntityType", ->
-  class EntityType extends ComplexType {
+  class EntityType extends ComplexType:
+    constructor(name) ->
+      super(name)
+
     defineField(key, spec): void ->
       spec.key = key
       this.fields[key] = spec
@@ -115,12 +136,10 @@ export EntityType = singleton("EntityType", ->
         else:
           state.visitUnknownField(left, right, k, v, seen)
       )
-  }
-  EntityType
 )
 
 export ListType = singleton("ListType", ->
-  class ListType extends ComplexType {
+  class ListType extends ComplexType:
     constructor(baseType, elementType) ->
       super(baseType)
       this.elementType = elementType
@@ -154,18 +173,14 @@ export ListType = singleton("ListType", ->
       right.forEach! (v, i): void ->
         seen = state.seen(v)
         state.visitListEntry(left, T, right, i, v, seen)
-  }
-  ListType
 )
 
 export MapType = singleton("MapType", ->
-  class MapType extends ComplexType {
+  class MapType extends ComplexType:
     constructor(keyType, valueType) ->
       super()
       this.keyType = keyType
       this.valueType = valueType
-  }
-  MapType
 )
 
 export typeFrom(x) ->
@@ -202,4 +217,3 @@ export isKindOf(T1, T2): boolean ->
   now T1 = T1[typeSymbol]
   now T2 = T2[typeSymbol]
   if T1: T1.isKindOf(T2) else: false
-
