@@ -1,34 +1,15 @@
 // Helpers for defining types
-import { typeFrom, isType, EntityType, setType } from './type'
+import { typeFrom, isType, EntityType } from './type'
 import { any } from './primitiveTypes'
 import { fieldsSymbol } from './fields'
 
 // Associate a prototype with an Ephraim EntityType
 export bootstrapPrototype(proto, typeClass): void ->
   if not proto.hasOwnProperty(fieldsSymbol):
-    // Inherit fields from parent by duplicating and assigning
-    // to own fields.
-    nextFields = Object.assign({}, proto[fieldsSymbol])
-    proto[fieldsSymbol] = nextFields
-
-    // Figure out if this is going to extend something
-    extendsProto = Object.getPrototypeOf(proto)
-    extendsType = if extendsProto?.constructor: typeFrom(extendsProto.constructor)
-
-    // Create EntityType and associate it with the constructor
+    // Create EntityType
     T = new typeClass(proto.constructor.name)
-
-    // Extend the supertype
-    // TODO: factor out to type class
-    if extendsType:
-      T.extends(extendsType)
-      T.javascriptSupertype = extendsType
-
-    T.fields = nextFields
-    T.entityPrototype = proto
-
-    T.entitySpec = Object.assign({}, extendsType?.entitySpec)
-    proto.constructor~setType(T)
+    // Associate it with the prototype
+    T.bootstrapFromPrototype(proto)
 
 normalizeFieldSpec(spec) ->
   if not spec: return { type: any }

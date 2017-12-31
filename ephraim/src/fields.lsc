@@ -1,4 +1,4 @@
-import { typeFrom, PrimitiveType } from './type'
+import { typeFrom } from './type'
 
 export fieldsSymbol = Symbol.for("ephraim.fields")
 export dataSymbol = Symbol.for("ephraim.data")

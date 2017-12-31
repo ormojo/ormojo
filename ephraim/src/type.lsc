@@ -1,5 +1,5 @@
 import { singleton } from './singleton'
-import { forEachField } from './fields'
+import { forEachField, fieldsSymbol } from './fields'
 
 export typeSymbol = Symbol.for("ephraim.type")
 export underlyingTypeSymbol = Symbol.for("ephraim.underlyingType")
@@ -64,7 +64,7 @@ export ComplexType = singleton("ComplexType", ->
   class ComplexType extends Type:
     constructor(name) ->
       super(name)
-      this.typeIdentity = Symbol()
+      this.typeIdentity = Symbol(name)
       this.isa = { [this.typeIdentity]: true }
 
     extends(otherT): void ->
@@ -83,6 +83,8 @@ export EntityType = singleton("EntityType", ->
   class EntityType extends ComplexType:
     constructor(name) ->
       super(name)
+      this.entitySpec = {}
+      this.fields = {}
 
     defineField(key, spec): void ->
       spec.key = key
@@ -105,15 +107,34 @@ export EntityType = singleton("EntityType", ->
       // Set constructor name to typename
       Object.defineProperty(constr, "name", { value: this.name })
 
-    isKindOf(otherT): boolean ->
-      (otherT instanceof EntityType)
-      and (
-        otherT.entityConstructor == this.entityConstructor
-        or this.entityConstructor.prototype instanceof otherT.entityConstructor
-      )
+    extends(otherT): void ->
+      if not (otherT instanceof EntityType):
+        throw new Error(`Invalid inheritance: entity type '${this.name}' cannot extend non-entity type '${otherT.name}'`)
+      super.extends(otherT)
+      Object.assign(this.fields, otherT.fields)
+      Object.assign(this.entitySpec, otherT.entitySpec)
+
+    extendsPrototypically(otherT): void ->
+      this.extends(otherT)
+      this.extendsPrototypically = otherT
+
+    bootstrapFromPrototype(proto): void ->
+      // Set demographic information
+      proto.constructor~setType(this)
+      this.entityPrototype = proto
+      proto[fieldsSymbol] = this.fields
+
+      // Compute JavaScript inheritance
+      extendsProto = Object.getPrototypeOf(proto)
+      extendsType = if extendsProto?.constructor: typeFrom(extendsProto.constructor)
+      if extendsType:
+        this.extendsPrototypically(extendsType)
 
     validate(x): boolean ->
-      x~looseEq(null) or (x instanceof this.entityConstructor)
+      if x~looseEq(null): return true
+      if typeof(x) != "object": return false
+      Tx = x[typeSymbol] or x.constructor?[typeSymbol]
+      Tx.isKindOf(this)
 
     createObservableGhost() ->
       throw new Error("entities without a driver cannot be observed")
