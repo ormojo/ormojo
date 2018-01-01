@@ -4,12 +4,35 @@ import { forEachField, fieldsSymbol } from './fields'
 export typeSymbol = Symbol.for("ephraim.type")
 export underlyingTypeSymbol = Symbol.for("ephraim.underlyingType")
 
+// Get all keys, enumerable or otherwise, up the prototype chain,
+// excluding Object.
+_getAllPrototypeKeys(buf, proto): void ->
+  if (not proto) or (proto == Object.prototype): return
+
+  for elem name in Object.getOwnPropertyNames(proto): buf.push(name)
+
+  _getAllPrototypeKeys(buf, Object.getPrototypeOf(proto))
+
+getAllPrototypeKeys(proto) ->
+  buf = []
+  _getAllPrototypeKeys(buf, proto)
+  buf
+
+getPropertyDescriptorFromPrototypeChain(proto, key) ->
+  if (not proto) or (proto == Object.prototype): return undefined
+
+  desc = Object.getOwnPropertyDescriptor(proto, key)
+  if desc: return desc
+
+  getPropertyDescriptorFromPrototypeChain(Object.getPrototypeOf(proto), key)
+
 export Type = singleton("Type", ->
   class Type:
     constructor(name) ->
       this[typeSymbol] = this
       this.extra = {}
       this.name = name
+      this.typeIdentity = Symbol(name)
 
     extends(otherT): void ->
       this.extra = Object.assign({}, otherT?.extra)
@@ -64,7 +87,6 @@ export ComplexType = singleton("ComplexType", ->
   class ComplexType extends Type:
     constructor(name) ->
       super(name)
-      this.typeIdentity = Symbol(name)
       this.isa = { [this.typeIdentity]: true }
 
     extends(otherT): void ->
@@ -85,6 +107,7 @@ export EntityType = singleton("EntityType", ->
       super(name)
       this.entitySpec = {}
       this.fields = {}
+      this.nativeProperties = {}
 
     defineField(key, spec): void ->
       spec.key = key
@@ -111,12 +134,37 @@ export EntityType = singleton("EntityType", ->
       if not (otherT instanceof EntityType):
         throw new Error(`Invalid inheritance: entity type '${this.name}' cannot extend non-entity type '${otherT.name}'`)
       super.extends(otherT)
-      Object.assign(this.fields, otherT.fields)
+
+      // Native fields override those from extensions
+      for key k, val v in otherT.fields:
+        if not this.nativeProperties[k]:
+          this.fields[k] = v
       Object.assign(this.entitySpec, otherT.entitySpec)
 
     extendsPrototypically(otherT): void ->
       this.extends(otherT)
       this.extendsPrototypically = otherT
+
+    extendsAprototypically(otherTs): void ->
+      for elem otherT in otherTs:
+        this.extends(otherT)
+        this.adoptPrototypeProperties(otherT)
+
+    adoptPrototypeProperties(otherT): void ->
+      // Transfer own AND non-own properties from otherT's prototype
+      // onto this prototype
+      myProto = this.entityPrototype
+      otherProto = otherT.entityPrototype
+      for elem k in getAllPrototypeKeys(otherProto):
+        if k != "constructor" and (not this.nativeProperties[k]):
+          desc = getPropertyDescriptorFromPrototypeChain(otherProto, k)
+          if desc: Object.defineProperty(myProto, k, desc)
+
+    freezeNativeProperties(): void ->
+      Object.assign(this.nativeProperties, {
+        ...for elem k in Object.getOwnPropertyNames(this.entityPrototype):
+          {[k]: true}
+      })
 
     bootstrapFromPrototype(proto): void ->
       // Set demographic information
@@ -161,8 +209,8 @@ export EntityType = singleton("EntityType", ->
 
 export ListType = singleton("ListType", ->
   class ListType extends ComplexType:
-    constructor(baseType, elementType) ->
-      super(baseType)
+    constructor(name, elementType) ->
+      super(name)
       this.elementType = elementType
 
     initialize(entity, spec, creator, initializer) ->
@@ -218,15 +266,17 @@ listOfSymbol = Symbol.for("ephraim.listOfType")
 export listOf(T) ->
   now T = typeFrom(T)
   if T[listOfSymbol]: return T[listOfSymbol]
-  T[listOfSymbol] = new ListType(null, T)
+  T[listOfSymbol] = new ListType(`listOf(${T.name})`, T)
 
 mapOfSymbol = Symbol.for("ephraim.mapOfType")
 export mapOf(T1, T2) ->
   now T1 = typeFrom(T1)
   now T2 = typeFrom(T2)
-  if T1[mapOfSymbol]?[T2.name]: return T1[mapOfSymbol][T2.name]
+  cached = T1[mapOfSymbol]?[T2.typeIdentity]
+  if cached: return cached
+  // No cached map type, create
   T1[mapOfSymbol] = T1[mapOfSymbol] or {}
-  T1[mapOfSymbol][T2.name] = new MapType(T1, T2)
+  T1[mapOfSymbol][T2.typeIdentity] = new MapType(T1, T2)
 
 // Determine if x is-a instance of Type.
 export isa(x, T): boolean ->

@@ -8,7 +8,7 @@ import transformedTypeSymbol from '../transformedTypeSymbol'
 import { transformType } from '../transformType'
 import { MemoryList } from './memoryList'
 
-class MemoryListType extends ListType {
+class MemoryListType extends ListType:
   fieldOfTypeWasDefined(targetType, key, spec): void ->
     defineEntityField(targetType.entityPrototype, spec.type, key, spec)
 
@@ -22,12 +22,9 @@ class MemoryListType extends ListType {
           delete ent[observableGhostSymbol]
     })
 
-}
-
 export transformListType(LT) ->
   ET = if LT.elementType instanceof PrimitiveType: LT.elementType else: transformType(LT.elementType)
-  MT = new MemoryListType(LT, ET)
-  MT.name = `memory(listOf(${ET.name}))`
+  MT = new MemoryListType(`memory(listOf(${ET.name}))`, ET)
 
   // Cache now to prevent cycles/recursion
   LT[transformedTypeSymbol] = MT

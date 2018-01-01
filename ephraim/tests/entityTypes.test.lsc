@@ -1,7 +1,8 @@
 'use @oigroup/lightscript with flippedImports'
 
 import '@ormojo/ephraim': {
-  entity, isKindOf, typeFrom, field, extendField
+  entity, isKindOf, typeFrom, field, extendField, isa
+  createMemory as create
 }
 
 test! "isKindOf", ->
@@ -30,3 +31,61 @@ test! "field extension", ->
   expect(typeFrom(E).fields.f.extension).toBeFalsy()
   expect(typeFrom(D).fields.f.extension).toBeTruthy()
   expect(typeFrom(D).fields.f.initializer).toBeTruthy()
+
+test! "multiple inheritance", ->
+  @entity() class Sentient {
+    @field() iq = 50
+
+    speak() -> "protolanguage"
+  }
+  @entity() class Animal {
+    @field() iq = 0
+
+    speak() -> "ruff ruff"
+  }
+  @entity() class Supergenius {
+    @field() iq = 250
+
+    speak() -> "ds^2 = g_mu_nu dx_mu dx_nu"
+  }
+
+  @entity({inherits: [Sentient]}) class Elephant extends Animal {}
+  @entity({inherits: [Sentient]}) class Human extends Animal {
+    @field() iq = 100
+
+    speak() -> "hello friend"
+  }
+  @entity({inherits: [Supergenius]}) class Einstein extends Human {
+  }
+
+  expect(Human~isKindOf(Animal)).toBeTruthy()
+  expect(Human~isKindOf(Sentient)).toBeTruthy()
+  expect(Sentient~isKindOf(Human)).toBeFalsy()
+  expect(Animal~isKindOf(Sentient)).toBeFalsy()
+
+  man = create(Human)
+  expect(man~isa(Sentient)).toBeTruthy()
+  expect(man~isa(Supergenius)).toBeFalsy()
+  expect(man.iq).toEqual(100)
+  expect(man.speak!).toEqual("hello friend")
+
+  dog = create(Animal)
+  expect(dog~isa(Sentient)).toBeFalsy()
+  expect(dog~isa(Animal)).toBeTruthy()
+  expect(dog.iq).toEqual(0)
+  expect(dog.speak!).toEqual("ruff ruff")
+
+  ele = create(Elephant)
+  expect(ele~isa(Sentient)).toBeTruthy()
+  expect(ele.iq).toEqual(50)
+  expect(ele.speak!).toEqual("protolanguage")
+
+  albert = create(Einstein)
+  expect(albert~isa(Human)).toBeTruthy()
+  expect(albert~isa(Sentient)).toBeTruthy()
+  expect(albert~isa(Supergenius)).toBeTruthy()
+  expect(albert~isa(Elephant)).toBeFalsy()
+  expect(albert.iq).toEqual(250)
+  expect(albert.speak!).toEqual("ds^2 = g_mu_nu dx_mu dx_nu")
+
+

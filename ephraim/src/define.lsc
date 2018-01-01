@@ -35,6 +35,7 @@ export field(spec) ->
     T = typeFrom(proto.constructor)
     spec.initializer = descriptor.initializer
     T.defineField(key, spec)
+    T.nativeProperties[key] = true
     {
       configurable: true, enumerable: true
       get: -> undefined
@@ -67,12 +68,19 @@ normalizeEntitySpec(spec) ->
 // @entity decorator
 export entity(spec) ->
   now spec = normalizeEntitySpec(spec)
+  let inherits = spec.inherits
+  if inherits: delete spec.inherits
 
   (constructor) ->
     proto = constructor.prototype
     bootstrapPrototype(proto, EntityType)
     T = typeFrom(proto.constructor)
     Object.assign(T.entitySpec, spec)
+    T.freezeNativeProperties()
+    if inherits:
+      T.extendsAprototypically([
+        ...for elem e in inherits: [typeFrom(e)]
+      ])
 
     throwOnlyConstructor = () ->
       throw new Error("cannot construct entity without a driver")
