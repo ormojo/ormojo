@@ -1,7 +1,7 @@
 import { Migration } from '@ormojo/ormojo'
 import isEqual from 'lodash/isEqual'
 import deepDiff from 'deep-diff'
-import set from 'nanotools/lib/set'
+import set from 'lodash/set'
 
 _getMigrationCounter(indexList) ->
   let maxn = 0
