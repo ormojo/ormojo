@@ -17,6 +17,7 @@ describe('CRUD', ->
   it('should create, save, find by id', ->
     awidget = Widget~create()
     awidget.name = "whosit"
+    debugger
     awidget~save()
     .then! (widg) ->
       console.log(widg~toPlainObject!)

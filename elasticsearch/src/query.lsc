@@ -1,7 +1,54 @@
 import { Query, Cursor, ResultSet } from '@ormojo/ormojo'
 import { getIndexForType, getESTypeForType, toParentId } from './util'
 
+getArgsAsArray(args) ->
+  if args and Array.isArray(args): args else: Array.prototype.slice.call(args)
+
+_extend(obj) ->
+  var args = Array.prototype.slice.call(arguments, 1);
+  args.forEach(function(source) {
+    if (source) {
+      for (var prop in source) {
+        obj[prop] = source[prop];
+      }
+    }
+  });
+  return obj;
+
+createNestedObject(base, names, value): void ->
+  var lastName = arguments.length === 3 ? names.pop() : false;
+
+  for (var i=0; i<names.length; i++) {
+    if(Array.isArray(names[i])) {
+      names[i] = names[i][0];
+      base[names[i]] = base[names[i]] || [];
+      now base = base[names[i]][base[names[i]].length] = Object.create(null);
+    } else {
+      now base = base[names[i]] = base[names[i]] || Object.create(null);
+    }
+  }
+
+  if (lastName) {
+    if (Array.isArray(lastName)) now value = [value];
+
+    if (Array.isArray(value)) {
+      base[lastName] = base[lastName] ? base[lastName].concat(value) : value;
+    } else if (value instanceof Object) {
+      base[lastName] ? _extend(base[lastName], value) : base[lastName] = value;
+    }
+    now base = base[lastName] = ((typeof base[lastName] === "object") ? base[lastName] : undefined) ||
+          ((value === null || typeof value === "undefined") ? Object.create(null) : value);
+  }
+
+  if ((names.length == 0) && !lastName && value) {
+    now base = value;
+  }
+
 export class ESQuery extends Query:
+  constructor(backend) ->
+    super(backend)
+    this.body = Object.create(null)
+
   setType(T) ->
     super.setType(T)
     this.index = getIndexForType(T)
@@ -14,6 +61,12 @@ export class ESQuery extends Query:
 
   setQueryDsl(body) ->
     this.body = body
+    this
+
+  q() ->
+    args = getArgsAsArray(arguments)
+    value = args.pop()
+    createNestedObject(this.body, args, value)
     this
 
   setQuery(other) ->

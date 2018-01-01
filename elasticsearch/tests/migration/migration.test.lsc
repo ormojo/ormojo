@@ -2,8 +2,7 @@
 import { create, save, findById, destroy, find } from '@ormojo/ormojo'
 import { toPlainObject, entity, field, types, listOf, extendField } from '@ormojo/ephraim'
 import es_client from '../es_client'
-import { createChild, destroyChildById, ESBackend } from '../..'
-import ESQ from 'esq'
+import { createChild, destroyChildById, ESBackend, ESQuery } from '../..'
 
 @entity({
   index: `widget_migration`
@@ -27,8 +26,8 @@ import ESQ from 'esq'
   @field(types.string) name = 'nameless'
   @field(types.integer) qty = 2
   @field({
-    type: listOf(types.string)
-    mapping: (new ESQ).query('fields', 'raw', { type: 'string', index: 'not_analyzed'})
+    type: listOf(types.text)
+    mapping: (new ESQuery).q('fields', 'raw', { type: 'keyword'}).body
   }) tags = []
 
 @entity() class Widget2 extends Widget {}
@@ -57,7 +56,7 @@ describe('migration tests: ', ->
     mig.prepare()
     .then(->
       plan = mig.getMigrationPlan()
-      console.dir(plan, { depth: 50 })
+      // console.dir(plan, { depth: 50 })
       // should need to create the index because it's absent
       expect(plan[0].strategy).toBe('CREATE')
       mig.execute()
@@ -72,7 +71,7 @@ describe('migration tests: ', ->
       mig2.prepare()
     .then! (mig2) ->
       plan = mig2.getMigrationPlan!
-      console.dir(plan, { depth: 50 })
+      // console.dir(plan, { depth: 50 })
       expect(plan[0].strategy).toBe('NOT_NEEDED')
       be3 = createBackend()
       be3.registerType(NuWidget)
@@ -80,7 +79,7 @@ describe('migration tests: ', ->
       mig3.prepare()
     .then! (mig3) ->
       plan = mig3.getMigrationPlan!
-      console.dir(plan, { depth: 50 })
+      // console.dir(plan, { depth: 50 })
       expect(plan[0].strategy).toBe('REINDEX')
       mig3.execute()
     .then! ->

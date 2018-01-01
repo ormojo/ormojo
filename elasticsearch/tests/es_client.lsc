@@ -3,7 +3,8 @@
 import elasticsearch from 'elasticsearch'
 
 esclient = new elasticsearch.Client({
-  host: 'http://slave1.internal.oigroup.net:9200'
+  host: 'http://localhost:9200'
+  apiVersion: '5.4'
 })
 
 export default esclient

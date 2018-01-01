@@ -1,44 +1,14 @@
 // Basic Elasticsearch crud operations.
 export makeESAPI(es, log) ->
-  findById = (index, type, id, parent) ->
-    rq = { id, index, type, ignore: [404] }
-    if parent: rq.parent = parent
-    log.trace("es.get >", rq)
-    Promise.resolve( es.get(rq) )
-      .then((rst) ->
-        log.trace("es.get <", rst)
-        rst
-      )
-
-  findByIds = (index, type, ids, opts) ->
-    rq = { index, type, body: { ids } }
-    if opts: Object.assign(rq, opts)
-    log.trace("es.mget >", rq)
-    Promise.resolve( es.mget(rq) )
-      .then((rst) ->
-        log.trace("es.mget <", rst)
-        rst
-      )
-
-  findRaw = (index, type, opts) ->
-    rq = { index, type, version: true }
-    if not opts: throw new Error('findRaw: must provide `opts`')
-    Object.assign(rq, opts)
-    log.trace("es.search >", rq)
-    Promise.resolve( es.search(rq) )
-      .then((rst) ->
-        log.trace("es.search <", rst)
-        rst
-      )
-
-  create = (index, type, data, id, parent) ->
+  create = (index, type, data, id, parent, opts) ->
     rq = { index, type, body: data }
+    if opts?.refresh: rq.refresh = opts.refresh
     if id: rq.id = id
     if parent: rq.parent = parent
-    log.trace("es.create >", rq)
-    Promise.resolve( es.create(rq) )
+    log.trace("es.index >", rq)
+    Promise.resolve( es.index(rq) )
       .then((rst) ->
-        log.trace("es.create <", rst)
+        log.trace("es.index <", rst)
         rst
       )
 
@@ -63,5 +33,5 @@ export makeESAPI(es, log) ->
       )
 
   {
-    findById, findByIds, findRaw, create, update, destroy
+    create, update, destroy
   }

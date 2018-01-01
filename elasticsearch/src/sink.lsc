@@ -7,10 +7,10 @@ export class ESSink extends AsyncSink:
     super(opts)
     this.api = opts.api
 
-  createOne(data) ->
+  createOne(data, opts) ->
     // Store dataValues that we used to create the instance.
     createdValues = data.data
-    this.api.create(data.index, data.type, data.data, data.id, data.parent)
+    this.api.create(data.index, data.type, data.data, data.id, data.parent, opts)
       .then((res) ->
         // Elasticsearch does not return the new values; pull them from the original doc.
         res._source = createdValues
@@ -29,16 +29,27 @@ export class ESSink extends AsyncSink:
           res
         )
 
-  crupsert(data, isCreate) ->
+  crupsert(data, isCreate, opts) ->
     // XXX: use Bulk API here.
     promises = [...for elem datum in data:
       if not datum: throw new Error("invalid create format")
-      if isCreate: [this.createOne(datum)] else: [this.updateOne(datum)]
+      if isCreate: [this.createOne(datum, opts)] else: [this.updateOne(datum)]
     ]
     Promise.all(promises)
 
-  create(data) ->
-    this.crupsert(data, true)
+  create(data, opts) ->
+    this.crupsert(data, true, opts)
+    // if data.length == 1:
+    // else:
+    //   this._bulk([...for elem datum in data: [
+    //     { index: {
+    //       _index: datum.index
+    //       _type: datum.type
+    //       ...if datum.id: { _id: datum.id }
+    //       ...if datum.parent: { _parent: datum.parent }
+    //     } }
+    //     datum.data
+    //   ]])
 
   update(data) ->
     promises = [...for elem datum in data: [this.updateOne(datum)]]

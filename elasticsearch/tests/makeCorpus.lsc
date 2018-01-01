@@ -1,7 +1,6 @@
 import { entity, field, types, listOf, extendField } from '@ormojo/ephraim'
 import es_client from './es_client'
-import ESQ from 'esq'
-import { ESBackend } from '..'
+import { ESBackend, ESQuery } from '..'
 
 export makeCorpus(extraName) ->
   logger = console.log.bind(console)
@@ -13,9 +12,9 @@ export makeCorpus(extraName) ->
 
   @entity() class Widget:
     @field(types.string) id
-    @field(types.string) name = 'nameless'
+    @field(types.text) name = 'nameless'
     @field(types.integer) qty = 2
-    @field(listOf(types.string)) tags = []
+    @field(listOf(types.text)) tags = []
 
   @entity({
     // Elasticsearch backend type info
@@ -25,7 +24,7 @@ export makeCorpus(extraName) ->
     // Augment the definition of the `tags` field with some special elasticsearch
     // options
     @extendField({
-      mapping: (new ESQ).query('fields', 'raw', { type: 'string', index: 'not_analyzed'})
+      mapping: (new ESQuery).q('fields', 'raw', { type: 'keyword'}).body
     }) tags
 
   backend.registerType(ESWidget)

@@ -54,7 +54,13 @@ describe('parent-child tests: ', ->
       widg~createChild(Kidget, { value: 'kid' })
     ).then((kidg) ->
       expect(kidg.value).toBe('kid')
-      backend.createQuery().setType(Kidget).setParent(parent).byId(kidg.id).find()
+      //backend.createQuery().setType(Kidget).setParent(parent).byId(kidg.id).find()
+      let q = backend.createQuery()
+      now q = q.setType(Kidget)
+      now q = q.setParent(parent)
+      debugger
+      now q = q.byId(kidg.id)
+      q.find()
     ).then((kidg) ->
       expect(kidg._parent).toBe(parent.id)
       expect(kidg.value).toBe('kid')

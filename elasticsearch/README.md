@@ -1,3 +1,5 @@
-# @ormojo/ephraim-memory
+# @ormojo/elasticsearch
 
-Memory driver for ephraim.
+Elasticsearch driver for ormojo.
+
+Currently targeting Elasticsearch 5.x API.

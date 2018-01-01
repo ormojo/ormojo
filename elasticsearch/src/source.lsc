@@ -5,42 +5,70 @@ import { ESQuery, ESResultSet } from './query'
 export class ESSource extends AsyncSource:
   constructor(opts) ->
     super(opts)
-    this.api = opts.api
+    this.es = opts.es
+    this.log = opts.log
+
+  _get(query, id) ->
+    // Elasticsearch GET
+    { log, es } = this
+    rq = {
+      id
+      index: query.index
+      type: query.type
+      ignore: [404]
+      ...if query.parent: { parent: query.parent }
+    }
+    log.trace("es.get >", rq)
+    es.get(rq).then! (rst) ->
+      log.trace("es.get <", rst)
+      if rst.found: new ESResultSet([rst]) else: new ESResultSet([])
+
+  _mget(query, ids) ->
+    // Elasticsearch MGET
+    { log, es } = this
+    rq = {
+      index: query.index
+      type: query.type
+      body: { ids }
+      ...if query.parent: { routing: query.parent }
+    }
+    log.trace("es.mget >", rq)
+    es.mget(rq).then! (rst) ->
+      log.trace("es.mget <", rst)
+      docs = rst?.docs or []
+      new ESResultSet([
+        ...for elem doc in docs: if doc?.found: [doc] else: [undefined]
+      ])
+
+  _find(query) ->
+    { log, es } = this
+    rq = {
+      body: query.getQueryDsl()
+      version: true
+      index: query.index
+      type: query.type
+      ...if query.offset: { from: query.offset }
+      ...if query.limit: { size: query.limit }
+    }
+    log.trace("es.search >", rq)
+    es.search(rq).then! (rst) ->
+      log.trace("es.search <", rst)
+      if (not rst) or (not rst.hits):
+        new ESResultSet([], 0, 0, query, 0)
+      else:
+        new ESResultSet(rst.hits.hits, rst.hits.total, rq.from, query, rst.hits.max_score)
 
   readIdQuery(query: ESQuery): Promise<ESResultSet> ->
     ids = query.ids
     if ids.length == 0:
       Promise.resolve(new ESResultSet([]))
     else if ids.length == 1:
-      // Elasticsearch GET
-      this.api.findById(query.index, query.type, ids[0], query.parent)
-        .then((rst) ->
-          if not rst.found: new ESResultSet([]) else: new ESResultSet([ rst ])
-        )
+      this._get(query, ids[0])
     else:
-      // Elasticsearch MGET
-      opts = if query.parent: ({ routing: query.parent })
-      this.api.findByIds(query.index, query.type, ids, opts)
-        .then((rst) ->
-          entities = [...for elem entity in (rst?.docs or []):
-            if not (entity?.found): [undefined] else: [entity]
-          ]
-          new ESResultSet(entities)
-        )
+      this._mget(query, ids)
 
   readFullQuery(query: ESQuery): Promise<ESResultSet> ->
-    body = query.getQueryDsl()
-    // Elaticsearch SEARCH apicall
-    searchParams = { body }
-    if query.offset: searchParams.from = query.offset
-    if query.limit: searchParams.size = query.limit
-    this.api.findRaw(query.index, query.type, searchParams)
-      .then((rst) ->
-        if (not rst) or (not rst.hits):
-          new ESResultSet([], 0, 0, query, 0)
-        else:
-          new ESResultSet(rst.hits.hits, rst.hits.total, searchParams.from, query, rst.hits.max_score)
-      )
+    this._find(query)
 
   read(query: ESQuery): Promise<ESResultSet> ->
     if query.ids:

@@ -18,7 +18,7 @@ export class ESBackend extends Backend:
     this.typeMap = new Map()
     this.sink = new ESSink({api: this.api})
     this.sinkAdapter = new ESSinkEntityAdapter({sink: this.sink})
-    this.source = new ESSource({api: this.api})
+    this.source = new ESSource({es: this.es, log: this.log})
     this.sourceAdapter = new ESSourceEntityAdapter({source: this.source})
     if opts?.indexPrefix: this.indexPrefix = opts.indexPrefix
 
@@ -62,15 +62,15 @@ export class ESBackend extends Backend:
   put(instance, shouldCreate, opts) ->
     { sink, sinkAdapter } = this
     if shouldCreate:
-      sink.create([ sinkAdapter.willCreate(instance) ])
+      sink.create([ sinkAdapter.willCreate(instance) ], opts)
         .then(createdData -> sinkAdapter.didCreate(instance, createdData[0]))
     else:
-      sink.update([ sinkAdapter.willUpdate(instance) ])
+      sink.update([ sinkAdapter.willUpdate(instance) ], opts)
         .then(updatedData -> sinkAdapter.didUpdate(instance, updatedData[0]))
 
   destroy(instance, opts) ->
     { sink, sinkAdapter } = this
-    sink.delete([ sinkAdapter.willDelete(instance) ])
+    sink.delete([ sinkAdapter.willDelete(instance) ], opts)
       .then! rst ->
         if rst?[0]: sinkAdapter.didDelete(instance) else: instance
 
