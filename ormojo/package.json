@@ -44,7 +44,6 @@
     "testRegex": "(\\.|/)test\\.lsc$"
   },
   "dependencies": {
-    "observable-utils": "^0.1.10",
     "@ormojo/ephraim": "^0.0.0"
   }
 }
