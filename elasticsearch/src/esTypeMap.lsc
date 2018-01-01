@@ -2,7 +2,9 @@ import { types, ListType } from '@ormojo/ephraim'
 
 export esTypeMap(orType) ->
   if orType == types.string:
-    ({ type: 'string' })
+    ({ type: 'keyword' })
+  else if orType == types.text:
+    ({ type: 'text' })
   else if orType == types.integer:
     ({ type: 'long' })
   else if orType == types.boolean:
