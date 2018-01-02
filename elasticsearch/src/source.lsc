@@ -84,6 +84,7 @@ export class ESSourceEntityAdapter extends SourceEntityAdapter:
 // Update an instance from an ES API return value.
 // XXX: assign vs set...
 export updateInstanceWithData(instance, esData) ->
+  instance._isNewRecord = undefined
   if not esData: return instance
 
   // Data

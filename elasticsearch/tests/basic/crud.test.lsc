@@ -21,6 +21,7 @@ describe('CRUD', ->
     awidget~save()
     .then! (widg) ->
       console.log(widg~toPlainObject!)
+      debugger
       Widget~findById(widg.id)
     .then! (widg) ->
       console.log(widg~toPlainObject!)

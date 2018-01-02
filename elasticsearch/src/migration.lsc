@@ -75,6 +75,8 @@ class MigrationPlan:
       this.migrationStrategy = 'CREATE'
       return
 
+    this.backend.log.trace('elasticsearch: computing migration diff', this.currentSettings, this.targetSettings)
+
     this.migrationDiff = deepDiff.diff(this.currentSettings, this.targetSettings)
     // Elasticsearch annoyingly stringifies numbers. We must do the same.
     for elem difference in this.migrationDiff:

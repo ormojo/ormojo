@@ -5,7 +5,7 @@ import { makeESAPI } from './makeESAPI'
 import { ESQuery } from './query'
 import { typeFrom, createMemory as create, assignPlainObject } from '@ormojo/ephraim'
 import { getIndexForType, getESTypeForType } from './util'
-import { ESSink, ESSinkEntityAdapter } from './sink'
+import { ESSink } from './bulkSink'
 import { ESSource, ESSourceEntityAdapter } from './source'
 
 export class ESBackend extends Backend:
@@ -16,8 +16,7 @@ export class ESBackend extends Backend:
     this.api = makeESAPI(this.es, this.log)
     this.indices = new ESIndices(this)
     this.typeMap = new Map()
-    this.sink = new ESSink({api: this.api})
-    this.sinkAdapter = new ESSinkEntityAdapter({sink: this.sink})
+    this.sink = new ESSink({es: this.es, log: this.log })
     this.source = new ESSource({es: this.es, log: this.log})
     this.sourceAdapter = new ESSourceEntityAdapter({source: this.source})
     if opts?.indexPrefix: this.indexPrefix = opts.indexPrefix
@@ -54,34 +53,26 @@ export class ESBackend extends Backend:
       instance
 
   save(instance, opts) ->
+    { sink } = this
     if instance._isNewRecord:
-      this.put(instance, true, opts)
+      sink.create([instance], opts).then! -> instance
     else:
-      this.put(instance, false, opts)
-
-  put(instance, shouldCreate, opts) ->
-    { sink, sinkAdapter } = this
-    if shouldCreate:
-      sink.create([ sinkAdapter.willCreate(instance) ], opts)
-        .then(createdData -> sinkAdapter.didCreate(instance, createdData[0]))
-    else:
-      sink.update([ sinkAdapter.willUpdate(instance) ], opts)
-        .then(updatedData -> sinkAdapter.didUpdate(instance, updatedData[0]))
+      sink.upsert([instance], opts).then! -> instance
 
   destroy(instance, opts) ->
-    { sink, sinkAdapter } = this
-    sink.delete([ sinkAdapter.willDelete(instance) ], opts)
-      .then! rst ->
-        if rst?[0]: sinkAdapter.didDelete(instance) else: instance
+    { sink } = this
+    sink.delete([instance], opts).then! (rst) ->
+      if rst?.results[0]: instance._wasDeleted = true
+      instance
 
   destroyById(type, id, opts) ->
     target = {
-      id
-      type: getESTypeForType(type)
-      index: getIndexForType(type)
+      _id: id
+      _type: getESTypeForType(type)
+      _index: getIndexForType(type)
     }
-    if opts?.parent: target.parent = opts.parent
-    this.sink.delete([target]).then! rst -> rst?[0]
+    if opts?.parent: target._parent = opts.parent
+    this.sink.delete([target]).then! rst -> rst?.results[0]
 
   find(query) ->
     this.source.read(query)

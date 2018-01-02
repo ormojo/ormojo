@@ -1,0 +1,166 @@
+import { toPlainObject } from '@ormojo/ephraim'
+import { AsyncSink, SinkResult, NotFoundError, DuplicateError } from '@ormojo/ormojo'
+import { updateInstanceWithData } from './source'
+
+errorForResult(res) ->
+  err = if res.status == 404:
+    new NotFoundError("not found")
+  elif res.status == 409:
+    new DuplicateError("duplicate")
+  else:
+    new Error()
+  err.status = res.status
+  err
+
+// Unwrap elasticsearch item returned from bulk api
+unwrapItem(item) ->
+  for const k in item:
+    now item = item[k]
+    break
+  item
+
+class ESSinkResult extends SinkResult:
+  constructor() ->
+    this.results = []
+    this._err = null
+
+  _pushResult(res, ignore404) ->
+    if res.status >= 200 and res.status < 300:
+      this.results.push(true)
+    else if ignore404 and res.status == 404:
+      this.results.push(false)
+    else:
+      err = errorForResult(res)
+      if not this._err: this._err = err
+      this.results.push(err)
+
+  _lastResultWasSuccess() ->
+    res = this.results
+    if res.length > 0 and res[res.length - 1] == true: true else: false
+
+  firstError() -> this._err
+  hasError() -> if this._err: true else: false
+
+getBulkCreateOpForInstance(instance) ->
+  id = instance._id or instance.id
+  if id:
+    {
+      create: {
+        _index: instance._index
+        _type: instance._type
+        _id: id
+        ...if instance._parent: { _parent: instance._parent }
+      }
+    }
+  else:
+    {
+      index: {
+        _index: instance._index
+        _type: instance._type
+        ...if instance._parent: { _parent: instance._parent }
+      }
+    }
+
+getBulkUpdateOpForInstance(instance) ->
+  {
+    update: {
+      _index: instance._index
+      _type: instance._type
+      _id: instance._id
+      ...if instance._parent: { _parent: instance._parent }
+    }
+  }
+
+getBulkUpsertOpForInstance(instance) ->
+  id = instance._id or instance.id
+  {
+    index: {
+      _index: instance._index
+      _type: instance._type
+      ...if id: { _id: id }
+      ...if instance._parent: { _parent: instance._parent }
+    }
+  }
+
+getBulkDeleteOpForInstance(instance) ->
+  {
+    delete: {
+      _index: instance._index
+      _type: instance._type
+      _id: instance._id or instance.id
+      ...if instance._parent: { _parent: instance._parent }
+    }
+  }
+
+getBulkDataForInstance(instance) ->
+  ob = instance~toPlainObject()
+  delete ob.id // use Elasticsearch virtual id field
+  ob
+
+bulkOperation(es, log, body, opts) ->
+  rq = { body }
+  if opts?.refresh: rq.refresh = opts.refresh
+  log.trace("es.bulk >", rq)
+  es.bulk(rq).then! (res) ->
+    log.trace("es.bulk <", res)
+    res
+
+shouldThrowFirstError(data, opts) ->
+  if opts?.throwFirstError == true:
+    true
+  else if opts?.throwFirstError == false:
+    false
+  else if data.length == 1:
+    true
+  else:
+    false
+
+crupsert(es, log, data, lambda1, lambda2, opts) ->
+  bulkOperation(es, log,
+    [...for elem datum in data:
+      [ lambda1(datum), lambda2(datum) ]
+    ],
+    opts
+  ).then! (res) ->
+    result = new ESSinkResult()
+    for idx i, elem item in res.items:
+      unwrappedItem = unwrapItem(item)
+      result._pushResult(unwrappedItem, false)
+      if result._lastResultWasSuccess():
+        updateInstanceWithData(data[i], unwrappedItem)
+    if shouldThrowFirstError(data, opts) and result.hasError():
+      throw result.firstError()
+    result
+
+export class ESSink extends AsyncSink:
+  constructor(opts) ->
+    super(opts)
+    this.es = opts.es
+    this.log = opts.log
+
+  create(data, opts) ->
+    crupsert(this.es, this.log, data, getBulkCreateOpForInstance, getBulkDataForInstance, opts)
+
+  update(data, opts) ->
+    crupsert(this.es, this.log, data, getBulkUpdateOpForInstance,
+      (datum) -> { doc: getBulkDataForInstance(datum) }
+      opts
+    )
+
+  upsert(data, opts) ->
+    crupsert(this.es, this.log, data, getBulkUpsertOpForInstance, getBulkDataForInstance, opts)
+
+  delete(data, opts) ->
+    bulkOperation(
+      this.es, this.log
+      [...for elem datum in data:
+        [ getBulkDeleteOpForInstance(datum) ]
+      ]
+      opts
+    ).then! (res) ->
+      result = new ESSinkResult()
+      for elem item in res.items:
+        result._pushResult(unwrapItem(item), true)
+      if shouldThrowFirstError(data, opts) and result.hasError():
+        throw result.firstError()
+      result
