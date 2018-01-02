@@ -1,6 +1,13 @@
 import { Query, ResultSet } from './Query'
 import { toPlainObject, assignPlainObject } from '@ormojo/ephraim'
 
+export class SinkResult:
+  getResults() -> []
+
+  hasError() -> this.hasError
+
+  firstError() -> null
+
 class Source:
   // Create a Query suitable for this Store.
   // @return [Query]
@@ -19,18 +26,18 @@ export class AsyncSource extends Source:
 
 class Sink:
   // Create objects in the store with the given JSON data.
-  create(data: Array<{}>, opts) -> return
+  create(data: Array<{}>, opts): Promise<SinkResult> -> return
 
   // Update objects that already exist, applying the given JSON data.
-  update(data: Array<{}>, opts) -> return
+  update(data: Array<{}>, opts): Promise<SinkResult> -> return
 
   // Update objects where the given datacorresponds to an extant object, otherwise
   // create new objects if no object can be located corresponding to the data.
-  upsert(data: Array<{}>, opts) -> return
+  upsert(data: Array<{}>, opts): Promise<SinkResult> -> return
 
   // Destroy objects with the given data. Data must be sufficient to identify the object
   // to the backing store.
-  delete(data: Array<{} | string | number>, opts) -> return
+  delete(data: Array<{} | string | number>, opts): Promise<SinkResult> -> return
 
 // A store whose methods execute synchronously and return arrays.
 export class SynchronousSink extends Sink {}
@@ -49,11 +56,6 @@ export class SourceEntityAdapter:
   // `undefined` data implies a nonexistent instance
   didRead(instance, data) ->
     return
-    // if data == undefined: return undefined
-    // if instance:
-    //   this.didUpdate(instance, data)
-    // else:
-    //   this.boundModel.createInstance(data)
 
 // Mediate between Ephraim entities and a Source
 export class SinkEntityAdapter:
