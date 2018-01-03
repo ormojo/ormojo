@@ -1,16 +1,18 @@
-import { assignPlainObject } from '@ormojo/ephraim'
-import { AsyncSource, SourceEntityAdapter } from '@ormojo/ormojo'
-import { ESQuery, ESResultSet } from './query'
+import { AsyncSource } from '@ormojo/ormojo'
+import { ESQuery, ESResultSet, updateInstanceWithData } from './query'
 
 export class ESSource extends AsyncSource:
   constructor(opts) ->
     super(opts)
+    this.typeMap = opts.typeMap
+    this.defaultType = opts.defaultType
+    this.errorOnMissingType = opts.errorOnMissingType
     this.es = opts.es
     this.log = opts.log
 
   _get(query, id) ->
     // Elasticsearch GET
-    { log, es } = this
+    { log, es, typeMap, defaultType, errorOnMissingType } = this
     rq = {
       id
       index: query.index
@@ -21,11 +23,14 @@ export class ESSource extends AsyncSource:
     log.trace("es.get >", rq)
     es.get(rq).then! (rst) ->
       log.trace("es.get <", rst)
-      if rst.found: new ESResultSet([rst]) else: new ESResultSet([])
+      if rst.found:
+        new ESResultSet([rst])._hydrate(typeMap, defaultType, errorOnMissingType)
+      else:
+        new ESResultSet([])
 
   _mget(query, ids) ->
     // Elasticsearch MGET
-    { log, es } = this
+    { log, es, typeMap, defaultType, errorOnMissingType } = this
     rq = {
       index: query.index
       type: query.type
@@ -38,10 +43,10 @@ export class ESSource extends AsyncSource:
       docs = rst?.docs or []
       new ESResultSet([
         ...for elem doc in docs: if doc?.found: [doc] else: [undefined]
-      ])
+      ])._hydrate(typeMap, defaultType, errorOnMissingType)
 
   _find(query) ->
-    { log, es } = this
+    { log, es, typeMap, defaultType, errorOnMissingType } = this
     rq = {
       body: query.getQueryDsl()
       version: true
@@ -56,7 +61,7 @@ export class ESSource extends AsyncSource:
       if (not rst) or (not rst.hits):
         new ESResultSet([], 0, 0, query, 0)
       else:
-        new ESResultSet(rst.hits.hits, rst.hits.total, rq.from, query, rst.hits.max_score)
+        new ESResultSet(rst.hits.hits, rst.hits.total, rq.from, query, rst.hits.max_score)._hydrate(typeMap, defaultType, errorOnMissingType)
 
   readIdQuery(query: ESQuery): Promise<ESResultSet> ->
     ids = query.ids
@@ -76,30 +81,4 @@ export class ESSource extends AsyncSource:
     else:
       this.readFullQuery(query)
 
-export class ESSourceEntityAdapter extends SourceEntityAdapter:
-  didRead(instance, data) ->
-    if data == undefined: return undefined
-    updateInstanceWithData(instance, data)
-
-// Update an instance from an ES API return value.
-// XXX: assign vs set...
-export updateInstanceWithData(instance, esData) ->
-  instance._isNewRecord = undefined
-  if not esData: return instance
-
-  // Data
-  if esData._source:
-    instance~assignPlainObject(esData._source)
-
-  // Metadata
-  if esData._id: instance.id = esData._id
-  if esData._index: instance._index = esData._index
-  if esData._version: instance._version = esData._version
-  if esData._type: instance._type = esData._type
-  if esData._score: instance._score = esData._score
-  if esData._routing: instance._routing = esData._routing
-  if esData._parent: instance._parent = esData._parent
-
-  // XXX: clear delta here...
-  //instance._clearChanges()
-  instance
+export { updateInstanceWithData }

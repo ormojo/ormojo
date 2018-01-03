@@ -6,7 +6,7 @@ import { ESQuery } from './query'
 import { typeFrom, createMemory as create, assignPlainObject } from '@ormojo/ephraim'
 import { getIndexForType, getESTypeForType } from './util'
 import { ESSink } from './bulkSink'
-import { ESSource, ESSourceEntityAdapter } from './source'
+import { ESSource } from './source'
 
 export class ESBackend extends Backend:
   constructor(es, opts) ->
@@ -17,8 +17,9 @@ export class ESBackend extends Backend:
     this.indices = new ESIndices(this)
     this.typeMap = new Map()
     this.sink = new ESSink({es: this.es, log: this.log })
-    this.source = new ESSource({es: this.es, log: this.log})
-    this.sourceAdapter = new ESSourceEntityAdapter({source: this.source})
+    // Source constructor
+    typeMap(idx, ty) => this.indices.getEphraimTypeForESType(idx, ty)
+    this.source = new ESSource({es: this.es, log: this.log, typeMap, defaultType: null, errorOnMissingType: true})
     if opts?.indexPrefix: this.indexPrefix = opts.indexPrefix
 
   registerType(T): void ->
@@ -76,15 +77,3 @@ export class ESBackend extends Backend:
 
   find(query) ->
     this.source.read(query)
-      .then! resultSet =>
-        // Convert JSON into entities
-        nextResults = [...for elem result in resultSet.getResults():
-          if result:
-            // XXX: should infer the type of entity to create from the query
-            // result...
-            [this.sourceAdapter.didRead(create(query.ephraimType), result)]
-          else:
-            [undefined]
-        ]
-        resultSet.replaceResults(nextResults)
-        resultSet

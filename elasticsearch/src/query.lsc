@@ -1,5 +1,6 @@
 import { Query, Cursor, ResultSet } from '@ormojo/ormojo'
 import { getIndexForType, getESTypeForType, toParentId } from './util'
+import { createMemory as create, assignPlainObject } from '@ormojo/ephraim'
 
 getArgsAsArray(args) ->
   if args and Array.isArray(args): args else: Array.prototype.slice.call(args)
@@ -98,6 +99,46 @@ export class ESCursor extends Cursor:
     this.total = total
     this
 
+resolveType(typeMap, defaultType, errorOnMissingType, datum) ->
+  idx = datum._index
+  ty = datum._type
+  if (not idx) or (not ty):
+    if errorOnMissingType:
+      throw new Error("could not map Elasticsearch result to Ephraim type")
+    else:
+      return defaultType
+  T = typeMap(idx, ty)
+  if not T:
+    if errorOnMissingType:
+      throw new Error("could not map Elasticsearch result to Ephraim type")
+    else:
+      return defaultType
+  T
+
+
+// Helper: Update an instance from an ES API return value.
+// XXX: assign vs set...
+export updateInstanceWithData(instance, esData) ->
+  instance._isNewRecord = undefined
+  if not esData: return instance
+
+  // Data
+  if esData._source:
+    instance~assignPlainObject(esData._source)
+
+  // Metadata
+  if esData._id: instance.id = esData._id
+  if esData._index: instance._index = esData._index
+  if esData._version: instance._version = esData._version
+  if esData._type: instance._type = esData._type
+  if esData._score: instance._score = esData._score
+  if esData._routing: instance._routing = esData._routing
+  if esData._parent: instance._parent = esData._parent
+
+  // XXX: clear delta here...
+  //instance._clearChanges()
+  instance
+
 export class ESResultSet extends ResultSet:
   constructor(data, total, offset, originalQuery, maxScore = 0) ->
     super()
@@ -113,3 +154,16 @@ export class ESResultSet extends ResultSet:
   getCursor() -> this.cursor
 
   getMaxScore() -> this.maxScore
+
+  _hydrate(typeMap, defaultType, errorOnMissingType) ->
+    nextResults = [...for elem result in this.results:
+      if result:
+        T = resolveType(typeMap, defaultType, errorOnMissingType, result)
+        if T:
+          instance = T~create()
+          [updateInstanceWithData(instance, result)]
+      else:
+        [undefined]
+    ]
+    this.results = nextResults
+    this

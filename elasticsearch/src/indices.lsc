@@ -67,6 +67,7 @@ export class ESIndices:
   constructor(backend) ->
     this.backend = backend
     this.indices = {}
+    this.prefixedIndices = {}
 
   addEntityType(T) ->
     indexName = getIndexForType(T)
@@ -76,3 +77,23 @@ export class ESIndices:
 
   getIndices() ->
     this.indices
+
+  findIndexByName(name) ->
+    // Locate by name
+    idx = this.prefixedIndices[name]
+    if idx: return idx
+
+    // Search by prefix
+    for key k, val idx in this.indices:
+      if name.startsWith(k):
+        // TODO: allow index naming convention to be changed in config
+        if (k == name) or (/ormojo(\d+)$/.test(name)):
+          this.prefixedIndices[k] = idx
+          return idx
+
+    // Not found
+    undefined
+
+  getEphraimTypeForESType(esIndex, esType) ->
+    idx = this.findIndexByName(esIndex)
+    if idx: idx.types[esType]
