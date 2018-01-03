@@ -55,10 +55,10 @@ export class ESBackend extends Backend:
 
   save(instance, opts) ->
     { sink } = this
-    if instance._isNewRecord:
-      sink.create([instance], opts).then! -> instance
+    if Array.isArray(instance):
+      sink.crupsert(instance, opts).then! -> instance
     else:
-      sink.upsert([instance], opts).then! -> instance
+      sink.crupsert([instance], opts).then! -> instance
 
   destroy(instance, opts) ->
     { sink } = this

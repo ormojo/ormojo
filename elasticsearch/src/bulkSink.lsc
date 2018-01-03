@@ -82,6 +82,12 @@ getBulkUpsertOpForInstance(instance) ->
     }
   }
 
+getBulkCrupsertOpForInstance(instance) ->
+  if instance._isNewRecord:
+    getBulkCreateOpForInstance(instance)
+  else:
+    getBulkUpsertOpForInstance(instance)
+
 getBulkDeleteOpForInstance(instance) ->
   {
     delete: {
@@ -149,6 +155,9 @@ export class ESSink extends AsyncSink:
 
   upsert(data, opts) ->
     crupsert(this.es, this.log, data, getBulkUpsertOpForInstance, getBulkDataForInstance, opts)
+
+  crupsert(data, opts) ->
+    crupsert(this.es, this.log, data, getBulkCrupsertOpForInstance, getBulkDataForInstance, opts)
 
   delete(data, opts) ->
     bulkOperation(
