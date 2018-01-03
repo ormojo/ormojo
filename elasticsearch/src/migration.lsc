@@ -77,18 +77,20 @@ class MigrationPlan:
 
     this.backend.log.trace('elasticsearch: computing migration diff', this.currentSettings, this.targetSettings)
 
+    // If mappings are the same, migration is unnecessary.
+    if isEqual(this.currentSettings, this.targetSettings):
+      this.backend.log.trace('elasticsearch: no difference, migration not needed')
+      this.migrationStrategy = 'NOT_NEEDED'
+      return
+
     this.migrationDiff = deepDiff.diff(this.currentSettings, this.targetSettings)
+    this.backend.log.trace('elasticsearch: diff', this.migrationDiff)
+
     // Elasticsearch annoyingly stringifies numbers. We must do the same.
     for elem difference in this.migrationDiff:
       if difference.kind == 'E' and (JSON.stringify(difference.rhs) == difference.lhs):
         set(this.targetSettings, difference.path, difference.lhs)
-    // If mappings are the same, migration is unnecessary.
-    if isEqual(this.currentSettings, this.targetSettings):
-      this.migrationStrategy = 'NOT_NEEDED'
-      return
-    else:
-      this.migrationDiff = deepDiff.diff(this.currentSettings, this.targetSettings)
-      this.backend.log.trace('migration diff', JSON.stringify(this.migrationDiff, undefined, 2))
+
     // Determine a migration strategy.
     this.migrationStrategy = 'CANT_MIGRATE'
     if this.indexStatus == 'UNKNOWN' or this.indexStatus == 'NOT_ALIASED' or this.indexStatus == 'NOT_MIGRATED':
