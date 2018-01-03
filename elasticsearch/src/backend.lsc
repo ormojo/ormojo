@@ -49,7 +49,10 @@ export class ESBackend extends Backend:
     instance._type = getESTypeForType(type)
     if data~looseNotEq(null):
       instance~assignPlainObject(data)
-      this.save(instance, opts)
+      if not opts?.noPersist:
+        this.save(instance, opts)
+      else:
+        instance
     else:
       instance
 

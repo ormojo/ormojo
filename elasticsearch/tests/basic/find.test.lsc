@@ -16,13 +16,11 @@ afterAll! ->
 describe('find', ->
 
   it('should find', ->
-    promises = [...for let i=0;i<10;i++:
-      [Widget~create({name: `findAll ${i}`, tags: ['findAll'], qty: i}, { refresh: 'wait_for' })]
+    widgets = [...for let i=0;i<10;i++:
+      [Widget~create({name: `findAll ${i}`, tags: ['findAll'], qty: i}, { noPersist: true })]
     ]
-    promises.push(Widget~create({name: 'uniquely named thing', qty: 50}))
-    Promise.all(promises).then! ->
-      // wait for es indexing (todo: quorum query flag)
-      new Promise( (resolve) -> setTimeout(resolve, 1000) )
+    widgets.push(Widget~create({name: 'uniquely named thing', qty: 50}, { noPersist: true }))
+    backend.save(widgets, { refresh: 'wait_for'})
     .then! ->
       // find one
       q = backend.createQuery().setType(Widget).setQueryDsl({
