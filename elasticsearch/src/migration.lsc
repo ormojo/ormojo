@@ -84,8 +84,6 @@ class MigrationPlan:
       return
 
     this.migrationDiff = deepDiff.diff(this.currentSettings, this.targetSettings)
-    this.backend.log.trace('elasticsearch: diff', this.migrationDiff)
-
     // Elasticsearch annoyingly stringifies numbers. We must do the same.
     for elem difference in this.migrationDiff:
       if difference.kind == 'E' and (JSON.stringify(difference.rhs) == difference.lhs):
@@ -95,6 +93,8 @@ class MigrationPlan:
       this.backend.log.trace('elasticsearch: no difference, migration not needed')
       this.migrationStrategy = 'NOT_NEEDED'
       return
+
+    this.backend.log.trace('elasticsearch: diff', this.migrationDiff)
 
     // Determine a migration strategy.
     this.migrationStrategy = 'CANT_MIGRATE'
