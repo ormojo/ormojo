@@ -1,0 +1,103 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+import { create, save, findById, destroy, find } from '@ormojo/ormojo'
+import { toPlainObject, entity, field, types, listOf, extendField, typeOf, isa } from '@ormojo/ephraim'
+import es_client from '../es_client'
+import { createChild, destroyChildById, ESBackend } from '../..'
+
+let backend
+
+@entity() class Sentient {
+  @field(types.integer) iq = 50
+
+  speak() -> "protolanguage"
+}
+@entity() class Animal {
+  @field(types.string) id
+  @field(types.integer) iq = 0
+
+  speak() -> "ruff ruff"
+}
+@entity() class Supergenius {
+  @field(types.integer) iq = 250
+
+  speak() -> "ds^2 = g_mu_nu dx_mu dx_nu"
+}
+
+@entity({inherits: [Sentient]}) class Elephant extends Animal {}
+@entity({inherits: [Sentient]}) class Human extends Animal {
+  @field(types.integer) iq = 100
+  @field(types.string) name = "Bob"
+
+  speak() -> "hello friend"
+}
+@entity({inherits: [Supergenius]}) class Einstein extends Human {
+  @field(types.string) name = "Albert"
+}
+
+@entity({
+  index: `es_test_mi`
+  type: `human`
+}) class ESHuman extends Human {}
+
+@entity({
+  index: `es_test_mi`
+  type: `elephant`
+}) class ESElephant extends Elephant {}
+
+@entity({
+  index: `es_test_mi`
+  type: `animal`
+}) class ESAnimal extends Animal {}
+
+@entity({
+  index: `es_test_mi`
+  type: `einstein`
+}) class ESEinstein extends Einstein {}
+
+beforeAll! ->
+  logger = console.log.bind(console)
+  now backend = new ESBackend(es_client, {
+    log: {
+      trace: logger
+    }
+  })
+
+  backend.registerType(ESHuman)
+  backend.registerType(ESElephant)
+  backend.registerType(ESAnimal)
+  backend.registerType(ESEinstein)
+
+  mig = backend.getMigration()
+  debugger
+  mig.prepare().then(-> mig.execute())
+
+afterAll! ->
+  es_client.indices.delete({
+    index: [`es_test_mi*`]
+    ignore: [404]
+  })
+
+describe('multiple inheritance tests: ', ->
+  it! 'should create, store, and rehydrate multitype objects', ->
+    let humanId, elephantId, animalId, einsteinId
+    creatures = [ ESHuman~create(), ESElephant~create(), ESAnimal~create(), ESEinstein~create() ]
+    backend.save(creatures, { refresh: 'wait_for'})
+    .then! (rst) ->
+      now [ humanId, elephantId, animalId, einsteinId ] = [ rst[0].id, rst[1].id, rst[2].id, rst[3].id ]
+      q = backend.createQuery()
+      q.setIndexName("es_test_mi")
+      q.q("query", "range", "iq", "gte", 0)
+      backend.find(q)
+    .then! (resultSet) ->
+      cmp = {...for elem r in resultSet.getResults():
+        {[r.id]: r }
+      }
+      console.dir(cmp, { depth: 5 })
+      expect(cmp[elephantId]~isa(Elephant))
+      expect(cmp[humanId]~isa(Human))
+      expect(cmp[animalId]~isa(Animal))
+      expect(cmp[einsteinId]~isa(Einstein))
+      expect(cmp[einsteinId]~isa(Human))
+      expect(cmp[einsteinId]~isa(Supergenius))
+      expect(cmp[einsteinId]~isa(Animal))
+)
