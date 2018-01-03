@@ -91,6 +91,11 @@ class MigrationPlan:
       if difference.kind == 'E' and (JSON.stringify(difference.rhs) == difference.lhs):
         set(this.targetSettings, difference.path, difference.lhs)
 
+    if isEqual(this.currentSettings, this.targetSettings):
+      this.backend.log.trace('elasticsearch: no difference, migration not needed')
+      this.migrationStrategy = 'NOT_NEEDED'
+      return
+
     // Determine a migration strategy.
     this.migrationStrategy = 'CANT_MIGRATE'
     if this.indexStatus == 'UNKNOWN' or this.indexStatus == 'NOT_ALIASED' or this.indexStatus == 'NOT_MIGRATED':
