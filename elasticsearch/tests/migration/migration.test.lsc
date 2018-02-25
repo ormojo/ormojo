@@ -1,8 +1,10 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
-import { create, save, findById, destroy, find } from '@ormojo/ormojo'
-import { toPlainObject, entity, field, types, listOf, extendField } from '@ormojo/ephraim'
+import { create, findById } from '@ormojo/ormojo'
+import {  entity, field, types, listOf } from '@ormojo/ephraim'
 import es_client from '../es_client'
-import { createChild, destroyChildById, ESBackend, ESQuery, QueryDsl } from '../..'
+import { ESBackend,QueryDsl } from '../..'
+
+jest.setTimeout(10000)
 
 @entity({
   index: `widget_migration`
