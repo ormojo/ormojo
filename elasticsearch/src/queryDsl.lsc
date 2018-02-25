@@ -1,0 +1,64 @@
+_extend(obj) ->
+  var args = Array.prototype.slice.call(arguments, 1);
+  args.forEach(function(source) {
+    if (source) {
+      for (var prop in source) {
+        obj[prop] = source[prop];
+      }
+    }
+  });
+  return obj;
+
+export createNestedObject(base, names, value): void ->
+  var lastName = arguments.length === 3 ? names.pop() : false;
+
+  for (var i=0; i<names.length; i++) {
+    if(Array.isArray(names[i])) {
+      names[i] = names[i][0];
+      base[names[i]] = base[names[i]] || [];
+      now base = base[names[i]][base[names[i]].length] = Object.create(null);
+    } else {
+      now base = base[names[i]] = base[names[i]] || Object.create(null);
+    }
+  }
+
+  if (lastName) {
+    if (Array.isArray(lastName)) now value = [value];
+
+    if (Array.isArray(value)) {
+      base[lastName] = base[lastName] ? base[lastName].concat(value) : value;
+    } else if (value instanceof Object) {
+      base[lastName] ? _extend(base[lastName], value) : base[lastName] = value;
+    }
+    now base = base[lastName] = ((typeof base[lastName] === "object") ? base[lastName] : undefined) ||
+          ((value === null || typeof value === "undefined") ? Object.create(null) : value);
+  }
+
+  if ((names.length == 0) && !lastName && value) {
+    now base = value;
+  }
+
+// Class for building Elasticsearch Query DSL queries
+export class QueryDsl:
+  constructor() ->
+    this.body = Object.create(null)
+
+  getBody() -> this.body
+
+  isBool() -> if this.body.bool: true else: false
+
+  q(...args) ->
+    let value = args.pop()
+    if value instanceof QueryDsl: now value = value.body
+    createNestedObject(this.body, args, value)
+    this
+
+  filterAnd(...args) ->
+    for elem arg in args: this.q('bool', ['filter'], arg)
+    this
+
+  filterOr(...args) ->
+    subQuery = new QueryDsl()
+    for elem arg in args: subQuery.q('bool', ['should'], arg)
+    subQuery.q('bool', 'minimum_should_match', 1)
+    this.q('bool', ['filter'], subQuery)

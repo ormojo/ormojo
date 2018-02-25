@@ -2,7 +2,7 @@
 import { create, save, findById, destroy, find } from '@ormojo/ormojo'
 import { toPlainObject, entity, field, types, listOf, extendField } from '@ormojo/ephraim'
 import es_client from '../es_client'
-import { createChild, destroyChildById, ESBackend, ESQuery } from '../..'
+import { createChild, destroyChildById, ESBackend, ESQuery, QueryDsl } from '../..'
 
 @entity({
   index: `widget_migration`
@@ -27,7 +27,7 @@ import { createChild, destroyChildById, ESBackend, ESQuery } from '../..'
   @field(types.integer) qty = 2
   @field({
     type: listOf(types.text)
-    mapping: (new ESQuery).q('fields', 'raw', { type: 'keyword'}).body
+    mapping: (new QueryDsl).q('fields', 'raw', { type: 'keyword'}).body
   }) tags = []
 
 @entity() class Widget2 extends Widget {}

@@ -1,3 +1,4 @@
 export { ESBackend } from './backend'
 export { createChild, destroyChildById } from './util'
 export { ESQuery } from './query'
+export { QueryDsl } from './queryDsl'
