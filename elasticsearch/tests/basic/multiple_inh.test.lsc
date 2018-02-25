@@ -1,8 +1,8 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
-import { create, save, findById, destroy, find } from '@ormojo/ormojo'
-import { toPlainObject, entity, field, types, listOf, extendField, typeOf, isa } from '@ormojo/ephraim'
+import { create } from '@ormojo/ormojo'
+import { entity, field, types, isa } from '@ormojo/ephraim'
 import es_client from '../es_client'
-import { createChild, destroyChildById, ESBackend } from '../..'
+import { ESBackend } from '../..'
 
 let backend
 
