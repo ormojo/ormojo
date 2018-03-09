@@ -192,7 +192,8 @@ export EntityType = singleton("EntityType", ->
       if memo: return memo
       obj = state.create(this)
       state.remember(left, obj)
-      left~forEachField! (k, v, spec): void -> state.visitField(obj, k, v, spec)
+      left~forEachField! (k, v, spec): void ->
+        if v != undefined: state.visitField(obj, k, v, spec)
       obj
 
     recurseRight(left, right, state): void ->

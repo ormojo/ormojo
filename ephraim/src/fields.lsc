@@ -31,8 +31,7 @@ export fieldKeys(ent) ->
 export forEachField(ent, f): void ->
   // Declared fields
   for key k, val spec in ent[fieldsSymbol]:
-    v = ent[k]
-    if v != undefined: f(k, v, spec)
+    f(k, ent[k], spec)
 
   // Flex fields
   for elem k in Object.keys(ent):
