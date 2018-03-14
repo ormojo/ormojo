@@ -260,6 +260,9 @@ export isType(x) ->
   t = typeof x
   (t == "function" or t == "object") and (x[typeSymbol] instanceof Type)
 
+export isPrimitiveType(T) ->
+  T[typeSymbol] instanceof PrimitiveType
+
 export setType(x, T) ->
   x[typeSymbol] = T
 
