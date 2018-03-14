@@ -1,0 +1,15 @@
+import SqlString from 'sqlstring'
+
+// Promise finally implementation
+export finalize(pr, handler) ->
+  resolver() -> pr
+  finalizer = -> Promise.resolve(handler()).then(resolver)
+  pr.then(finalizer, finalizer)
+
+// Quote SQL identifiers using MySQL syntax
+export quoteIdentifier(id) ->
+  SqlString.escapeId(id)
+
+// Escape a raw value in a sql query
+export escapeValue(val) ->
+  SqlString.escape(val)

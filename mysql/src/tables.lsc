@@ -1,0 +1,129 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+
+import { esTypeMap } from './esTypeMap'
+import { declaredFieldKeys } from '@ormojo/ephraim'
+import { quoteIdentifier, escapeValue } from './util'
+
+export class MySQLColumn:
+  constructor(backend, database, tableName, name) ->
+    this.backend = backend
+    this.database = database
+    this.tableName = tableName
+    this.name = name
+
+  _fromInformationSchemaRow(row): void ->
+    this.nullable = if row.is_nullable == 'YES': true else: false
+    this.ordinalPosition = row.ordinal_position
+    this.keyType = row.column_key
+    this.type = row.column_type
+    this.charset = row.character_set_name
+    this.collation = row.collation_name
+    this.default = row.column_default
+    this.autoIncrement = /auto_increment/.test(row.extra)
+
+  _toDDL(): string ->
+    nullability = if this.nullable: 'NULL' else: 'NOT NULL'
+    def = if this.default: escapeValue(this.default) else: ''
+    incr = if this.autoIncrement: 'AUTO_INCREMENT' else: ''
+    key = match this.keyType:
+      | 'PRI': 'PRIMARY KEY'
+      | 'UNI': 'UNIQUE'
+      | else: ''
+    `${quoteIdentifier(this.name)} ${this.type} ${nullability} ${def} ${incr} ${key}`
+
+// Represents a MySQL table
+export class MySQLTable:
+  constructor(backend, database, name) ->
+    this.backend = backend
+    this.database = database
+    this.name = name
+    this.columns = {}
+    this.ordinalColumns = []
+    this.queryColumns = []
+
+  _dropTable(): Promise<any> ->
+    this.backend._getConnection()
+    .then! (conn) ->
+      conn.query('DROP TABLE ?;', [this.name])
+
+  // Get columns from MySQL
+  _getTableMetadata(): Promise<any> ->
+    // Clear existing
+    this.columns = {}
+    this.ordinalColumns = []
+    this.backend.rawQuery('SELECT table_schema, table_name, column_name, ordinal_position, column_default, is_nullable, data_type, character_set_name, collation_name, column_type, column_key, extra FROM information_schema.columns WHERE table_name=? AND table_schema=?;', [this.name, this.database])
+    .then! (rst) =>
+      for elem colSpec in rst[0] or []:
+        col = new MySQLColumn(this.backend, this.database, this.name, colSpec.column_name)
+        col._fromInformationSchemaRow(colSpec)
+        this.columns[colSpec.column_name] = col
+        this.ordinalColumns[colSpec.ordinal_position - 1] = col
+      console.log(this.columns)
+
+  // Generate CREATE TABLE DDL
+  _toCreateDDL(unchecked): string ->
+    colDDL = [...for elem col in this.ordinalColumns: [col._toDDL!]].join(',')
+    `CREATE TABLE ${if unchecked: '' else: 'IF NOT EXISTS'} ${quoteIdentifier(this.name)} (${colDDL})`
+
+  // Insert a column at the ordinally-last position in this table
+  addColumn(col: MySQLColumn): void ->
+    this.ordinalColumns.push(col)
+    this.columns[col.name] = col
+
+  // Derive a table from an ormojo type plus an opts array.
+  deriveSerializationScheme(T, opts): void ->
+    // Strategy:
+    // - Make an array of columns we'd like to read from the table
+    readColumnSequence = []
+    columnFieldSequence = []
+    columnForField = {}
+    fieldKeyList = T~declaredFieldKeys()
+    for elem fieldKey in fieldKeyList:
+      fieldOpts = opts?.fields?[fieldKey] or { column: fieldKey }
+      fieldColumn = fieldOpts?.column or fieldKey
+      if not fieldOpts.ignore:
+        readColumnSequence.push(fieldColumn)
+        columnFieldSequence.push(fieldKey)
+        columnForField[fieldKey] = fieldColumn
+    this.readColumnSequence = readColumnSequence
+    this.columnFieldSequence = columnFieldSequence
+    this.columnForField = columnForField
+
+
+
+// Represents the collection of tables associated with a backend.
+export class MySQLTables:
+  constructor(backend, database) ->
+    this.backend = backend
+    this.database = database
+    this.tables = {}
+
+  // Obtain list of tables from mysql
+  _enumerateTables() ->
+    this.backend.rawQuery('SHOW TABLES;')
+    .then! (rst) =>
+      nameColumn = rst?[1]?[0]?.name
+      if not nameColumn: return
+      tableList = rst[0]
+      for elem table in tableList:
+        tableName = table[nameColumn]
+        this.tables[tableName] = new MySQLTable(this.backend, this.database, tableName)
+      this.tables
+
+  // Get metadata for each enumerated table
+  _getAllTableMetadata() ->
+    Promise.all([...for val tbl in this.tables: [tbl._getTableMetadata()]])
+
+  // Get DDL for all tables
+  _getCreateDDL() ->
+    [...for val tbl in this.tables: [tbl._toCreateDDL()]]
+
+  getTables() ->
+    this.tables
+
+  getOrCreateTableByName(name) ->
+    t = this.tables[name]
+    if t: return t
+    newT = new MySQLTable(this.backend, this.database, name)
+    this.tables[name] = newT
+    newT

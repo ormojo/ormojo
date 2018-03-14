@@ -1,0 +1,34 @@
+export class MySQLConnectionManager:
+  constructor(driver, opts) ->
+    this.driver = driver
+    // Create a system that allows connections to be obtained from the driver.
+    configHash = {
+      host: opts.host
+      ...if opts.port: { port: opts.port }
+      user: opts.user
+      ...if opts.database: { database: opts.database }
+      ...if opts.password: { password: opts.password }
+    }
+
+    if opts.pool:
+      pool = driver.createPool(configHash)
+      this.pool = pool
+      this.openConnection = ->
+        conn = pool.getConnection()
+        conn
+    else:
+      this.openConnection = ->
+        conn = driver.createConnection(configHash)
+        conn
+
+  closeConnection(conn) ->
+    if this.pool:
+      conn.release()
+    else:
+      conn.end()
+
+  shutdown(): Promise<any> ->
+    if this.pool:
+      this.pool.end()
+    else:
+      Promise.resolve(true)

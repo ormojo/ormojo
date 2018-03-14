@@ -1,0 +1,38 @@
+import { entity, field, types, listOf, extendField } from '@ormojo/ephraim'
+import es_client from './es_client'
+import { ESBackend, ESQuery, QueryDsl } from '..'
+
+export makeCorpus(extraName) ->
+  logger = console.log.bind(console)
+  backend = new ESBackend(es_client, {
+    log: {
+      trace: logger
+    }
+  })
+
+  @entity() class Widget:
+    @field(types.string) id
+    @field(types.text) name = 'nameless'
+    @field(types.integer) qty = 2
+    @field(listOf(types.text)) tags = []
+
+  @entity({
+    // Elasticsearch backend type info
+    index: `widget_${extraName}`
+    type: `widget_${extraName}`
+  }) class ESWidget extends Widget:
+    // Augment the definition of the `tags` field with some special elasticsearch
+    // options
+    @extendField({
+      mapping: (new QueryDsl).q('fields', 'raw', { type: 'keyword'}).body
+    }) tags
+
+  backend.registerType(ESWidget)
+
+  { backend, Widget: ESWidget }
+
+export cleanupCorpus(extraName) ->
+  es_client.indices.delete({
+    index: [`widget_${extraName}_ormojo*`, `widget_${extraName}`]
+    ignore: [404]
+  })

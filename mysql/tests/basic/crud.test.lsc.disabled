@@ -1,0 +1,103 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+import { makeCorpus, cleanupCorpus } from '../makeCorpus'
+import { create, save, findById, destroy, destroyById } from '@ormojo/ormojo'
+import { toPlainObject } from '@ormojo/ephraim'
+
+let backend, Widget
+
+beforeAll! ->
+  now { backend, Widget } = makeCorpus('crud')
+  mig = backend.getMigration()
+  mig.prepare().then(-> mig.execute())
+
+afterAll! ->
+  cleanupCorpus('crud')
+
+describe('CRUD', ->
+  it('should create, save, find by id', ->
+    awidget = Widget~create()
+    awidget.name = "whosit"
+    debugger
+    awidget~save()
+    .then! (widg) ->
+      console.log(widg~toPlainObject!)
+      debugger
+      Widget~findById(widg.id)
+    .then! (widg) ->
+      console.log(widg~toPlainObject!)
+      expect(widg~toPlainObject!).toEqual(awidget~toPlainObject!)
+      Widget~findById([widg.id])
+    .then! (widgs) ->
+      console.log(widgs)
+      expect(widgs[0]~toPlainObject!).toEqual(awidget~toPlainObject!)
+  )
+
+  it('should create, destroy by specific id', ->
+    awidget = Widget~create()
+    awidget.name = '12345'
+    debugger
+    awidget.id = '12345'
+
+    awidget~save()
+    .then(->
+      Widget~findById('12345')
+    ).then((rst) ->
+      console.log(rst~toPlainObject!)
+      expect(rst.name).toBe('12345')
+      Widget~destroyById('12345')
+    ).then((rst) ->
+      expect(rst).toBeTruthy()
+      Widget~findById('12345')
+    ).then((rst) ->
+      expect(rst).toBe(undefined)
+    )
+  )
+
+  it('shouldnt find documents that arent there', ->
+    Widget~findById('nothere')
+    .then((x) ->
+      expect(x).toBe(undefined)
+      Widget~findById(['nothere', 'nowhere'])
+    ).then((xs) ->
+      expect(xs.length).toBe(2)
+      expect(xs[0]).toBe(undefined)
+      expect(xs[1]).toBe(undefined)
+    )
+  )
+
+  it('should save, delete, not find', ->
+    let id = null
+    Widget~create({name: 'whatsit', qty: 1000000})
+    .then((widg) ->
+      now id = widg.id
+      widg~destroy()
+    ).then((widg) ->
+      expect(widg._wasDeleted).toBe(true)
+      Widget~findById(id)
+    ).then((x) ->
+      expect(x).toBe(undefined)
+    )
+  )
+
+  it('should CRUD', ->
+    let id = null
+    Widget~create({name: 'name1', qty: 1})
+    .then((widg) ->
+      expect(widg.name).toBe('name1')
+      expect(widg.qty).toBe(1)
+      Widget~findById(widg.id)
+    ).then((widg) ->
+      expect(widg.name).toBe('name1')
+      widg.name = 'name2'
+      widg~save()
+    ).then((widg) ->
+      expect(widg.name).toBe('name2')
+      now id = widg.id
+      widg~destroy()
+    ).then(->
+      Widget~findById(id)
+    ).then((x) ->
+      expect(x).toBe(undefined)
+    )
+  )
+)

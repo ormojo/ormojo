@@ -1,0 +1,13 @@
+// Make the MySQL driver for testing
+// Do not expose credentials for a live server to git!
+import { MySQLBackend } from '..'
+mysql2 = require('mysql2/promise')
+
+export createBackend() ->
+  new MySQLBackend(mysql2, {
+    host: 'localhost'
+    user: 'drivertest'
+    password: 'drivertest'
+    database: 'drivertest'
+    pool: true
+  })

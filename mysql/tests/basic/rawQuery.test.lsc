@@ -1,0 +1,27 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+import { createBackend } from '../backend'
+
+let backend
+
+beforeAll! ->
+  now backend = createBackend()
+  Promise.resolve(true)
+
+afterAll! ->
+  backend.shutdown()
+
+describe! 'raw queries', ->
+  it! 'simple exercise', ->
+    backend.rawQuery(`
+      CREATE TABLE IF NOT EXISTS example_autoincrement (
+        id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        data VARCHAR(100),
+        data2 VARCHAR(100) DEFAULT "It's ya boy"
+    );`).then! (result) ->
+      console.log("CREATE", result)
+      backend.rawQuery(`INSERT INTO example_autoincrement (data) VALUES ("hello");`)
+    .then! (result) ->
+      console.log("INSERT", result)
+      backend.rawQuery(`SELECT id, data FROM example_autoincrement;`)
+    .then! (result) ->
+      console.log("SELECT", result)

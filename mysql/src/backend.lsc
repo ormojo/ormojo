@@ -1,0 +1,94 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+
+import { Backend, setBackend, getBackend, normalizeLoggerObject } from '@ormojo/ormojo'
+import { MySQLTables } from './tables'
+import { MySQLMigration } from './migration'
+import { MySQLQuery } from './query'
+import { typeFrom, createMemory as create, assignPlainObject } from '@ormojo/ephraim'
+import { finalize } from './util'
+import { MySQLConnectionManager } from './connection'
+
+export class MySQLBackend extends Backend:
+  constructor(mysql2, opts) ->
+    super()
+    this.log = normalizeLoggerObject(opts?.log)
+    // Initialize SQL backend api, including connection pool if enabled
+    this.connectionManager = new MySQLConnectionManager(mysql2, opts)
+    // The table registry contains information mapping ephraim entity types
+    // onto tables.
+    this.tableMap = new Map()
+    this.typeMap = new Map()
+    // this.sink = new ESSink({es: this.es, log: this.log })
+    // // Source constructor
+    // typeMap(idx, ty) => this.indices.getEphraimTypeForESType(idx, ty)
+    // this.source = new ESSource({es: this.es, log: this.log, typeMap, defaultType: null, errorOnMissingType: true})
+    // if opts?.indexPrefix: this.indexPrefix = opts.indexPrefix
+
+  // Shutdown backend, closing all pooled connections
+  shutdown(): Promise<any> ->
+    console.log("shutdown hook")
+    this.connectionManager.shutdown().then(-> console.log("shutdown complete"))
+
+  // Run a single raw query
+  rawQuery(str, params, conn) ->
+    if conn:
+      conn.query(str, params)
+    else:
+      // Lease a connection for the duration of the query only.
+      mgr = this.connectionManager
+      let theConn = null
+      mgr.openConnection()
+      .then! (conn) ->
+        now theConn = conn
+        conn.query(str, params)
+      ~finalize! ->
+        if theConn: mgr.closeConnection(theConn)
+
+  registerType(T, opts): void ->
+    now T = typeFrom(T)
+    if not T: throw new Error(`MySQLBackend.registerType: a type is required`)
+    if this.typeMap.has(T):
+      throw new Error(`MySQLBackend.registerType: duplicate registration of type '${T.name}'`)
+    now opts = opts or {}
+    opts.table = opts.table or T.name
+    if this.tableMap.has(opts.table):
+      throw new Error(`MySQLBackend.registerType: multiple types assigned to table '${opts.table}'`)
+    this.tableMap.set(opts.table, T)
+    this.typeMap.set(T, opts)
+
+  getMigration() ->
+    new MySQLMigration(this)
+
+  createQuery(): MySQLQuery ->
+    new MySQLQuery(this)
+
+  create(type, data, opts) ->
+    instance = create(type)
+    instance._isNewRecord = true
+    if data~looseNotEq(null):
+      instance~assignPlainObject(data)
+      if not opts?.noPersist:
+        this.save(instance, opts)
+      else:
+        instance
+    else:
+      instance
+
+  save(instance, opts) ->
+    { sink } = this
+    if Array.isArray(instance):
+      sink.crupsert(instance, opts).then! -> instance
+    else:
+      sink.crupsert([instance], opts).then! -> instance
+
+  destroy(instance, opts) ->
+    { sink } = this
+    sink.delete([instance], opts).then! (rst) ->
+      if rst?.results[0]: instance._wasDeleted = true
+      instance
+
+  destroyById(type, id, opts) ->
+    this.sink.delete([target]).then! rst -> rst?.results[0]
+
+  find(query) ->
+    this.source.read(query)
