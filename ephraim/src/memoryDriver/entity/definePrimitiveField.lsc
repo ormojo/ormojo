@@ -8,9 +8,9 @@ createGetterMethod(proto, type, key) ->
   () ->
     if this[isDeltaSymbol]:
       r = this[deltaSymbol]?[key]
-      if r == undefined: this[dataSymbol][key] else: r
+      if r == undefined: this[dataSymbol]?[key] else: r
     else:
-      this[dataSymbol][key]
+      this[dataSymbol]?[key]
 
 createSetterMethod(proto, type, key) ->
   // TODO: special handling for id

@@ -5,6 +5,7 @@ import '@ormojo/ephraim': {
   declaredFields, declaredFieldKeys
   fieldKeys, flexFieldKeys, forEachField
   createMemory as create
+  typeOf, underlyingTypeOfType
 }
 
 
@@ -57,3 +58,29 @@ test! "instance field metadata", ->
   expect(e~fieldKeys()).toEqual(E~declaredFieldKeys())
   expect(d~fieldKeys()).not.toEqual(D~declaredFieldKeys())
   expect(d~flexFieldKeys()).toEqual(['flex'])
+
+test! "primitive defaults metadata", ->
+  @entity() class E:
+    @field(types.string) F = "default"
+    @field(types.string) G
+
+  e = create(E)
+  fields = e~declaredFields()
+
+  console.log(fields['F'], fields['G'])
+  expect(fields['F'].defaultValue).toEqual('default')
+  expect(fields['G'].defaultValue).toEqual(undefined)
+
+test! "underlying types", ->
+  @entity() class E:
+    @field() anyField
+
+  e = create(E)
+
+  T1 = typeOf(e)
+  T2 = underlyingTypeOfType(T1)
+  console.log("T1", T1)
+  console.log("T2", T2)
+
+  expect(e~typeOf()).not.toBe(E)
+  expect(e~typeOf()~underlyingTypeOfType()).toBe(E)

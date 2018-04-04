@@ -112,6 +112,12 @@ export EntityType = singleton("EntityType", ->
     defineField(key, spec): void ->
       spec.key = key
       this.fields[key] = spec
+      // Extract single-value defaults on primitive fields
+      if spec.type~isPrimitiveType!:
+        if spec.initializer:
+          val = spec.initializer.call(null)
+          if spec.type.validate(val):
+            spec.defaultValue = val
       spec.type.fieldOfTypeWasDefined(this, key, spec)
 
     initialize(entity, spec, creator, initializer) ->
@@ -260,6 +266,11 @@ export isType(x) ->
   t = typeof x
   (t == "function" or t == "object") and (x[typeSymbol] instanceof Type)
 
+// Convert a type into user-consumable form
+export consumableType(T) ->
+  EC = T.entityConstructor
+  if EC: EC else: T
+
 export isPrimitiveType(T) ->
   T[typeSymbol] instanceof PrimitiveType
 
@@ -292,3 +303,9 @@ export isKindOf(T1, T2): boolean ->
   now T1 = T1[typeSymbol]
   now T2 = T2[typeSymbol]
   if T1: T1.isKindOf(T2) else: false
+
+// Determine the underlying type of a type.
+export underlyingTypeOfType(T) ->
+  now T = typeFrom(T)
+  UT = T[underlyingTypeSymbol]
+  if UT: UT~consumableType() else: T
