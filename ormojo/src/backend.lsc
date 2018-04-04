@@ -1,10 +1,58 @@
+import type {Type, Entity} from '@ormojo/ephraim'
+import { Query, ResultSet } from './query'
+
 // Backend
 export class Backend {
+  //
+  // Bind an Ephraim entity type to this backend.
+  //
+  // eslint-disable-next-line no-unused-vars
+  bind(T, opts): void -> return
+
+  //
+  // Find an entity of a given type by ID.
+  //
+  findById(T: Type, id, opts): Promise<Entity | undefined | Array<Entity | undefined>> ->
+    q = this.createQuery().setType(T).byId(id)
+    if Array.isArray(id):
+      this.find(q).then! resultSet -> resultSet.getResults!
+    else:
+      this.find(q).then! resultSet -> (resultSet.getResults!)[0]
+
+  //
+  // Find entities matching a backend-specific Query.
+  //
+  find(query: Query, opts): Promise<ResultSet> -> null
+
+  //
+  // Create an entity of the bound type suitable for this backend,
+  // persisting it to the database if data is provided.
+  //
+  create(T: Type, data, opts): Entity | Promise<Entity> -> null
+
+  //
+  // Persist instance(s), or changes thereto, to the underlying database.
+  //
+  save(data: Entity | Array<Entity>, opts): Promise<Entity | Array<Entity>> ->
+    null
+
+  //
+  // Destroy the given entity, persisting the destruction to the
+  // backend.
+  //
+  destroy(instance: Entity, opts): Promise<Entity> -> null
+
+  //
+  // Destroy an entity given an identified type and ID.
+  //
+  destroyById(T: Type, id, opts): Promise<bool> -> null
 
 }
 
 export normalizeLoggerObject(log) ->
+  let defaultLogger = -> return
+  if typeof(log) == "function": now defaultLogger = log
   if typeof(log) != "object": now log = {}
   for elem logger in ["trace", "debug", "info", "warn", "error", "fatal"]:
-    if not log[logger]: log[logger] = -> return
+    if not log[logger]: log[logger] = defaultLogger
   log
