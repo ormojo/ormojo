@@ -10,4 +10,5 @@ export createBackend() ->
     password: 'drivertest'
     database: 'drivertest'
     pool: true
+    log: console.log.bind(console)
   })

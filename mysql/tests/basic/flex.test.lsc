@@ -1,0 +1,54 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+import { save, destroy } from '@ormojo/ormojo'
+import { toPlainObject, entity, field, types } from '@ormojo/ephraim'
+import { createBackend } from '../backend'
+
+@entity() class Widget:
+  @field(types.integer) id
+  @field(types.string) name = 'nameless'
+  @field(types.integer) qty = 2
+
+let backend = null
+beforeAll! ->
+  now backend = createBackend()
+  backend.bind(Widget, {
+    table: 'Widget_flex'
+    fields: {
+      "id": { autoIncrement: true }
+      "flex": {
+        type: "VARCHAR(255)"
+      }
+    }
+  })
+  mig = backend.createMigration()
+  mig.prepare().then! ->
+    mig.execute()
+  .then! ->
+    backend.rawQuery('DELETE FROM Widget_flex')
+
+// afterAll! ->
+//   backend.tables._dropAllTables()
+//   .then! -> backend.shutdown!
+//   .catch! (err) -> console.error(err)
+
+afterAll! ->
+  backend.shutdown!
+
+describe! 'flex fields', ->
+  it! 'should create, save, find by id', ->
+    awidget = backend.create(Widget)
+    awidget.name = "willflex"
+    awidget.flex = "flexible"
+    debugger
+    backend.save(awidget)
+    .then! (widg) ->
+      console.log(widg~toPlainObject!)
+      debugger
+      backend.findById(Widget, widg.id)
+    .then! (widg) ->
+      console.log(widg~toPlainObject!)
+      expect(widg~toPlainObject!).toEqual(awidget~toPlainObject!)
+      backend.findById(Widget, [widg.id])
+    .then! (widgs) ->
+      console.log(widgs)
+      expect(widgs[0]~toPlainObject!).toEqual(awidget~toPlainObject!)

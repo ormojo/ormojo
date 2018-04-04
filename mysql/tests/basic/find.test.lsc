@@ -1,0 +1,81 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+import { save, destroy, find, findAll } from '@ormojo/ormojo'
+import { toPlainObject, entity, field, types } from '@ormojo/ephraim'
+import { createBackend } from '../backend'
+import { And, Or, Not, Eq, Op } from '../..'
+
+@entity() class Widget:
+  @field(types.string) id
+  @field(types.string) name = 'nameless'
+  @field(types.integer) qty = 2
+
+let backend = null
+beforeAll! ->
+  now backend = createBackend()
+  backend.bind(Widget, {
+    table: 'Widget_find'
+  })
+  mig = backend.createMigration()
+  mig.prepare().then! ->
+    mig.execute()
+  .then! ->
+    backend.rawQuery('DELETE FROM Widget_find')
+
+// afterAll! ->
+//   backend.tables._dropAllTables()
+//   .then! -> backend.shutdown!
+//   .catch! (err) -> console.error(err)
+
+afterAll! ->
+  backend.shutdown!
+
+describe('find', ->
+
+  it('should find', ->
+    widgets = [...for let i=0;i<10;i++:
+      [backend.create(Widget, {id: `${i}`, name: `findAll`, qty: i}, { noPersist: true })]
+    ]
+    widgets.push(backend.create(Widget, { id: '50', name: 'uniquely named thing', qty: 50}, { noPersist: true }))
+    backend.save(widgets)
+    .then! ->
+      debugger
+      // find one
+      q = backend.createQuery().setType(Widget).where('name'~Eq('uniquely named thing'))
+      backend~find(q)
+    .then! (ent) ->
+      console.log(ent)
+      expect(ent.qty).toBe(50)
+      // find nonexistent
+      q = backend.createQuery().setType(Widget).where('name'~Eq('frobozz'))
+      backend~find(q)
+    .then! (ent) ->
+      expect(ent).toBe(undefined)
+      // find many
+      q = backend.createQuery().setType(Widget).where('name'~Eq('findAll'))
+      backend~findAll(q)
+    .then! (results) ->
+      expect(results.getResultCount()).toBe(10)
+      // pagination, first page
+      q = backend.createQuery().setType(Widget).setLimit(3).where('name'~Eq('findAll')).orderBy('qty', 'ASC')
+      backend~findAll(q)
+    .then! (results) ->
+      expect(results.getResultCount()).toBe(3)
+      expect(results.getResults()[0].qty).toBe(0)
+      // pagination, next page
+      results.nextPage()
+    .then! (results) ->
+      expect(results.getResultCount()).toBe(3)
+      expect(results.getResults()[0].qty).toBe(3)
+      results.nextPage()
+    .then! (results) ->
+      expect(results.getResultCount()).toBe(3)
+      expect(results.getResults()[0].qty).toBe(6)
+      results.nextPage()
+    .then! (results) ->
+      expect(results.getResultCount()).toBe(1)
+      expect(results.getResults()[0].qty).toBe(9)
+      results.nextPage()
+    .then! (results) ->
+      expect(results.isEmpty()).toBe(true)
+  )
+)

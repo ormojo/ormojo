@@ -1,0 +1,20 @@
+import { entity, field, types } from '@ormojo/ephraim'
+import { createBackend } from './backend'
+import { MySQLBackend, MySQLQuery } from '..'
+
+export makeCorpus(extraName) ->
+  backend = createBackend()
+
+  @entity() class Widget:
+    @field(types.string) id
+    @field(types.text) name = 'nameless'
+    @field(types.integer) qty = 2
+
+  backend.bind(Widget, { table: `Widget_${extraName or '1'}`})
+
+  { backend, Widget }
+
+export cleanupCorpus(backend, extraName) ->
+  backend.rawQuery(`DROP TABLE Widget_${extraName}`)
+    .then! ->
+      backend.shutdown()

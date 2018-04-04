@@ -1,63 +1,81 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
-import { makeCorpus, cleanupCorpus } from '../makeCorpus'
-import { create, save, findById, destroy, destroyById } from '@ormojo/ormojo'
-import { toPlainObject } from '@ormojo/ephraim'
+import { save, destroy } from '@ormojo/ormojo'
+import { toPlainObject, entity, field, types } from '@ormojo/ephraim'
+import { createBackend } from '../backend'
 
-let backend, Widget
+@entity() class Widget:
+  @field(types.integer) id
+  @field(types.string) name = 'nameless'
+  @field(types.integer) qty = 2
 
+let backend = null
 beforeAll! ->
-  now { backend, Widget } = makeCorpus('crud')
-  mig = backend.getMigration()
-  mig.prepare().then(-> mig.execute())
+  now backend = createBackend()
+  backend.bind(Widget, {
+    table: 'Widget_crud'
+    fields: {
+      "id": { autoIncrement: true }
+    }
+  })
+  mig = backend.createMigration()
+  mig.prepare().then! ->
+    mig.execute()
+  .then! ->
+    backend.rawQuery('DELETE FROM Widget_crud')
+
+// afterAll! ->
+//   backend.tables._dropAllTables()
+//   .then! -> backend.shutdown!
+//   .catch! (err) -> console.error(err)
 
 afterAll! ->
-  cleanupCorpus('crud')
+  backend.shutdown!
 
 describe('CRUD', ->
   it('should create, save, find by id', ->
-    awidget = Widget~create()
+    awidget = backend.create(Widget)
     awidget.name = "whosit"
     debugger
-    awidget~save()
+    backend.save(awidget)
     .then! (widg) ->
       console.log(widg~toPlainObject!)
       debugger
-      Widget~findById(widg.id)
+      backend.findById(Widget, widg.id)
     .then! (widg) ->
       console.log(widg~toPlainObject!)
       expect(widg~toPlainObject!).toEqual(awidget~toPlainObject!)
-      Widget~findById([widg.id])
+      backend.findById(Widget, [widg.id])
     .then! (widgs) ->
       console.log(widgs)
       expect(widgs[0]~toPlainObject!).toEqual(awidget~toPlainObject!)
   )
 
   it('should create, destroy by specific id', ->
-    awidget = Widget~create()
+    awidget = backend.create(Widget)
     awidget.name = '12345'
     debugger
-    awidget.id = '12345'
+    awidget.id = 12345
 
-    awidget~save()
+    backend.save(awidget)
     .then(->
-      Widget~findById('12345')
+      backend.findById(Widget, 12345)
     ).then((rst) ->
       console.log(rst~toPlainObject!)
       expect(rst.name).toBe('12345')
-      Widget~destroyById('12345')
+      backend.destroyById(Widget, 12345)
     ).then((rst) ->
       expect(rst).toBeTruthy()
-      Widget~findById('12345')
+      backend.findById(Widget, 12345)
     ).then((rst) ->
       expect(rst).toBe(undefined)
     )
   )
 
   it('shouldnt find documents that arent there', ->
-    Widget~findById('nothere')
+    backend.findById(Widget, -1)
     .then((x) ->
       expect(x).toBe(undefined)
-      Widget~findById(['nothere', 'nowhere'])
+      backend.findById(Widget, [-2, -3])
     ).then((xs) ->
       expect(xs.length).toBe(2)
       expect(xs[0]).toBe(undefined)
@@ -67,13 +85,13 @@ describe('CRUD', ->
 
   it('should save, delete, not find', ->
     let id = null
-    Widget~create({name: 'whatsit', qty: 1000000})
+    backend.create(Widget, {name: 'whatsit', qty: 1000000})
     .then((widg) ->
       now id = widg.id
-      widg~destroy()
+      backend.destroy(widg)
     ).then((widg) ->
       expect(widg._wasDeleted).toBe(true)
-      Widget~findById(id)
+      backend.findById(Widget, id)
     ).then((x) ->
       expect(x).toBe(undefined)
     )
@@ -81,11 +99,11 @@ describe('CRUD', ->
 
   it('should CRUD', ->
     let id = null
-    Widget~create({name: 'name1', qty: 1})
+    backend.create(Widget, {name: 'name1', qty: 1})
     .then((widg) ->
       expect(widg.name).toBe('name1')
       expect(widg.qty).toBe(1)
-      Widget~findById(widg.id)
+      backend.findById(Widget, widg.id)
     ).then((widg) ->
       expect(widg.name).toBe('name1')
       widg.name = 'name2'
@@ -95,7 +113,7 @@ describe('CRUD', ->
       now id = widg.id
       widg~destroy()
     ).then(->
-      Widget~findById(id)
+      backend.findById(Widget, id)
     ).then((x) ->
       expect(x).toBe(undefined)
     )

@@ -1,5 +1,34 @@
 import { Query, Cursor, ResultSet } from '@ormojo/ormojo'
-import { createMemory as create, assignPlainObject } from '@ormojo/ephraim'
+import { assignPlainObject } from '@ormojo/ephraim'
+import { escapeValue as q } from './util'
+
+export Op(field, o, val) ->
+  (query, clause): void ->
+    col = query._table?.columnForField[field]?.fqcn
+    if col:
+      clause.push(`${col}${o}${q(val)}`)
+    else:
+      throw new Error(`MySQLQuery: could not find column for field '${field}'`)
+    clause
+
+export Eq(field, val) -> Op(field, '=', val)
+
+export Not(arg) ->
+  (query, clause): void ->
+    clause.push(`NOT ${arg(query, clause)}`)
+
+export Logical(op, ...args) ->
+  (query, clause): void ->
+    myClauses = []
+    for elem arg in args: arg(query, myClauses)
+    if myClauses.length == 1:
+      clause.push(myClauses[0])
+    elif myClauses.length > 1:
+      andedClauses = myClauses.map(x -> `(${x})`).join(` ${op} `)
+      clause.push(`(${andedClauses})`)
+
+export And(...args) -> Logical("AND", ...args)
+export Or(...args) -> Logical("OR", ...args)
 
 export class MySQLQuery extends Query:
   constructor(backend) ->
@@ -7,19 +36,15 @@ export class MySQLQuery extends Query:
 
   setType(T) ->
     super.setType(T)
-    this
-
-  setIndexName(idx) ->
-    this.index = idx
+    tbl = this.backend._getTableForType(T)
+    this._table = tbl
+    this.fieldsClause = tbl.selectFieldsClause
+    this.fromClause = tbl.quotedName
+    this.readPattern = tbl.readPattern
     this
 
   setQuery(other) ->
-    this.body = other.body
-    this.limit = other.limit
-    this.offset = other.offset
-    this.index = other.index
-    this.type = other.type
-    this.ephraimType = other.ephraimType
+    Object.assign(this, other)
 
   resumeFrom(cursor) ->
     this.setQuery(cursor.query)
@@ -27,37 +52,71 @@ export class MySQLQuery extends Query:
     this.limit = cursor.limit
     this
 
-  // Get Elasticsearch Query DSL JSON for this query.
-  getQueryDsl() ->
-    this.body
+  where(build) ->
+    clause = []
+    build(this, clause)
+    if clause[0]:
+      this.whereClause = clause[0]
+    else:
+      throw new Error('Invalid query builder')
+    this
 
-export class ESCursor extends Cursor:
+  orderBy(field, qualifier = 'ASC') ->
+    col = this._table?.columnForField[field]?.quotedName
+    if not col: throw new Error(`MySQLQuery.orderBy: no column for field '${field}'`)
+    this.orderByClause = `ORDER BY ${col} ${qualifier}`
+    this
+
+  _getOffsetClause() ->
+    if this.limit:
+      if this.offset:
+        `LIMIT ${this.limit} OFFSET ${this.offset}`
+      else:
+        `LIMIT ${this.limit}`
+    else:
+      ''
+
+  _getOrderByClause() ->
+    if this.orderByClause: this.orderByClause else: ''
+
+  _getFieldsClause() ->
+    if typeof(this.fieldsClause) == 'string':
+      this.fieldsClause
+    elif Array.isArray(this.fieldsClause):
+      this.fieldsClause.join(',')
+    else:
+      // TODO: error here?
+      ''
+
+  _getFromClause() ->
+    this.fromClause
+
+  _getWhereClause() ->
+    this.whereClause
+
+  _getSQL() ->
+    if this.sql:
+      this.sql
+    elif this.ids:
+      ids = this.ids
+      tbl = this._table
+      if ids.length > 1:
+        set = [...for elem id in ids: [q(id)]].join(',')
+        `SELECT ${tbl.selectFieldsClause} FROM ${tbl.quotedName} WHERE ${tbl.idColumnFqcn} IN (${set})`
+      else:
+        `SELECT ${tbl.selectFieldsClause} FROM ${tbl.quotedName} WHERE ${tbl.idColumnFqcn}=${q(ids[0])}`
+    else:
+      `SELECT ${this._getFieldsClause()} FROM ${this._getFromClause()} WHERE ${this._getWhereClause()} ${this._getOrderByClause()} ${this._getOffsetClause()}`
+
+export class MySQLCursor extends Cursor:
   constructor(query) ->
     super()
     this.query = query
 
-  setFromOffset(offset, limit, total) ->
+  setFromOffset(offset, limit) ->
     this.offset = offset
     this.limit = limit
-    this.total = total
     this
-
-resolveType(typeMap, defaultType, errorOnMissingType, datum) ->
-  idx = datum._index
-  ty = datum._type
-  if (not idx) or (not ty):
-    if errorOnMissingType:
-      // TODO: specific error class for this
-      throw new Error("could not map Elasticsearch result to Ephraim type")
-    else:
-      return defaultType
-  T = typeMap(idx, ty)
-  if not T:
-    if errorOnMissingType:
-      throw new Error("could not map Elasticsearch result to Ephraim type")
-    else:
-      return defaultType
-  T
 
 // Helper: Update an instance from an ES API return value.
 // XXX: assign vs set...
@@ -82,31 +141,27 @@ export updateInstanceWithData(instance, esData) ->
   //instance._clearChanges()
   instance
 
-export class ESResultSet extends ResultSet:
-  constructor(data, total, offset, originalQuery, maxScore = 0) ->
-    super()
-    this.maxScore = maxScore
-    this.results = data or []
-    this.total = total or this.results.length
-    nextOffset = (offset or 0) + this.results.length
-    if nextOffset < this.total:
-      this.cursor = new ESCursor(originalQuery).setFromOffset(nextOffset, this.results.length, this.total)
+export class MySQLResultSet extends ResultSet:
+  constructor(backend, data) ->
+    super(backend, data or [])
 
-  getTotalResultCount() -> this.total
+  setPagination(sourceQuery, count): void ->
+    if count == undefined: now count = this.results.length
+    // Clear cursor if no next page
+    if count == 0 or count < sourceQuery.limit:
+      this.cursor = null
+      return
+    nextOffset = (sourceQuery.offset or 0) + count
+    nextLimit = sourceQuery.limit or count
+    this.cursor = new MySQLCursor(sourceQuery).setFromOffset(nextOffset, nextLimit)
 
   getCursor() -> this.cursor
 
-  getMaxScore() -> this.maxScore
+  nextPage() ->
+    if this.cursor:
+      qry = this.backend.createQuery().resumeFrom(this.cursor)
+      this.backend.find(qry)
+    else:
+      Promise.resolve(new MySQLResultSet(this.backend))
 
-  _hydrate(typeMap, defaultType, errorOnMissingType) ->
-    nextResults = [...for elem result in this.results:
-      if result:
-        T = resolveType(typeMap, defaultType, errorOnMissingType, result)
-        if T:
-          instance = T~create()
-          [updateInstanceWithData(instance, result)]
-      else:
-        [undefined]
-    ]
-    this.results = nextResults
-    this
+

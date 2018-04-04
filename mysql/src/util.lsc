@@ -1,10 +1,25 @@
 import SqlString from 'sqlstring'
 
+export function array_move(arr, old_index, new_index) {
+    if (new_index >= arr.length) {
+        var k = new_index - arr.length + 1;
+        while (k--) {
+            arr.push(undefined);
+        }
+    }
+    arr.splice(new_index, 0, arr.splice(old_index, 1)[0]);
+    return arr;
+}
+
 // Promise finally implementation
 export finalize(pr, handler) ->
   resolver() -> pr
   finalizer = -> Promise.resolve(handler()).then(resolver)
   pr.then(finalizer, finalizer)
+
+// Promise reflect implementation
+export reflect(pr) ->
+  pr.then(value -> { value, status: 'resolved' }, value -> { value, status: 'rejected'})
 
 // Quote SQL identifiers using MySQL syntax
 export quoteIdentifier(id) ->

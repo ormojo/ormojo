@@ -1,2 +1,2 @@
 export { MySQLBackend } from './backend'
-export { MySQLQuery } from './query'
+export { MySQLQuery, Op, Eq, Not, Logical, And, Or } from './query'

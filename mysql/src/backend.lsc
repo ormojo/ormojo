@@ -1,12 +1,15 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
 
-import { Backend, setBackend, getBackend, normalizeLoggerObject } from '@ormojo/ormojo'
+import { Backend, normalizeLoggerObject, setBackend } from '@ormojo/ormojo'
+import { typeOf, typeFrom, createMemory as create, assignPlainObject, underlyingTypeOfType } from '@ormojo/ephraim'
+
 import { MySQLTables } from './tables'
 import { MySQLMigration } from './migration'
 import { MySQLQuery } from './query'
-import { typeFrom, createMemory as create, assignPlainObject } from '@ormojo/ephraim'
 import { finalize } from './util'
 import { MySQLConnectionManager } from './connection'
+import { MySQLSink } from './sink'
+import { MySQLSource } from './source'
 
 export class MySQLBackend extends Backend:
   constructor(mysql2, opts) ->
@@ -14,49 +17,70 @@ export class MySQLBackend extends Backend:
     this.log = normalizeLoggerObject(opts?.log)
     // Initialize SQL backend api, including connection pool if enabled
     this.connectionManager = new MySQLConnectionManager(mysql2, opts)
+    // Record target database
+    this.database = opts.database
+    if not this.database:
+      throw new Error("MySQLBackend: opts.database is required")
     // The table registry contains information mapping ephraim entity types
     // onto tables.
-    this.tableMap = new Map()
+    this.tables = new MySQLTables(this, this.database)
     this.typeMap = new Map()
-    // this.sink = new ESSink({es: this.es, log: this.log })
-    // // Source constructor
-    // typeMap(idx, ty) => this.indices.getEphraimTypeForESType(idx, ty)
-    // this.source = new ESSource({es: this.es, log: this.log, typeMap, defaultType: null, errorOnMissingType: true})
-    // if opts?.indexPrefix: this.indexPrefix = opts.indexPrefix
+    // Sink/source
+    this.sink = new MySQLSink({backend: this, log: this.log})
+    this.source = new MySQLSource({backend: this, log: this.log})
 
-  // Shutdown backend, closing all pooled connections
-  shutdown(): Promise<any> ->
-    console.log("shutdown hook")
-    this.connectionManager.shutdown().then(-> console.log("shutdown complete"))
-
-  // Run a single raw query
-  rawQuery(str, params, conn) ->
-    if conn:
-      conn.query(str, params)
-    else:
-      // Lease a connection for the duration of the query only.
-      mgr = this.connectionManager
-      let theConn = null
-      mgr.openConnection()
-      .then! (conn) ->
-        now theConn = conn
-        conn.query(str, params)
-      ~finalize! ->
-        if theConn: mgr.closeConnection(theConn)
-
-  registerType(T, opts): void ->
+  bind(T, opts): void ->
     now T = typeFrom(T)
     if not T: throw new Error(`MySQLBackend.registerType: a type is required`)
     if this.typeMap.has(T):
       throw new Error(`MySQLBackend.registerType: duplicate registration of type '${T.name}'`)
     now opts = opts or {}
     opts.table = opts.table or T.name
-    if this.tableMap.has(opts.table):
+    if this.tables.has(opts.table):
       throw new Error(`MySQLBackend.registerType: multiple types assigned to table '${opts.table}'`)
-    this.tableMap.set(opts.table, T)
-    this.typeMap.set(T, opts)
+    // Create table representation
+    tableRepresentation = this.tables.getOrCreateTableByName(opts.table)
+    this.typeMap.set(T, tableRepresentation)
+    tableRepresentation.deriveFromType(T, opts)
 
-  getMigration() ->
+  // Shutdown backend, closing all pooled connections
+  shutdown(): Promise<any> ->
+    { log } = this
+    this.connectionManager.shutdown().then(-> log.info("MySQLBackend: shutdown complete"))
+
+  // Run a single raw query
+  rawQuery(str, params, conn) ->
+    if conn:
+      if params:
+        this.log.trace(`SQL: ${str}`, params)
+      else:
+        this.log.trace(`SQL: ${str}`)
+      conn.query(str, params)
+    else:
+      // Lease a connection for the duration of the query only.
+      mgr = this.connectionManager
+      let theConn = null
+      mgr.openConnection()
+      .then! (conn) =>
+        now theConn = conn
+        if params:
+          this.log.trace(`SQL: ${str}`, params)
+        else:
+          this.log.trace(`SQL: ${str}`)
+        conn.query(str, params)
+      ~finalize! ->
+        if theConn: mgr.closeConnection(theConn)
+
+  _getTableForType(T) ->
+    table = this.typeMap.get(typeFrom(T))
+    if not table:
+      throw new Error(`Type '${T.name}' is not bound to this backend.`)
+    table
+
+  _getTableForInstance(inst) ->
+    this._getTableForType(underlyingTypeOfType(typeOf(inst)))
+
+  createMigration(): MySQLMigration ->
     new MySQLMigration(this)
 
   createQuery(): MySQLQuery ->
@@ -64,6 +88,7 @@ export class MySQLBackend extends Backend:
 
   create(type, data, opts) ->
     instance = create(type)
+    instance~setBackend(this)
     instance._isNewRecord = true
     if data~looseNotEq(null):
       instance~assignPlainObject(data)
@@ -87,8 +112,9 @@ export class MySQLBackend extends Backend:
       if rst?.results[0]: instance._wasDeleted = true
       instance
 
-  destroyById(type, id, opts) ->
-    this.sink.delete([target]).then! rst -> rst?.results[0]
+  destroyById(T, id, opts) ->
+    now T = typeFrom(T)
+    this.sink.deleteById(this.typeMap.get(T), id)
 
   find(query) ->
     this.source.read(query)

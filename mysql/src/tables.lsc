@@ -1,8 +1,16 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
 
-import { esTypeMap } from './esTypeMap'
-import { declaredFieldKeys } from '@ormojo/ephraim'
-import { quoteIdentifier, escapeValue } from './util'
+import { sqlTypeMap } from './sqlTypeMap'
+import { declaredFieldKeys, declaredFields } from '@ormojo/ephraim'
+import { quoteIdentifier, escapeValue, array_move } from './util'
+
+_createColumn(table, colName, fieldKey, colType) ->
+  column = new MySQLColumn(table.backend, table.database, table.name, colName)
+  table.addColumn(column)
+  column.ephraimField = fieldKey
+  column.nullable = true
+  column.type = colType
+  column
 
 export class MySQLColumn:
   constructor(backend, database, tableName, name) ->
@@ -10,6 +18,8 @@ export class MySQLColumn:
     this.database = database
     this.tableName = tableName
     this.name = name
+    this.quotedName = quoteIdentifier(name)
+    this.fqcn = `${quoteIdentifier(tableName)}.${quoteIdentifier(name)}`
 
   _fromInformationSchemaRow(row): void ->
     this.nullable = if row.is_nullable == 'YES': true else: false
@@ -23,7 +33,7 @@ export class MySQLColumn:
 
   _toDDL(): string ->
     nullability = if this.nullable: 'NULL' else: 'NOT NULL'
-    def = if this.default: escapeValue(this.default) else: ''
+    def = if this.default: `DEFAULT ${escapeValue(this.default)}` else: ''
     incr = if this.autoIncrement: 'AUTO_INCREMENT' else: ''
     key = match this.keyType:
       | 'PRI': 'PRIMARY KEY'
@@ -31,20 +41,38 @@ export class MySQLColumn:
       | else: ''
     `${quoteIdentifier(this.name)} ${this.type} ${nullability} ${def} ${incr} ${key}`
 
+export class MySQLRelationship:
+  constructor(tbl) ->
+    this.backend = tbl.backend
+    this.table = tbl
+
+export class LeftJoinRelationship extends MySQLRelationship:
+  // Set up the left side of the join
+  setLHS(lhsT, lhsColumn) -> return
+
+  setRHS(rhsT, rhsTable, rhsColumn) -> return
+
+  // Use the backend to lookup the RHS type and cache it
+  _cacheRHS() ->
+    return
+
+  // Get the from clause
+  _getJoinClause() ->
+    `LEFT JOIN ${this.rhsTable.quotedName} ON ${this.lhsColumn.fqcn}=${this.rhsColumn.fqcn}`
+
+
 // Represents a MySQL table
 export class MySQLTable:
   constructor(backend, database, name) ->
     this.backend = backend
     this.database = database
     this.name = name
+    this.quotedName = quoteIdentifier(name)
     this.columns = {}
     this.ordinalColumns = []
-    this.queryColumns = []
 
   _dropTable(): Promise<any> ->
-    this.backend._getConnection()
-    .then! (conn) ->
-      conn.query('DROP TABLE ?;', [this.name])
+    this.backend.rawQuery(`DROP TABLE ${this.quotedName};`)
 
   // Get columns from MySQL
   _getTableMetadata(): Promise<any> ->
@@ -58,7 +86,6 @@ export class MySQLTable:
         col._fromInformationSchemaRow(colSpec)
         this.columns[colSpec.column_name] = col
         this.ordinalColumns[colSpec.ordinal_position - 1] = col
-      console.log(this.columns)
 
   // Generate CREATE TABLE DDL
   _toCreateDDL(unchecked): string ->
@@ -67,36 +94,101 @@ export class MySQLTable:
 
   // Insert a column at the ordinally-last position in this table
   addColumn(col: MySQLColumn): void ->
+    if this.columns[col.name]:
+      throw new Error(`Duplicate column name '${col.name}'`)
     this.ordinalColumns.push(col)
     this.columns[col.name] = col
 
-  // Derive a table from an ormojo type plus an opts array.
-  deriveSerializationScheme(T, opts): void ->
-    // Strategy:
-    // - Make an array of columns we'd like to read from the table
-    readColumnSequence = []
-    columnFieldSequence = []
-    columnForField = {}
-    fieldKeyList = T~declaredFieldKeys()
-    for elem fieldKey in fieldKeyList:
-      fieldOpts = opts?.fields?[fieldKey] or { column: fieldKey }
-      fieldColumn = fieldOpts?.column or fieldKey
-      if not fieldOpts.ignore:
-        readColumnSequence.push(fieldColumn)
-        columnFieldSequence.push(fieldKey)
-        columnForField[fieldKey] = fieldColumn
-    this.readColumnSequence = readColumnSequence
-    this.columnFieldSequence = columnFieldSequence
+  // Derive a table from an Ormojo type plus an options object.
+  // opts = {
+  //    table: string -- name of table, defaults to T.name
+  //    fields: {
+  //      [ephraimFieldName]: {
+  //        column: string -- name of SQL table column for this field, defaults to field name
+  //        ignore: boolean -- if true, field will not be mapped to SQL
+  //        autoIncrement: boolean -- apply MySQL AUTOINCREMENT
+  //        default: string -- MySQL default clause
+  //      }
+  //      ...
+  //    }
+  // }
+  deriveFromType(T, opts): void -> {
+    this.derivedFromType = T
+    fieldOpts = opts?.fields or {}
+    fieldSpecs = T~declaredFields()
+    fieldKeyList = T~declaredFieldKeys().slice()
+
+    // Information used while serializing and deserializing
+    columnSequence = [] // SELECT sequence
+    readPattern = [] // Pattern for deserializing this type of object
+    columnForField = Object.create(null) // Field-name-to-column map
+    this.columnSequence = columnSequence
+    this.readPattern = readPattern
     this.columnForField = columnForField
 
+    // Make id the ordinally-first column if it exists
+    if T~declaredFields().id:
+      array_move(fieldKeyList, fieldKeyList.indexOf('id'), 0)
 
+    // Enumerate keys and create columns
+    for elem fieldKey in fieldKeyList:
+      thisFieldSpec = fieldSpecs[fieldKey]
+      thisFieldOpts = fieldOpts[fieldKey] or {}
+      // Allow fields to be ignored
+      if thisFieldOpts.ignore: continue
+      // Allow fields to be renamed
+      colName = thisFieldOpts.column or fieldKey
+      // Only create columns if we can determine the data type
+      colType = thisFieldOpts.type or sqlTypeMap(thisFieldSpec.type)
+      if not colType: continue
+      // Create the column representation
+      column = _createColumn(this, colName, fieldKey, colType)
+      // Establish column demographics
+      if fieldKey == 'id':
+        this.idColumnFqcn = column.fqcn
+        column.nullable = false
+        column.keyType = 'PRI'
+        if thisFieldOpts.autoIncrement:
+          column.autoIncrement = true
+          // Flag for auto-increment ID; upon insertion we will automatically
+          // read the ID from the database
+          this.hasAutoIncrementId = true
+      if thisFieldOpts.default != undefined:
+        column.default = thisFieldOpts.default
+      elif thisFieldSpec.defaultValue != undefined:
+        column.default = thisFieldSpec.defaultValue
+      // Build serialization structures
+      columnSequence.push(column.fqcn)
+      if fieldKey == 'id':
+        readPattern.push(['create', T])
+      else:
+        readPattern.push(['read', fieldKey])
+      columnForField[fieldKey] = column
+
+    // Allow flex fields
+    for key fieldKey, val thisFieldOpts in fieldOpts:
+      if not fieldSpecs[fieldKey]:
+        colName = thisFieldOpts.column or fieldKey
+        colType = thisFieldOpts.type
+        if not colType: continue
+        column = _createColumn(this, colName, fieldKey, colType)
+        if thisFieldOpts.default != undefined:
+          column.default = thisFieldOpts.default
+        columnSequence.push(column.fqcn)
+        readPattern.push(['read', fieldKey])
+        columnForField[fieldKey] = column
+
+    // Build extra data
+    this.selectFieldsClause = this.columnSequence.join(',')
+  } // deriveFromType
 
 // Represents the collection of tables associated with a backend.
 export class MySQLTables:
   constructor(backend, database) ->
     this.backend = backend
     this.database = database
-    this.tables = {}
+    this.tables = Object.create(null)
+    this.ordinalTables = []
 
   // Obtain list of tables from mysql
   _enumerateTables() ->
@@ -118,12 +210,23 @@ export class MySQLTables:
   _getCreateDDL() ->
     [...for val tbl in this.tables: [tbl._toCreateDDL()]]
 
+  // Drop all tables
+  _dropAllTables() ->
+    Promise.all([...for val tbl in this.tables: [tbl._dropTable()]])
+
   getTables() ->
     this.tables
+
+  getTableList() ->
+    this.ordinalTables
+
+  has(name) ->
+    this.tables[name]~looseNotEq(null)
 
   getOrCreateTableByName(name) ->
     t = this.tables[name]
     if t: return t
     newT = new MySQLTable(this.backend, this.database, name)
     this.tables[name] = newT
+    this.ordinalTables.push(newT)
     newT

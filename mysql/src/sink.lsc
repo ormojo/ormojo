@@ -1,32 +1,21 @@
-import { toPlainObject, forEachField, isPrimitiveType } from '@ormojo/ephraim'
-import { AsyncSink, SinkResult, NotFoundError, DuplicateError } from '@ormojo/ormojo'
-import { updateInstanceWithData } from './source'
-import { quoteIdentifier as qid, escapeValue as q } from './util'
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
 
-errorForResult(res) ->
-  err = if res.status == 404:
-    new NotFoundError("not found")
-  elif res.status == 409:
-    new DuplicateError("duplicate")
-  else:
-    new Error()
-  err.status = res.status
-  err
+import { forEachField } from '@ormojo/ephraim'
+import { AsyncSink, SinkResult } from '@ormojo/ormojo'
+import { escapeValue as q, reflect } from './util'
+import { MySQLTable } from './tables'
 
 class MySQLSinkResult extends SinkResult:
   constructor() ->
     this.results = []
     this._err = null
 
-  _pushResult(res, ignore404) ->
-    if res.status >= 200 and res.status < 300:
-      this.results.push(true)
-    else if ignore404 and res.status == 404:
-      this.results.push(false)
-    else:
-      err = errorForResult(res)
-      if not this._err: this._err = err
-      this.results.push(err)
+  _pushSuccess() ->
+    this.results.push(true)
+
+  _pushFailure(err) ->
+    if not this._err: this._err = err
+    this.results.push(err)
 
   _lastResultWasSuccess() ->
     res = this.results
@@ -39,101 +28,53 @@ getInsertQueryForInstance(instance, tbl: MySQLTable) ->
   columnForField = tbl.columnForField
   colNames = []
   colVals = []
-  instance~forEachField! (k, v, T): void ->
+  instance~forEachField! (k, v): void ->
     if v != undefined:
-      colName = columnForField[v]
-      if colName and T~isPrimitiveType!:
-        colNames.push(qid(colName))
+      col = columnForField[k]
+      if col:
+        colNames.push(col.quotedName)
         colVals.push(q(v))
 
-  `INSERT INTO ${qid(tbl.name)} (${colNames.join(',')}) VALUES (${colVals.join(',')})`
+  `INSERT INTO ${tbl.quotedName} (${colNames.join(',')}) VALUES (${colVals.join(',')})`
 
 getUpdateQueryForInstance(instance, tbl: MySQLTable) ->
+  // Formulate SET clause
+  columnForField = tbl.columnForField
+  subclauses = []
+  instance~forEachField! (k, v): void ->
+    if v != undefined:
+      col = columnForField[k]
+      if col:
+        subclauses.push(`${col.quotedName}=${q(v)}`)
+
+  `UPDATE ${tbl.quotedName} SET ${subclauses.join(',')} WHERE ${tbl.idColumnFqcn}=${q(instance.id)}`
+
+getUpsertQueryForInstance(instance, tbl: MySQLTable) ->
   columnForField = tbl.columnForField
   colNames = []
   colVals = []
-  instance~forEachField! (k, v, T): void ->
+  subclauses = []
+  instance~forEachField! (k, v): void ->
     if v != undefined:
-      colName = columnForField[v]
-      if colName and T~isPrimitiveType!:
-        colNames.push(qid(colName))
-        colVals.push(q(v))
+      col = columnForField[k]
+      if col:
+        colNames.push(col.quotedName)
+        quotedValue = q(v)
+        colVals.push(quotedValue)
+        subclauses.push(`${col.quotedName}=${quotedValue}`)
 
-  `INSERT INTO ${qid(tbl.name)} (${colNames.join(',')}) VALUES (${colVals.join(',')})`
+  `INSERT INTO ${tbl.quotedName} (${colNames.join(',')}) VALUES (${colVals.join(',')}) ON DUPLICATE KEY UPDATE ${subclauses.join(',')}`
 
-
-
-
-
-getBulkCreateOpForInstance(instance) ->
-  id = instance._id or instance.id
-  if id:
-    {
-      create: {
-        _index: instance._index
-        _type: instance._type
-        _id: id
-        ...if instance._parent: { _parent: instance._parent }
-      }
-    }
-  else:
-    {
-      index: {
-        _index: instance._index
-        _type: instance._type
-        ...if instance._parent: { _parent: instance._parent }
-      }
-    }
-
-getBulkUpdateOpForInstance(instance) ->
-  {
-    update: {
-      _index: instance._index
-      _type: instance._type
-      _id: instance._id
-      ...if instance._parent: { _parent: instance._parent }
-    }
-  }
-
-getBulkUpsertOpForInstance(instance) ->
-  id = instance._id or instance.id
-  {
-    index: {
-      _index: instance._index
-      _type: instance._type
-      ...if id: { _id: id }
-      ...if instance._parent: { _parent: instance._parent }
-    }
-  }
-
-getBulkCrupsertOpForInstance(instance) ->
+getCrupsertQueryForInstance(instance, tbl: MySQLTable) ->
   if instance._isNewRecord:
-    getBulkCreateOpForInstance(instance)
+    getInsertQueryForInstance(instance, tbl)
+  else if instance.id~looseNotEq(null):
+    getUpdateQueryForInstance(instance, tbl)
   else:
-    getBulkUpsertOpForInstance(instance)
+    getUpsertQueryForInstance(instance, tbl)
 
-getBulkDeleteOpForInstance(instance) ->
-  {
-    delete: {
-      _index: instance._index
-      _type: instance._type
-      _id: instance._id or instance.id
-      ...if instance._parent: { _parent: instance._parent }
-    }
-  }
-
-getBulkDataForInstance(instance) ->
-  ob = instance~toPlainObject()
-  delete ob.id // use Elasticsearch virtual id field
-  ob
-
-bulkOperation(es, log, body, opts) ->
-  rq = { body }
-  if opts?.refresh: rq.refresh = opts.refresh
-  log.trace("es.bulk >", rq)
-  es.bulk(rq).then! (res) ->
-    log.trace("es.bulk <", res)
-    res
+getDeleteQueryForInstance(instance, tbl: MySQLTable) ->
+  `DELETE FROM ${tbl.quotedName} WHERE ${tbl.idColumnFqcn}=${q(instance.id)}`
 
 shouldThrowFirstError(data, opts) ->
   if opts?.throwFirstError == true:
@@ -145,19 +86,21 @@ shouldThrowFirstError(data, opts) ->
   else:
     false
 
-crupsert(es, log, data, lambda1, lambda2, opts) ->
-  bulkOperation(es, log,
-    [...for elem datum in data:
-      [ lambda1(datum), lambda2(datum) ]
-    ],
-    opts
-  ).then! (res) ->
-    result = new ESSinkResult()
-    for idx i, elem item in res.items:
-      unwrappedItem = unwrapItem(item)
-      result._pushResult(unwrappedItem, false)
-      if result._lastResultWasSuccess():
-        updateInstanceWithData(data[i], unwrappedItem)
+query(backend, builder, data, opts) ->
+  Promise.all([...for elem datum in data:
+    [backend.rawQuery(builder(datum, backend._getTableForInstance(datum)))~reflect!]
+  ])
+  .then! (results) ->
+    result = new MySQLSinkResult()
+    for idx i, elem r in results:
+      if r.status == 'resolved':
+        // For auto ID generation, pull ID back into ephraim entity
+        // TODO: verify if table is an autoincrement table before doing this
+        iid = r.value[0].insertId
+        if iid > 0: data[i].id = iid
+        result._pushSuccess(r.value)
+      else:
+        result._pushFailure(r.value)
     if shouldThrowFirstError(data, opts) and result.hasError():
       throw result.firstError()
     result
@@ -165,35 +108,31 @@ crupsert(es, log, data, lambda1, lambda2, opts) ->
 export class MySQLSink extends AsyncSink:
   constructor(opts) ->
     super(opts)
-    this.es = opts.es
+    this.backend = opts.backend
     this.log = opts.log
 
   create(data, opts) ->
-    crupsert(this.es, this.log, data, getBulkCreateOpForInstance, getBulkDataForInstance, opts)
+    query(this.backend, getInsertQueryForInstance, data, opts)
 
   update(data, opts) ->
-    crupsert(this.es, this.log, data, getBulkUpdateOpForInstance,
-      (datum) -> { doc: getBulkDataForInstance(datum) }
-      opts
-    )
+    query(this.backend, getUpdateQueryForInstance, data, opts)
 
   upsert(data, opts) ->
-    crupsert(this.es, this.log, data, getBulkUpsertOpForInstance, getBulkDataForInstance, opts)
+    query(this.backend, getUpsertQueryForInstance, data, opts)
 
   crupsert(data, opts) ->
-    crupsert(this.es, this.log, data, getBulkCrupsertOpForInstance, getBulkDataForInstance, opts)
+    query(this.backend, getCrupsertQueryForInstance, data, opts)
 
   delete(data, opts) ->
-    bulkOperation(
-      this.es, this.log
-      [...for elem datum in data:
-        [ getBulkDeleteOpForInstance(datum) ]
-      ]
-      opts
-    ).then! (res) ->
-      result = new ESSinkResult()
-      for elem item in res.items:
-        result._pushResult(unwrapItem(item), true)
-      if shouldThrowFirstError(data, opts) and result.hasError():
-        throw result.firstError()
-      result
+    query(this.backend, getDeleteQueryForInstance, data, opts)
+
+  deleteById(tbl, ids) ->
+    qry = if Array.isArray(ids):
+      set = [...for elem id in ids: q(id)].join(',')
+      `DELETE FROM ${tbl.quotedName} WHERE ${tbl.idColumnFqcn} IN (${set})`
+    else:
+      `DELETE FROM ${tbl.quotedName} WHERE ${tbl.idColumnFqcn}=${q(ids)}`
+
+    this.backend.rawQuery(qry)
+    .then! ->
+      true

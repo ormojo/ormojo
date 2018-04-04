@@ -12,9 +12,10 @@ afterAll! ->
 
 describe! 'migration metadata', ->
   it! 'should enumerate database state', ->
-    backend.tables._enumerateTables()
-    .then! (rst) ->
-      backend.tables._getAllTableMetadata()
+    mig = backend.createMigration()
+    mig._enumerateExistingTables()
     .then! ->
-      ddl = backend.tables._getCreateDDL!
+      mig.existingTables._getAllTableMetadata()
+    .then! ->
+      ddl = mig.existingTables._getCreateDDL!
       console.log(ddl[0])
