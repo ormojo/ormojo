@@ -1,4 +1,4 @@
-import { find } from './util'
+import { find, findAll } from './util'
 
 //
 // Object representing a declarative request for particular information from a store
@@ -54,13 +54,14 @@ export class Query {
     find(this.backend, this)
 
   findAll() ->
-    this.backend.find(this)
+    findAll(this.backend, this)
 }
 
 // Collection of results from a query that may return multiple results.
 // @abstract
 export class ResultSet {
-  constructor(results) ->
+  constructor(backend, results) ->
+    this.backend = backend
     this.results = results
 
   ////// istanbul ignore next //////

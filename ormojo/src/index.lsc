@@ -5,7 +5,7 @@ export { Query, Cursor, ResultSet } from './query'
 import * as symbols from './symbols'
 export { symbols }
 
-export { create, save, setBackend, getBackend, findById, destroy, destroyById, find, findAll } from './util'
+export { save, setBackend, getBackend, destroy, find, findAll } from './util'
 
 export { SynchronousSource, AsyncSource, SynchronousSink, AsyncSink, SourceEntityAdapter, SinkEntityAdapter, SinkResult } from './store'
 
