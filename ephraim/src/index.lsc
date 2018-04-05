@@ -10,12 +10,12 @@ export {
 } from './type'
 
 export {
-  field, entity, bootstrapPrototype, augment, extendField
+  field, entity, bootstrapPrototype, augment, extendField, setFieldType
 } from './define'
 
 export {
   declaredFields, declaredFieldKeys, flexFieldKeys, fieldKeys, forEachField
-  dataSymbol
+  dataSymbol, hasDeclaredField
 } from './fields'
 
 export {

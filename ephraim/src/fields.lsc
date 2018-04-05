@@ -8,6 +8,10 @@ export declaredFields(x) ->
   T = typeFrom(x) or typeFrom(x.constructor)
   T.fields
 
+export hasDeclaredField(x, f) ->
+  T = typeFrom(x) or typeFrom(x.constructor)
+  if T.fields[f]: true else: false
+
 export declaredFieldKeys(x) ->
   T = typeFrom(x) or typeFrom(x.constructor)
   Object.keys(T.fields)
