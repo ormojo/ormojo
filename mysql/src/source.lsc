@@ -2,17 +2,7 @@
 
 import { AsyncSource, setBackend } from '@ormojo/ormojo'
 import { MySQLQuery, MySQLResultSet } from './query'
-import { escapeValue as q } from './util'
-import { MySQLTable } from './tables'
 import { createMemory as create } from '@ormojo/ephraim'
-
-_formulateIdQuery(backend, tbl: MySQLTable, ids) ->
-  fields = tbl.selectFieldsClause
-  if ids.length > 1:
-    set = [...for elem id in ids: [q(id)]].join(',')
-    `SELECT ${fields} FROM ${tbl.quotedName} WHERE ${tbl.idColumnFqcn} IN (${set})`
-  else:
-    `SELECT ${fields} FROM ${tbl.quotedName} WHERE ${tbl.idColumnFqcn}=${q(ids[0])}`
 
 _deserializeRow(backend, row, readPattern) ->
   // Tools to read DB column data in sequence
@@ -22,9 +12,8 @@ _deserializeRow(backend, row, readPattern) ->
 
   let result = undefined
   let currentEntity = undefined
-  createEntity(backend, T, id) ->
+  createEntity(backend, T) ->
     instance = T~create!~setBackend(backend)
-    if id != undefined: instance.id = id
     if result == undefined: now result = instance
     now currentEntity = instance
     instance
@@ -34,14 +23,14 @@ _deserializeRow(backend, row, readPattern) ->
       | "push":
         if Array.isArray(result): result.push(nextColumn!) else: now result=[nextColumn!]
       | "pushEntity":
-        entity = createEntity(backend, entry[1], nextColumn!)
+        entity = createEntity(backend, entry[1])
         if Array.isArray(result): result.push(entity) else: now result = [entity]
       | "read":
         currentEntity[entry[1]] = nextColumn!
       | "create":
-        createEntity(backend, entry[1], nextColumn!)
+        createEntity(backend, entry[1])
       | "createChild":
-        entity = createEntity(backend, entry[1], nextColumn!)
+        entity = createEntity(backend, entry[1])
         result[entry[2]] = entity
         if entry[3]: entity[entry[3]] = result
 

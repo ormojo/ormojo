@@ -1,0 +1,51 @@
+import { Relationship, setBackend } from '@ormojo/ormojo'
+import { createMemory as create } from '@ormojo/ephraim'
+
+export class MySQLRelationship extends Relationship:
+  constructor(backend) ->
+    super(backend)
+
+export class MasterChildRelationship extends MySQLRelationship:
+  constructor(backend) ->
+    super(backend)
+
+  setMultiJoin(priorJoin, foreignType, foreignField) ->
+    this
+
+  setSingleJoin(masterType, childType, childJoinField, childObjectField, masterObjectField) ->
+    this.masterType = masterType
+    this.masterTable = this.backend._getTableForType(masterType)
+    if not this.masterTable:
+      throw new Error(`MasterChildRelationship: cannot find table for master type '${masterType.name}'`)
+    this.masterColumn = this.masterTable.columnForField['id']
+    if not this.masterColumn:
+      throw new Error(`MasterChildRelationship: cannot find master id column`)
+    this.masterObjectField = masterObjectField
+
+    this.childType = childType
+    this.childJoinField = childJoinField
+    this.childTable = this.backend._getTableForType(childType)
+    if not this.childTable:
+      throw new Error(`MasterChildRelationship: cannot find table for child type '${childType.name}'`)
+    this.childJoinColumn = this.childTable.columnForField[childJoinField]
+    if not this.childJoinColumn:
+      throw new Error(`MasterChildRelationship: cannot find child join column`)
+    this.childObjectField = childObjectField
+
+    this.joinClause = `${this.masterTable.quotedName} LEFT JOIN ${this.childTable.quotedName} ON ${this.masterColumn.fqcn}=${this.childJoinColumn.fqcn}`
+
+    // Formulate read pattern
+    this.selectFieldsClause = this.masterTable.selectFieldsClause + ',' + this.childTable.selectFieldsClause
+    this.readPattern = this.masterTable.readPattern.slice()
+    this.readPattern.push(["createChild", childType, childObjectField, masterObjectField])
+    this.readPattern.push(...this.childTable.readPattern.slice(1))
+
+    this
+
+  createRelated(master) ->
+    child = this.childType~create!~setBackend(this.backend)
+    child[this.childJoinField] = master.id
+    if this.childObjectField: master[this.childObjectField] = child
+    if this.masterObjectField: child[this.masterObjectField] = master
+    child
+

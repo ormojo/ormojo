@@ -47,7 +47,7 @@ getUpdateQueryForInstance(instance, tbl: MySQLTable) ->
       if col:
         subclauses.push(`${col.quotedName}=${q(v)}`)
 
-  `UPDATE ${tbl.quotedName} SET ${subclauses.join(',')} WHERE ${tbl.idColumnFqcn}=${q(instance.id)}`
+  `UPDATE ${tbl.quotedName} SET ${subclauses.join(',')} WHERE ${tbl.pkColumnFqcn}=${q(instance[tbl.pkFieldKey])}`
 
 getUpsertQueryForInstance(instance, tbl: MySQLTable) ->
   columnForField = tbl.columnForField
@@ -74,7 +74,7 @@ getCrupsertQueryForInstance(instance, tbl: MySQLTable) ->
     getUpsertQueryForInstance(instance, tbl)
 
 getDeleteQueryForInstance(instance, tbl: MySQLTable) ->
-  `DELETE FROM ${tbl.quotedName} WHERE ${tbl.idColumnFqcn}=${q(instance.id)}`
+  `DELETE FROM ${tbl.quotedName} WHERE ${tbl.pkColumnFqcn}=${q(instance[tbl.pkFieldKey])}`
 
 shouldThrowFirstError(data, opts) ->
   if opts?.throwFirstError == true:
@@ -129,9 +129,9 @@ export class MySQLSink extends AsyncSink:
   deleteById(tbl, ids) ->
     qry = if Array.isArray(ids):
       set = [...for elem id in ids: q(id)].join(',')
-      `DELETE FROM ${tbl.quotedName} WHERE ${tbl.idColumnFqcn} IN (${set})`
+      `DELETE FROM ${tbl.quotedName} WHERE ${tbl.pkColumnFqcn} IN (${set})`
     else:
-      `DELETE FROM ${tbl.quotedName} WHERE ${tbl.idColumnFqcn}=${q(ids)}`
+      `DELETE FROM ${tbl.quotedName} WHERE ${tbl.pkColumnFqcn}=${q(ids)}`
 
     this.backend.rawQuery(qry)
     .then! ->

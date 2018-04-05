@@ -1,0 +1,84 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+import { save, destroy, find, findAll } from '@ormojo/ormojo'
+import { toPlainObject, entity, field, types, setFieldType } from '@ormojo/ephraim'
+import { createBackend } from '../backend'
+import { MasterChildRelationship, And, Or, Not, Eq, Op, Field } from '../..'
+
+@entity() class Master:
+  @field(types.integer) id
+  @field(types.string) name = 'nameless'
+  @field() detail
+
+@entity() class Detail:
+  @field(types.integer) MasterId
+  @field(Master) master
+  @field(types.integer) qty = 2
+
+Master~setFieldType('detail', Detail) // circularity
+
+let backend = null
+let rel = null
+beforeAll! ->
+  now backend = createBackend()
+  backend.bind(Master, {
+    fields: {
+      id: { autoIncrement: true }
+    }
+  })
+  backend.bind(Detail, {
+    fields: {
+      MasterId: { primaryKey: true }
+    }
+  })
+  now rel = new MasterChildRelationship(backend).setSingleJoin(Master, Detail, 'MasterId', 'detail', 'master')
+  mig = backend.createMigration()
+  mig.prepare().then! ->
+    mig.execute()
+  .then! ->
+    backend.rawQuery('DELETE FROM Master')
+  .then! ->
+    backend.rawQuery('DELETE FROM Detail')
+
+// afterAll! ->
+//   backend.tables._dropAllTables()
+//   .then! -> backend.shutdown!
+//   .catch! (err) -> console.error(err)
+
+afterAll! ->
+  backend.shutdown!
+
+describe('master child', ->
+  it('should find', ->
+    let tmp
+    backend.create(Master, { name: 'one'})
+    .then! (master) ->
+      debugger
+      now tmp = master.id
+      child = rel.createRelated(master)
+      child.qty = 33
+      child~save()
+    .then! (child) ->
+      expect(child.MasterId).toBe(tmp)
+      backend.create(Master, { name: 'two'})
+    .then! (master) ->
+      child = rel.createRelated(master)
+      child.qty = 44
+      child~save()
+    .then! ->
+      // Relocate master, verify child
+      q = backend.createQuery().setRelationship(rel).byId(tmp)
+      q.find()
+    .then! (result) ->
+      expect(result.id).toBe(tmp)
+      expect(result.name).toBe('one')
+      expect(result.detail.MasterId).toBe(tmp)
+      expect(result.detail.qty).toBe(33)
+
+      // Locate master through a join field
+      q = backend.createQuery().setRelationship(rel).where(Field(Detail, 'qty')~Eq(44))
+      q.find()
+    .then! (result) ->
+      expect(result.detail.qty).toBe(44)
+      expect(result.name).toBe('two')
+  )
+)

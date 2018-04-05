@@ -41,26 +41,6 @@ export class MySQLColumn:
       | else: ''
     `${quoteIdentifier(this.name)} ${this.type} ${nullability} ${def} ${incr} ${key}`
 
-export class MySQLRelationship:
-  constructor(tbl) ->
-    this.backend = tbl.backend
-    this.table = tbl
-
-export class LeftJoinRelationship extends MySQLRelationship:
-  // Set up the left side of the join
-  setLHS(lhsT, lhsColumn) -> return
-
-  setRHS(rhsT, rhsTable, rhsColumn) -> return
-
-  // Use the backend to lookup the RHS type and cache it
-  _cacheRHS() ->
-    return
-
-  // Get the from clause
-  _getJoinClause() ->
-    `LEFT JOIN ${this.rhsTable.quotedName} ON ${this.lhsColumn.fqcn}=${this.rhsColumn.fqcn}`
-
-
 // Represents a MySQL table
 export class MySQLTable:
   constructor(backend, database, name) ->
@@ -120,7 +100,7 @@ export class MySQLTable:
 
     // Information used while serializing and deserializing
     columnSequence = [] // SELECT sequence
-    readPattern = [] // Pattern for deserializing this type of object
+    readPattern = [['create', T]] // Pattern for deserializing this type of object
     columnForField = Object.create(null) // Field-name-to-column map
     this.columnSequence = columnSequence
     this.readPattern = readPattern
@@ -144,8 +124,14 @@ export class MySQLTable:
       // Create the column representation
       column = _createColumn(this, colName, fieldKey, colType)
       // Establish column demographics
-      if fieldKey == 'id':
-        this.idColumnFqcn = column.fqcn
+      if fieldKey == 'id' or thisFieldOpts.primaryKey:
+        if this.pkColumnFqcn:
+          throw new Error(`MySQLTable: multiple primary keys not allowed for type '${T.name}'`)
+        if thisFieldOpts.primaryKey and fieldKey != 'id' and fieldSpecs['id']:
+          throw new Error(`MySQLTable: 'id' column must be primary key for type '${T.name}`)
+        this.pkColumnFqcn = column.fqcn
+        this.pkFieldKey = fieldKey
+        if fieldKey == 'id': this.idColumnFqcn = column.fqcn
         column.nullable = false
         column.keyType = 'PRI'
         if thisFieldOpts.autoIncrement:
@@ -159,10 +145,7 @@ export class MySQLTable:
         column.default = thisFieldSpec.defaultValue
       // Build serialization structures
       columnSequence.push(column.fqcn)
-      if fieldKey == 'id':
-        readPattern.push(['create', T])
-      else:
-        readPattern.push(['read', fieldKey])
+      readPattern.push(['read', fieldKey])
       columnForField[fieldKey] = column
 
     // Allow flex fields

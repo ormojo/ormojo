@@ -2,9 +2,16 @@ import { Query, Cursor, ResultSet } from '@ormojo/ormojo'
 import { assignPlainObject } from '@ormojo/ephraim'
 import { escapeValue as q } from './util'
 
+export Field(T, field) ->
+  (query) ->
+    query.backend._getTableForType(T)?.columnForField[field]?.fqcn
+
 export Op(field, o, val) ->
   (query, clause): void ->
-    col = query._table?.columnForField[field]?.fqcn
+    col = if typeof(field) == 'function':
+      field(query)
+    else:
+      query._table?.columnForField[field]?.fqcn
     if col:
       clause.push(`${col}${o}${q(val)}`)
     else:
@@ -41,6 +48,13 @@ export class MySQLQuery extends Query:
     this.fieldsClause = tbl.selectFieldsClause
     this.fromClause = tbl.quotedName
     this.readPattern = tbl.readPattern
+    this
+
+  setRelationship(R) ->
+    this._table = R.masterTable
+    this.fieldsClause = R.selectFieldsClause
+    this.fromClause = R.joinClause
+    this.readPattern = R.readPattern
     this
 
   setQuery(other) ->
@@ -102,9 +116,9 @@ export class MySQLQuery extends Query:
       tbl = this._table
       if ids.length > 1:
         set = [...for elem id in ids: [q(id)]].join(',')
-        `SELECT ${tbl.selectFieldsClause} FROM ${tbl.quotedName} WHERE ${tbl.idColumnFqcn} IN (${set})`
+        `SELECT ${this._getFieldsClause()} FROM ${this._getFromClause()} WHERE ${tbl.pkColumnFqcn} IN (${set})`
       else:
-        `SELECT ${tbl.selectFieldsClause} FROM ${tbl.quotedName} WHERE ${tbl.idColumnFqcn}=${q(ids[0])}`
+        `SELECT ${this._getFieldsClause()} FROM ${this._getFromClause()} WHERE ${tbl.pkColumnFqcn}=${q(ids[0])}`
     else:
       `SELECT ${this._getFieldsClause()} FROM ${this._getFromClause()} WHERE ${this._getWhereClause()} ${this._getOrderByClause()} ${this._getOffsetClause()}`
 
@@ -120,7 +134,7 @@ export class MySQLCursor extends Cursor:
 
 // Helper: Update an instance from an ES API return value.
 // XXX: assign vs set...
-export updateInstanceWithData(instance, esData) ->
+updateInstanceWithData(instance, esData) ->
   instance._isNewRecord = undefined
   if not esData: return instance
 
