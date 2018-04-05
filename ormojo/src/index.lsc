@@ -1,6 +1,7 @@
 export { Backend, normalizeLoggerObject } from './backend'
 export { Migration } from './migration'
 export { Query, Cursor, ResultSet } from './query'
+export { Relationship } from './relationship'
 
 import * as symbols from './symbols'
 export { symbols }

@@ -1,7 +1,7 @@
 // Abstract representation of a database migration.
 // @abstract
 export class Migration:
-  // Construct a Migration associated with the given `Corpus` and `Backend`.
+  // Construct a Migration associated with the given `Backend`.
   constructor(backend) ->
     this.backend = backend
 
