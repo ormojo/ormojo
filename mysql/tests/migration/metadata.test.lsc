@@ -18,4 +18,5 @@ describe! 'migration metadata', ->
       mig.existingTables._getAllTableMetadata()
     .then! ->
       ddl = mig.existingTables._getCreateDDL!
-      console.log(ddl[0])
+      for elem ddlx in ddl:
+        console.log("DDL:", ddlx)

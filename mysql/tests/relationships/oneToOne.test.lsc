@@ -2,22 +2,33 @@
 import { save, destroy, find, findAll } from '@ormojo/ormojo'
 import { toPlainObject, entity, field, types, setFieldType } from '@ormojo/ephraim'
 import { createBackend } from '../backend'
-import { MasterChildRelationship, And, Or, Not, Eq, Op, Field } from '../..'
+import { OneToOneRelationship, And, Or, Not, Eq, Op, Field } from '../..'
 
 @entity() class Master:
   @field(types.integer) id
   @field(types.string) name = 'nameless'
   @field() detail
+  @field() detail2
 
 @entity() class Detail:
   @field(types.integer) MasterId
   @field(Master) master
   @field(types.integer) qty = 2
 
+@entity() class Detail2:
+  @field(types.integer) id
+  @field(types.integer) MasterId
+  @field(Master) master
+  @field(types.string) detailedInfo = "blah"
+  @field(types.string) detailedInfo2 = "heh"
+
 Master~setFieldType('detail', Detail) // circularity
+Master~setFieldType('detail2', Detail2)
 
 let backend = null
 let rel = null
+let rel2 = null
+
 beforeAll! ->
   now backend = createBackend()
   backend.bind(Master, {
@@ -30,7 +41,18 @@ beforeAll! ->
       MasterId: { primaryKey: true }
     }
   })
-  now rel = new MasterChildRelationship(backend).setSingleJoin(Master, Detail, 'MasterId', 'detail', 'master')
+  backend.bind(Detail2, {
+    fields: {
+      id: { autoIncrement: true }
+    }
+    indices: [
+      { columnNames: ['detailedInfo', 'detailedInfo2'] }
+    ]
+  })
+
+  now rel = new OneToOneRelationship(backend).join(Master, Detail, 'MasterId', 'detail', 'master').createForeignKeyConstraint()
+  now rel2 = new OneToOneRelationship(backend).join(Master, Detail2, 'MasterId', 'detail2', 'master').createForeignKeyConstraint()
+
   mig = backend.createMigration()
   mig.prepare().then! ->
     mig.execute()
