@@ -3,7 +3,7 @@
 import { Backend, normalizeLoggerObject, setBackend } from '@ormojo/ormojo'
 import { typeOf, typeFrom, createMemory as create, assignPlainObject, underlyingTypeOfType } from '@ormojo/ephraim'
 
-import { MySQLTables } from './tables'
+import { MySQLTables } from './metadata/tables'
 import { MySQLMigration } from './migration'
 import { MySQLQuery } from './query'
 import { finalize } from './util'
@@ -112,6 +112,7 @@ export class MySQLBackend extends Backend:
       if rst?.results[0]: instance._wasDeleted = true
       instance
 
+  // eslint-disable-next-line no-unused-vars
   destroyById(T, id, opts) ->
     now T = typeFrom(T)
     this.sink.deleteById(this.typeMap.get(T), id)

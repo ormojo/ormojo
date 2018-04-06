@@ -1,0 +1,36 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+
+import { quoteIdentifier } from '../util'
+import { MySQLIndex } from './indices'
+
+export class MySQLForeignKey extends MySQLIndex:
+  constructor(table) ->
+    super(table)
+    this.referencedColumnNames = []
+    this.onDelete = "CASCADE"
+    this.onUpdate = "CASCADE"
+
+  setSingleColumn(columnName, foreignTableName, foreignColumnName) ->
+    this.columnNames = [columnName]
+    this.referencedTableName = foreignTableName
+    this.referencedColumnNames = [foreignColumnName]
+    this
+
+  _computeName(): string ->
+    `fk_${this.table.name}_${this.referencedTableName}_${this.columnNames.join('_')}_${this.referencedColumnNames.join('_')}`
+
+  _toDDL(): string ->
+    `FOREIGN KEY ${quoteIdentifier(this.getName!)} (${quoteIdentifier(this.columnNames[0])}) REFERENCES ${quoteIdentifier(this.referencedTableName)} (${quoteIdentifier(this.referencedColumnNames[0])}) ON DELETE ${this.onDelete} ON UPDATE ${this.onUpdate}`
+
+  _fromReferentialConstraintsColumn(col): void ->
+    this.name = col.constraint_name
+    this.onDelete = col.delete_rule
+    this.onUpdate = col.update_rule
+    this.referencedTableName = col.referenced_table_name
+
+  _getColumnsFromInformationSchema(): Promise<void> ->
+    this.backend.rawQuery('SELECT column_name, referenced_column_name FROM information_schema.key_column_usage WHERE table_name=? AND table_schema=? AND constraint_name=? ORDER BY ordinal_position ASC', [this.table.name, this.table.database, this.name])
+    .then! (rst): void =>
+      for elem colInfo in rst[0] or []:
+        this.columnNames.push(colInfo.column_name)
+        this.referencedColumnNames.push(colInfo.referenced_column_name)

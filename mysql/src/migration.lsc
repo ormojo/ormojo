@@ -1,5 +1,5 @@
 import { Migration } from '@ormojo/ormojo'
-import { MySQLTables } from './tables'
+import { MySQLTables } from './metadata/tables'
 
 // Migration for a schema
 export class MySQLMigration extends Migration:

@@ -1,6 +1,6 @@
 import { Relationship, setBackend } from '@ormojo/ormojo'
 import { createMemory as create } from '@ormojo/ephraim'
-import { MySQLForeignKey } from './tables'
+import { MySQLForeignKey } from './metadata/foreignKey'
 
 export class MySQLRelationship extends Relationship:
   constructor(backend) ->

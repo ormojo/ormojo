@@ -1,0 +1,52 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+
+import { MySQLTable } from './table'
+
+// Represents the collection of tables associated with a backend.
+export class MySQLTables:
+  constructor(backend, database) ->
+    this.backend = backend
+    this.database = database
+    this.tables = Object.create(null)
+    this.ordinalTables = []
+
+  // Obtain list of tables from mysql
+  _enumerateTables() ->
+    this.backend.rawQuery('SHOW TABLES;')
+    .then! (rst) =>
+      nameColumn = rst?[1]?[0]?.name
+      if not nameColumn: return
+      tableList = rst[0]
+      for elem table in tableList:
+        tableName = table[nameColumn]
+        this.tables[tableName] = new MySQLTable(this.backend, this.database, tableName)
+      this.tables
+
+  // Get metadata for each enumerated table
+  _getAllTableMetadata() ->
+    Promise.all([...for val tbl in this.tables: [tbl._getTableMetadata()]])
+
+  // Get DDL for all tables
+  _getCreateDDL() ->
+    [...for val tbl in this.tables: [tbl._toCreateDDL()]]
+
+  // Drop all tables
+  _dropAllTables() ->
+    Promise.all([...for val tbl in this.tables: [tbl._dropTable()]])
+
+  getTables() ->
+    this.tables
+
+  getTableList() ->
+    this.ordinalTables
+
+  has(name) ->
+    this.tables[name]~looseNotEq(null)
+
+  getOrCreateTableByName(name) ->
+    t = this.tables[name]
+    if t: return t
+    newT = new MySQLTable(this.backend, this.database, name)
+    this.tables[name] = newT
+    this.ordinalTables.push(newT)
+    newT

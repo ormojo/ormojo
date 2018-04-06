@@ -1,0 +1,16 @@
+import { MySQLTable } from './table'
+
+// List of changes to turn the RHS into the LHS
+export diff(lhs: MySQLTable, rhs: MySQLTable) ->
+  differences = []
+  let tmp = null
+  // Diff fields
+  for key colKey, val col in lhs.columns:
+    if rhs.columns[colKey]:
+      differences.push(["diffColumn", col.diff(rhs.columns[colKey])])
+    else:
+      differences.push(["addColumn", col])
+
+  for key colKey in rhs.columns:
+    if not lhs.columns[colKey]:
+      differences.push(["removeColumn", colKey])

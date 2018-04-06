@@ -2,7 +2,11 @@
 
 import { sqlTypeMap } from './sqlTypeMap'
 import { declaredFieldKeys, declaredFields } from '@ormojo/ephraim'
-import { quoteIdentifier, escapeValue, array_move } from './util'
+
+import { quoteIdentifier, array_move } from '../util'
+import { MySQLColumn } from './column'
+import { MySQLForeignKey } from './foreignKey'
+import { MySQLIndex } from './indices'
 
 _createColumn(table, colName, fieldKey, colType) ->
   column = new MySQLColumn(table.backend, table.database, table.name, colName)
@@ -12,96 +16,8 @@ _createColumn(table, colName, fieldKey, colType) ->
   column.type = colType
   column
 
-export class MySQLColumn:
-  constructor(backend, database, tableName, name) ->
-    this.backend = backend
-    this.database = database
-    this.tableName = tableName
-    this.name = name
-    this.quotedName = quoteIdentifier(name)
-    this.fqcn = `${quoteIdentifier(tableName)}.${quoteIdentifier(name)}`
-
-  _fromInformationSchemaRow(row): void ->
-    this.nullable = if row.is_nullable == 'YES': true else: false
-    this.ordinalPosition = row.ordinal_position
-    this.keyType = row.column_key
-    this.type = row.column_type
-    this.charset = row.character_set_name
-    this.collation = row.collation_name
-    this.default = row.column_default
-    this.autoIncrement = /auto_increment/.test(row.extra)
-
-  _toDDL(): string ->
-    nullability = if this.nullable: 'NULL' else: 'NOT NULL'
-    def = if this.default: `DEFAULT ${escapeValue(this.default)}` else: ''
-    incr = if this.autoIncrement: 'AUTO_INCREMENT' else: ''
-    key = match this.keyType:
-      | 'PRI': 'PRIMARY KEY'
-      | 'UNI': 'UNIQUE'
-      | else: ''
-    `${quoteIdentifier(this.name)} ${this.type} ${nullability} ${def} ${incr} ${key}`
-
-export class MySQLIndex:
-  constructor(table) ->
-    this.backend = table.backend
-    this.table = table
-    this.columnNames = []
-
-  getName(): string ->
-    if this.name:
-      this.name
-    else:
-      this.name = this._computeName!
-      this.name
-
-  // Generate canonical index name
-  _computeName(): string ->
-    if this.unique:
-      `${this.table.name}_${this.columnNames.join('_')}'_unique'`
-    else:
-      `${this.table.name}_${this.columnNames.join('_')}`
-
-  _toDDL(): string ->
-    if this.columnNames.length == 0: return ''
-    uniqueClause = if this.unique: 'UNIQUE' else: ''
-    nameClause = quoteIdentifier(this.getName!)
-    columnClause = this.columnNames.map(x -> quoteIdentifier(x)).join(',')
-    `${uniqueClause} INDEX ${nameClause} (${columnClause})`
-
-export class MySQLForeignKey extends MySQLIndex:
-  constructor(table) ->
-    super(table)
-    this.referencedColumnNames = []
-    this.onDelete = "CASCADE"
-    this.onUpdate = "CASCADE"
-
-  setSingleColumn(columnName, foreignTableName, foreignColumnName) ->
-    this.columnNames = [columnName]
-    this.referencedTableName = foreignTableName
-    this.referencedColumnNames = [foreignColumnName]
-    this
-
-  _computeName(): string ->
-    `fk_${this.table.name}_${this.referencedTableName}_${this.columnNames.join('_')}_${this.referencedColumnNames.join('_')}`
-
-  _toDDL(): string ->
-    `FOREIGN KEY ${quoteIdentifier(this.getName!)} (${quoteIdentifier(this.columnNames[0])}) REFERENCES ${quoteIdentifier(this.referencedTableName)} (${quoteIdentifier(this.referencedColumnNames[0])}) ON DELETE ${this.onDelete} ON UPDATE ${this.onUpdate}`
-
-  _fromReferentialConstraintsColumn(col): void ->
-    this.name = col.constraint_name
-    this.onDelete = col.delete_rule
-    this.onUpdate = col.update_rule
-    this.referencedTableName = col.referenced_table_name
-
-  _getColumnsFromInformationSchema(): Promise<void> ->
-    this.backend.rawQuery('SELECT column_name, referenced_column_name FROM information_schema.key_column_usage WHERE table_name=? AND table_schema=? AND constraint_name=? ORDER BY ordinal_position ASC', [this.table.name, this.table.database, this.name])
-    .then! (rst): void =>
-      for elem colInfo in rst[0] or []:
-        this.columnNames.push(colInfo.column_name)
-        this.referencedColumnNames.push(colInfo.referenced_column_name)
-
 // Represents a MySQL table
-export class MySQLTable:
+export class MySQLTable {
   constructor(backend, database, name) ->
     this.backend = backend
     this.database = database
@@ -273,51 +189,4 @@ export class MySQLTable:
       this.addIndex(idx)
   } // deriveFromType
 
-// Represents the collection of tables associated with a backend.
-export class MySQLTables:
-  constructor(backend, database) ->
-    this.backend = backend
-    this.database = database
-    this.tables = Object.create(null)
-    this.ordinalTables = []
-
-  // Obtain list of tables from mysql
-  _enumerateTables() ->
-    this.backend.rawQuery('SHOW TABLES;')
-    .then! (rst) =>
-      nameColumn = rst?[1]?[0]?.name
-      if not nameColumn: return
-      tableList = rst[0]
-      for elem table in tableList:
-        tableName = table[nameColumn]
-        this.tables[tableName] = new MySQLTable(this.backend, this.database, tableName)
-      this.tables
-
-  // Get metadata for each enumerated table
-  _getAllTableMetadata() ->
-    Promise.all([...for val tbl in this.tables: [tbl._getTableMetadata()]])
-
-  // Get DDL for all tables
-  _getCreateDDL() ->
-    [...for val tbl in this.tables: [tbl._toCreateDDL()]]
-
-  // Drop all tables
-  _dropAllTables() ->
-    Promise.all([...for val tbl in this.tables: [tbl._dropTable()]])
-
-  getTables() ->
-    this.tables
-
-  getTableList() ->
-    this.ordinalTables
-
-  has(name) ->
-    this.tables[name]~looseNotEq(null)
-
-  getOrCreateTableByName(name) ->
-    t = this.tables[name]
-    if t: return t
-    newT = new MySQLTable(this.backend, this.database, name)
-    this.tables[name] = newT
-    this.ordinalTables.push(newT)
-    newT
+} // MySQLTable

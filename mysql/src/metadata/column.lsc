@@ -1,0 +1,30 @@
+import { quoteIdentifier, escapeValue } from '../util'
+
+export class MySQLColumn:
+  constructor(backend, database, tableName, name) ->
+    this.backend = backend
+    this.database = database
+    this.tableName = tableName
+    this.name = name
+    this.quotedName = quoteIdentifier(name)
+    this.fqcn = `${quoteIdentifier(tableName)}.${quoteIdentifier(name)}`
+
+  _fromInformationSchemaRow(row): void ->
+    this.nullable = if row.is_nullable == 'YES': true else: false
+    this.ordinalPosition = row.ordinal_position
+    this.keyType = row.column_key
+    this.type = row.column_type
+    this.charset = row.character_set_name
+    this.collation = row.collation_name
+    this.default = row.column_default
+    this.autoIncrement = /auto_increment/.test(row.extra)
+
+  _toDDL(): string ->
+    nullability = if this.nullable: 'NULL' else: 'NOT NULL'
+    def = if this.default: `DEFAULT ${escapeValue(this.default)}` else: ''
+    incr = if this.autoIncrement: 'AUTO_INCREMENT' else: ''
+    key = match this.keyType:
+      | 'PRI': 'PRIMARY KEY'
+      | 'UNI': 'UNIQUE'
+      | else: ''
+    `${quoteIdentifier(this.name)} ${this.type} ${nullability} ${def} ${incr} ${key}`

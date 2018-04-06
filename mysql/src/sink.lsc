@@ -3,7 +3,7 @@
 import { forEachField } from '@ormojo/ephraim'
 import { AsyncSink, SinkResult } from '@ormojo/ormojo'
 import { escapeValue as q, reflect } from './util'
-import { MySQLTable } from './tables'
+import { MySQLTable } from './metadata/table'
 
 class MySQLSinkResult extends SinkResult:
   constructor() ->

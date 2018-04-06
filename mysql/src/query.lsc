@@ -1,5 +1,4 @@
 import { Query, Cursor, ResultSet } from '@ormojo/ormojo'
-import { assignPlainObject } from '@ormojo/ephraim'
 import { escapeValue as q } from './util'
 
 export Field(T, field) ->
@@ -131,29 +130,6 @@ export class MySQLCursor extends Cursor:
     this.offset = offset
     this.limit = limit
     this
-
-// Helper: Update an instance from an ES API return value.
-// XXX: assign vs set...
-updateInstanceWithData(instance, esData) ->
-  instance._isNewRecord = undefined
-  if not esData: return instance
-
-  // Data
-  if esData._source:
-    instance~assignPlainObject(esData._source)
-
-  // Metadata
-  if esData._id: instance.id = esData._id
-  if esData._index: instance._index = esData._index
-  if esData._version: instance._version = esData._version
-  if esData._type: instance._type = esData._type
-  if esData._score: instance._score = esData._score
-  if esData._routing: instance._routing = esData._routing
-  if esData._parent: instance._parent = esData._parent
-
-  // XXX: clear delta here...
-  //instance._clearChanges()
-  instance
 
 export class MySQLResultSet extends ResultSet:
   constructor(backend, data) ->
