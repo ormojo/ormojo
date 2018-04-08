@@ -1,5 +1,6 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
 
+import isEqual from 'lodash/isEqual'
 import { quoteIdentifier } from '../util'
 import { MySQLIndex } from './indices'
 
@@ -16,11 +17,25 @@ export class MySQLForeignKey extends MySQLIndex:
     this.referencedColumnNames = [foreignColumnName]
     this
 
+  hasSameDefinition(other: MySQLIndex): boolean ->
+    (Object.getPrototypeOf(other)?.constructor == MySQLForeignKey) and
+    this.onDelete == other.onDelete and
+    this.onUpdate == other.onUpdate and
+    this.referencedTableName == other.referencedTableName and
+    (isEqual(other.columnNames, this.columnNames)) and
+    (isEqual(other.referencedColumnNames, this.referencedColumnNames))
+
   _computeName(): string ->
     `fk_${this.table.name}_${this.referencedTableName}_${this.columnNames.join('_')}_${this.referencedColumnNames.join('_')}`
 
   _toDDL(): string ->
     `FOREIGN KEY ${quoteIdentifier(this.getName!)} (${quoteIdentifier(this.columnNames[0])}) REFERENCES ${quoteIdentifier(this.referencedTableName)} (${quoteIdentifier(this.referencedColumnNames[0])}) ON DELETE ${this.onDelete} ON UPDATE ${this.onUpdate}`
+
+  _toAlterDropDDL(): string ->
+    `DROP FOREIGN KEY ${quoteIdentifier(this.getName!)}`
+
+  _toAlterAddDDL(): string ->
+    `ADD ${this._toDDL!}`
 
   _fromReferentialConstraintsColumn(col): void ->
     this.name = col.constraint_name

@@ -1,5 +1,8 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+
 import { Migration } from '@ormojo/ormojo'
 import { MySQLTables } from './metadata/tables'
+import { getTablesDiff } from './metadata/tableDiff'
 
 // Migration for a schema
 export class MySQLMigration extends Migration:
@@ -7,11 +10,28 @@ export class MySQLMigration extends Migration:
     super(backend)
     this.database = backend.database
 
-  prepare() ->
+  prepare(): Promise<MySQLMigration> ->
+    this._prepareAlter!
+
+  _prepareAlter() ->
+    this.ddl = []
+    this.currentTables = new MySQLTables(this.backend, this.database)
+    this.currentTables._enumerateTables()
+    .then! =>
+      this.currentTables._getAllTableMetadata()
+    .then! =>
+      this.ddl = getTablesDiff(this.backend.tables, this.currentTables)
+      if this.ddl.length == 0:
+        this.backend.log.info("MySQLMigration: trivial migration")
+      else:
+        this.backend.log.trace("MySQLMigration: nontrivial migration", this.ddl)
+      this
+
+  _prepareCreate() ->
     this.ddl = []
     for elem tbl in this.backend.tables.getTableList():
       this.ddl.push(tbl._toCreateDDL!)
-    Promise.resolve(true)
+    Promise.resolve(this)
 
   execute() ->
     backend = this.backend

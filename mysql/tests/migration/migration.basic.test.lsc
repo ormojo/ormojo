@@ -43,7 +43,7 @@ describe('migration tests: ', ->
     mig = backend.createMigration()
     mig.prepare()
     .then(->
-      console.log(mig)
+      console.log("DDL:", mig.ddl)
       mig.execute()
     )
   )

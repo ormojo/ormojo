@@ -23,11 +23,14 @@ export class MySQLBackend extends Backend:
       throw new Error("MySQLBackend: opts.database is required")
     // The table registry contains information mapping ephraim entity types
     // onto tables.
-    this.tables = new MySQLTables(this, this.database)
-    this.typeMap = new Map()
+    this._clearInternalTableStructure!
     // Sink/source
     this.sink = new MySQLSink({backend: this, log: this.log})
     this.source = new MySQLSource({backend: this, log: this.log})
+
+  _clearInternalTableStructure(): void ->
+    this.tables = new MySQLTables(this, this.database)
+    this.typeMap = new Map()
 
   bind(T, opts): void ->
     now T = typeFrom(T)
@@ -56,6 +59,9 @@ export class MySQLBackend extends Backend:
       else:
         this.log.trace(`SQL: ${str}`)
       conn.query(str, params)
+      .catch! (err) =>
+        this.log.error('Error while executing SQL: "', str, '" with params ', params, ': ', err)
+        throw err
     else:
       // Lease a connection for the duration of the query only.
       mgr = this.connectionManager
@@ -70,6 +76,9 @@ export class MySQLBackend extends Backend:
         conn.query(str, params)
       ~finalize! ->
         if theConn: mgr.closeConnection(theConn)
+      .catch! (err) =>
+        this.log.error('Error while executing SQL: "', str, '" with params ', params, ': ', err)
+        throw err
 
   _getTableForType(T) ->
     table = this.typeMap.get(typeFrom(T))

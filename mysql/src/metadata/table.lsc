@@ -13,7 +13,7 @@ _createColumn(table, colName, fieldKey, colType) ->
   table.addColumn(column)
   column.ephraimField = fieldKey
   column.nullable = true
-  column.type = colType
+  column.setType(colType)
   column
 
 // Represents a MySQL table
@@ -28,7 +28,7 @@ export class MySQLTable {
     this.indices = {}
 
   _dropTable(): Promise<any> ->
-    this.backend.rawQuery(`DROP TABLE ${this.quotedName};`)
+    this.backend.rawQuery(`DROP TABLE IF EXISTS ${this.quotedName};`)
 
   _createColumnForInformationSchemaRow(row): void ->
     col = new MySQLColumn(this.backend, this.database, this.name, row.column_name)

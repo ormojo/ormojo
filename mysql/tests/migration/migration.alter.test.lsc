@@ -1,0 +1,62 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+
+import { create, save, findById, destroy, find } from '@ormojo/ormojo'
+import { toPlainObject, entity, field, types, listOf, extendField } from '@ormojo/ephraim'
+import { createBackend } from '../backend'
+
+let backend = null
+beforeAll! ->
+  now backend = createBackend()
+
+afterAll! ->
+  backend.tables._dropAllTables()
+  .then! -> backend.shutdown!
+  .catch! (err) -> console.error(err)
+
+describe('alter table migration tests: ', ->
+  it('add modify drop column', ->
+    @entity() class Widget:
+      @field(types.string) id
+      @field(types.integer) val1
+      @field(types.integer) willDrop
+
+    backend.bind(Widget, { table: 'Widget_alter' })
+    mig = backend.createMigration()
+    mig.prepare!
+    .then! ->
+      mig.execute!
+    .then! ->
+      @entity() class Widget2:
+        @field(types.string) id
+        @field(types.string) val1
+        @field(types.string) val2
+
+      console.log("Made Widget2")
+      backend._clearInternalTableStructure!
+      backend.bind(Widget2, { table: 'Widget_alter' })
+      const mig = backend.createMigration()
+      console.log("Made migration")
+      mig.prepare!
+    .then! (mig) ->
+      mig.execute!
+  )
+
+  @entity() class Wodget:
+    @field(types.string) id
+    @field(types.integer) f1
+    @field(types.integer) f2
+  it! 'add modify drop index', ->
+    console.log("******** Create")
+    backend.bind(Wodget, { table: 'Wodget_alter', indices: [{ columnNames: ['f1'] }] })
+    backend.createMigration!.prepare!.then(mig -> mig.execute!)
+    .then! ->
+      console.log("******** Alter")
+      backend._clearInternalTableStructure!
+      backend.bind(Wodget, { table: 'Wodget_alter', indices: [{ columnNames: ['f1'], unique: true }] })
+      backend.createMigration!.prepare!.then(mig -> mig.execute!)
+    .then! ->
+      console.log("******** Add/Drop")
+      backend._clearInternalTableStructure!
+      backend.bind(Wodget, { table: 'Wodget_alter', indices: [{ columnNames: ['f2'] }] })
+      backend.createMigration!.prepare!.then(mig -> mig.execute!)
+)
