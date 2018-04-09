@@ -10,7 +10,7 @@ export {
 } from './type'
 
 export {
-  field, entity, bootstrapPrototype, augment, extendField, setFieldType
+  field, entity, augment, extendField, setFieldType
 } from './define'
 
 export {

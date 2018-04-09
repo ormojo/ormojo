@@ -1,5 +1,4 @@
-import { EntityType, PrimitiveType, typeFrom, underlyingTypeSymbol } from '../../type'
-import { bootstrapPrototype } from '../../define'
+import { EntityType, PrimitiveType, underlyingTypeSymbol } from '../../type'
 import { declaredFields, dataSymbol } from '../../fields'
 
 import { definePrimitiveField } from './definePrimitiveField'
@@ -12,12 +11,12 @@ class MemoryEntityType extends EntityType {
     spec.key = key
     this.fields[key] = spec
     if spec.type instanceof PrimitiveType:
-      definePrimitiveField(this.entityPrototype, spec.type, key, spec)
+      definePrimitiveField(this.entityPrototype, spec.type, key, spec, false)
     else:
       spec.type.fieldOfTypeWasDefined(this, key, spec)
 
   fieldOfTypeWasDefined(targetType, key, spec): void ->
-    defineEntityField(targetType.entityPrototype, spec.type, key, spec)
+    defineEntityField(targetType.entityPrototype, spec.type, key, spec, false)
 
   construct() -> new (this.entityConstructor)()
 
@@ -26,25 +25,26 @@ class MemoryEntityType extends EntityType {
 
 } // class MemoryEntityType
 
-export transformEntityType(ET, transformedTypeSymbol) ->
-  typeName = `memory(${ET.name})`
+export transformEntityType(ET, transformedTypeSymbol, transformedTypeQualifier) ->
+  // Create ES2015 constructor for memory entity
+  typeName = `${transformedTypeQualifier}(${ET.name})`
   EClass = ET.entityConstructor
   class MemoryEntityClass extends EClass {}
   Object.defineProperty(MemoryEntityClass, "name", { value: typeName })
-  bootstrapPrototype(MemoryEntityClass.prototype, MemoryEntityType, ET)
-  MT = typeFrom(MemoryEntityClass)
-  MT.name = typeName
 
-  // Discard auto-created constructor in favor of simpler model
+  // Create ephraim type for memory entity; associate it with prototype
+  MT = new MemoryEntityType(typeName)
+  MT.bootstrapFromPrototype(MemoryEntityClass.prototype)
+
+  // Discard ES2015 constructor in favor of a simpler vanilla JS constructor
   memoryEntityClass = (): void ->
     this[dataSymbol] = {}
   // Set constructor name to typename
   Object.defineProperty(memoryEntityClass, "name", { value: MT.name })
-
   memoryEntityClass.prototype = MemoryEntityClass.prototype
   MT.setEntityConstructor(memoryEntityClass)
 
-  // Cache now to prevent cycles/recursion
+  // Cache newly created types to prevent cycles/recursion
   ET[transformedTypeSymbol] = MT
   MT[transformedTypeSymbol] = MT
   MT[underlyingTypeSymbol] = ET
