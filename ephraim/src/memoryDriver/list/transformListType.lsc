@@ -4,7 +4,6 @@ import { observableGhostSymbol } from '../../observe'
 import { createBehaviorSubject } from '@ormojo/fobs'
 
 import { defineEntityField } from '../entity/defineEntityField'
-import transformedTypeSymbol from '../transformedTypeSymbol'
 import { transformType } from '../transformType'
 import { MemoryList } from './memoryList'
 
@@ -22,7 +21,7 @@ class MemoryListType extends ListType:
           delete ent[observableGhostSymbol]
     })
 
-export transformListType(LT) ->
+export transformListType(LT, transformedTypeSymbol) ->
   ET = if LT.elementType instanceof PrimitiveType: LT.elementType else: transformType(LT.elementType)
   MT = new MemoryListType(`memory(listOf(${ET.name}))`, ET)
 

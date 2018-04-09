@@ -1,0 +1,89 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+import { create, save, findById, destroy, find } from '@ormojo/ormojo'
+import { toPlainObject, entity, field, types, listOf, extendField } from '@ormojo/ephraim'
+import es_client from '../es_client'
+import { createChild, destroyChildById, ESBackend } from '../..'
+
+let backend
+
+@entity({
+  // Elasticsearch backend type info
+  index: `widget_parentchild`
+  type: `widget`
+}) class Widget:
+  @field(types.string) id
+  @field(types.string) name = 'nameless'
+  @field(types.integer) qty = 2
+  @field(listOf(types.string)) tags = []
+
+@entity({
+  // Set a parent child relationship in ES
+  parent: Widget
+  type: `kidget`
+}) class Kidget {
+  @field(types.string) id
+  @field(types.string) value
+}
+
+beforeAll! ->
+  logger = console.log.bind(console)
+  now backend = new ESBackend(es_client, {
+    log: {
+      trace: logger
+    }
+  })
+
+  backend.registerType(Widget)
+  backend.registerType(Kidget)
+
+  mig = backend.getMigration()
+  mig.prepare().then(-> mig.execute())
+
+afterAll! ->
+  es_client.indices.delete({
+    index: [`widget_parentchild*`]
+    ignore: [404]
+  })
+
+describe('parent-child tests: ', ->
+  it('should make a widget and a kidget', ->
+    let parent = null
+    Widget~create({ value: 'mom'})
+    .then((widg) ->
+      now parent = widg
+      widg~createChild(Kidget, { value: 'kid' })
+    ).then((kidg) ->
+      expect(kidg.value).toBe('kid')
+      //backend.createQuery().setType(Kidget).setParent(parent).byId(kidg.id).find()
+      let q = backend.createQuery()
+      now q = q.setType(Kidget)
+      now q = q.setParent(parent)
+      debugger
+      now q = q.byId(kidg.id)
+      q.find()
+    ).then((kidg) ->
+      expect(kidg._parent).toBe(parent.id)
+      expect(kidg.value).toBe('kid')
+      kidg.value = 'child'
+      kidg~save()
+    ).then! (kidg) ->
+      expect(kidg.value).toBe('child')
+      console.log(kidg)
+      kidg~destroy()
+    .then! (rst) ->
+      expect(rst).toBeTruthy()
+      kidg = parent~createChild(Kidget)
+      kidg.id = '12345'
+      kidg.value = 'kid cudi'
+      kidg~save()
+    .then! (kidg) ->
+      expect(kidg.id).toBe('12345')
+      expect(kidg.value).toBe('kid cudi')
+      parent~destroyChildById(Kidget, kidg.id)
+    .then! (rst) ->
+      expect(rst).toBeTruthy()
+      backend.createQuery().setType(Kidget).setParent(parent).byId('12345').find()
+    .then! (rst) ->
+      expect(rst).toBe(undefined)
+  )
+)

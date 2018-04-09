@@ -8,6 +8,10 @@ export declaredFields(x) ->
   T = typeFrom(x) or typeFrom(x.constructor)
   T.fields
 
+export hasDeclaredField(x, f) ->
+  T = typeFrom(x) or typeFrom(x.constructor)
+  if T.fields[f]: true else: false
+
 export declaredFieldKeys(x) ->
   T = typeFrom(x) or typeFrom(x.constructor)
   Object.keys(T.fields)
@@ -29,10 +33,13 @@ export fieldKeys(ent) ->
 
 // Iterate over all field keys and values, flex and declared
 export forEachField(ent, f): void ->
+  // Declared fields
   for key k, val spec in ent[fieldsSymbol]:
-    v = ent[k]
-    if v != undefined: f(k, ent[k], spec)
+    f(k, ent[k], spec)
 
-  for key k, val v in ent:
-    if k.charCodeAt(0) != 95 and typeof(v) != "function":
-      f(k, v)
+  // Flex fields
+  for elem k in Object.keys(ent):
+    if k.charCodeAt(0) != 95:
+      v = ent[k]
+      if typeof(v) != "function":
+        f(k, v)

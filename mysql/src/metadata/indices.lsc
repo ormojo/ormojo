@@ -1,0 +1,40 @@
+import { quoteIdentifier } from '../util'
+import isEqual from 'lodash/isEqual'
+
+export class MySQLIndex:
+  constructor(table) ->
+    this.backend = table.backend
+    this.table = table
+    this.columnNames = []
+
+  getName(): string ->
+    if this.name:
+      this.name
+    else:
+      this.name = this._computeName!
+      this.name
+
+  hasSameDefinition(other: MySQLIndex): boolean ->
+    (Object.getPrototypeOf(other)?.constructor == MySQLIndex) and
+    (Boolean(other.unique) == Boolean(this.unique)) and
+    (isEqual(other.columnNames, this.columnNames))
+
+  // Generate canonical index name
+  _computeName(): string ->
+    if this.unique:
+      `${this.table.name}_${this.columnNames.join('_')}_unique`
+    else:
+      `${this.table.name}_${this.columnNames.join('_')}`
+
+  _toDDL(): string ->
+    if this.columnNames.length == 0: return ''
+    uniqueClause = if this.unique: 'UNIQUE ' else: ''
+    nameClause = quoteIdentifier(this.getName!)
+    columnClause = this.columnNames.map(x -> quoteIdentifier(x)).join(',')
+    `${uniqueClause}INDEX ${nameClause} (${columnClause})`
+
+  _toAlterDropDDL(): string ->
+    `DROP INDEX ${quoteIdentifier(this.getName!)}`
+
+  _toAlterAddDDL(): string ->
+    `ADD ${this._toDDL!}`

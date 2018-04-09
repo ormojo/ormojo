@@ -1,0 +1,95 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+import { create, save, findById, destroy, find } from '@ormojo/ormojo'
+import { toPlainObject, entity, field, types, listOf, extendField } from '@ormojo/ephraim'
+import es_client from '../es_client'
+import { createChild, destroyChildById, ESBackend, ESQuery, QueryDsl } from '../..'
+
+@entity({
+  index: `widget_migration`
+  type: `widget`
+  filter: {
+    autocomplete_filter: {
+      type: 'edge_ngram',
+      min_gram: 1,
+      max_gram: 10
+    }
+  }
+  analyzer: {
+    autocomplete: {
+      type: 'custom',
+      tokenizer: 'standard',
+      filter: [ 'lowercase', 'autocomplete_filter' ]
+    }
+  }
+}) class Widget:
+  @field(types.string) id
+  @field(types.string) name = 'nameless'
+  @field(types.integer) qty = 2
+  @field({
+    type: listOf(types.text)
+    mapping: (new QueryDsl).q('fields', 'raw', { type: 'keyword'}).body
+  }) tags = []
+
+@entity() class Widget2 extends Widget {}
+
+@entity() class NuWidget extends Widget:
+  @field(types.string) extra
+
+createBackend() ->
+  logger = console.log.bind(console)
+  new ESBackend(es_client, {
+    log: { trace: logger }
+  })
+
+afterAll! ->
+  es_client.indices.delete({
+    index: [`widget_migration*`]
+    ignore: [404]
+  })
+
+describe('migration tests: ', ->
+  it('should have static migration plan', ->
+    let id1, id2
+    let be = createBackend()
+    be.registerType(Widget)
+    mig = be.getMigration()
+    mig.prepare()
+    .then(->
+      plan = mig.getMigrationPlan()
+      // console.dir(plan, { depth: 50 })
+      // should need to create the index because it's absent
+      expect(plan[0].strategy).toBe('CREATE')
+      mig.execute()
+    )
+    .then! ->
+      Widget~create({name: 'bob'})
+    .then! (w1) ->
+      now id1 = w1.id
+      be2 = createBackend()
+      be2.registerType(Widget2)
+      mig2 = be2.getMigration()
+      mig2.prepare()
+    .then! (mig2) ->
+      plan = mig2.getMigrationPlan!
+      // console.dir(plan, { depth: 50 })
+      expect(plan[0].strategy).toBe('NOT_NEEDED')
+      be3 = createBackend()
+      be3.registerType(NuWidget)
+      mig3 = be3.getMigration()
+      mig3.prepare()
+    .then! (mig3) ->
+      plan = mig3.getMigrationPlan!
+      // console.dir(plan, { depth: 50 })
+      expect(plan[0].strategy).toBe('REINDEX')
+      mig3.execute()
+    .then! ->
+      NuWidget~create({name: 'joe', extra: 'pickles'})
+    .then! (w2) ->
+      now id2 = w2.id
+      // Check that data survived migration
+      NuWidget~findById([id1, id2])
+    .then! (results) ->
+      expect(results[0].name).toBe('bob')
+      expect(results[1].extra).toBe('pickles')
+  )
+)

@@ -1,0 +1,22 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+import { createBackend } from '../backend'
+
+let backend
+
+beforeAll! ->
+  now backend = createBackend()
+  Promise.resolve(true)
+
+afterAll! ->
+  backend.shutdown()
+
+describe! 'migration metadata', ->
+  it! 'should enumerate database state', ->
+    mig = backend.createMigration()
+    mig._enumerateExistingTables()
+    .then! ->
+      mig.existingTables._getAllTableMetadata()
+    .then! ->
+      ddl = mig.existingTables._getCreateDDL!
+      for elem ddlx in ddl:
+        console.log("DDL:", ddlx)

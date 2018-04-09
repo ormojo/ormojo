@@ -1,0 +1,72 @@
+import { quoteIdentifier, escapeValue } from '../util'
+
+sameCharset(lhs, rhs) ->
+  (lhs~looseEq(null)) or (rhs~looseEq(null)) or (lhs == rhs)
+
+sameDefault(lhs, rhs) ->
+  (((lhs == null) or (lhs == undefined)) and ((rhs == null) or (rhs == undefined))) or
+  String(lhs) == String(rhs)
+
+sameKeyType(lhs, rhs) ->
+  // Both falsy = no key here
+  if Boolean(lhs) == false and Boolean(rhs) == false: return true
+  // We only care about PRI keys. UNI and MUL keys are handled by index part
+  if lhs != 'PRI' and rhs != 'PRI': return true
+  // Must both be PRI
+  lhs == rhs
+
+export class MySQLColumn:
+  constructor(backend, database, tableName, name) ->
+    this.backend = backend
+    this.database = database
+    this.tableName = tableName
+    this.name = name
+    this.quotedName = quoteIdentifier(name)
+    this.fqcn = `${quoteIdentifier(tableName)}.${quoteIdentifier(name)}`
+
+  setType(ty) ->
+    this.type = ty
+    if(
+      /^CHAR/i.test(ty) or
+      /^VARCHAR/i.test(ty) or
+      /TEXT/i.test(ty) or
+      /^ENUM/i.test(ty) or
+      /^SET/i.test(ty)
+    ): this.isStringType = true
+    else: this.isStringType = false
+    this
+
+  hasSameDefinition(other: MySQLColumn): boolean ->
+    (Boolean(this.nullable) == Boolean(other.nullable)) and
+    (Boolean(this.autoIncrement) == Boolean(other.autoIncrement)) and
+    (this.type.toLowerCase! == other.type.toLowerCase!) and
+    (sameDefault(this.default, other.default)) and
+    (sameKeyType(this.keyType, other.keyType)) and
+    ((not this.isStringType) or sameCharset(this.charset, other.charset)) and
+    ((not this.isStringType) or sameCharset(this.collation, other.collation))
+
+  _fromInformationSchemaRow(row): void ->
+    this.nullable = if row.is_nullable == 'YES': true else: false
+    this.ordinalPosition = row.ordinal_position
+    this.keyType = row.column_key
+    this.setType(row.column_type)
+    this.charset = row.character_set_name
+    this.collation = row.collation_name
+    this.default = row.column_default
+    this.autoIncrement = /auto_increment/.test(row.extra)
+
+  _getTypeDDL(): string ->
+    if not this.isStringType:
+      this.type
+    elif this.charset or this.collation:
+      `${this.type} CHARACTER SET ${this.charset or 'utf8'} COLLATE ${this.collation or 'utf8_general_ci'}`
+
+  _toDDL(): string ->
+    nullability = if this.nullable: 'NULL' else: 'NOT NULL'
+    def = if this.default: `DEFAULT ${escapeValue(this.default)}` else: ''
+    incr = if this.autoIncrement: 'AUTO_INCREMENT' else: ''
+    key = match this.keyType:
+      | 'PRI': 'PRIMARY KEY'
+      | 'UNI': 'UNIQUE'
+      | else: ''
+    `${quoteIdentifier(this.name)} ${this.type} ${nullability} ${def} ${incr} ${key}`

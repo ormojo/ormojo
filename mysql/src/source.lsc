@@ -1,0 +1,84 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+
+import { AsyncSource, setBackend } from '@ormojo/ormojo'
+import { MySQLQuery, MySQLResultSet } from './query'
+import { createMemory as create } from '@ormojo/ephraim'
+
+_deserializeRow(backend, row, readPattern) ->
+  // Tools to read DB column data in sequence
+  rowKeys = Object.keys(row)
+  let colIdx = 0
+  nextColumn() -> row[rowKeys[colIdx++]]
+
+  let result = undefined
+  let currentEntity = undefined
+  createEntity(backend, T) ->
+    instance = T~create!~setBackend(backend)
+    if result == undefined: now result = instance
+    now currentEntity = instance
+    instance
+
+  for elem entry in readPattern:
+    match entry[0]:
+      | "push":
+        if Array.isArray(result): result.push(nextColumn!) else: now result=[nextColumn!]
+      | "pushEntity":
+        entity = createEntity(backend, entry[1])
+        if Array.isArray(result): result.push(entity) else: now result = [entity]
+      | "read":
+        currentEntity[entry[1]] = nextColumn!
+      | "create":
+        createEntity(backend, entry[1])
+      | "createChild":
+        entity = createEntity(backend, entry[1])
+        result[entry[2]] = entity
+        if entry[3]: entity[entry[3]] = result
+
+  result
+
+idQuery(backend, qry: MySQLQuery, ids: Array<any>) ->
+  a = Array(ids.length)
+  results = new MySQLResultSet(backend, a)
+
+  backend.rawQuery(qry._getSQL!)
+  .then! (result) ->
+    for elem row in result[0]:
+      entity = _deserializeRow(qry.backend, row, qry.readPattern)
+      a[ids.indexOf(entity.id)] = entity
+    results
+
+generalQuery(backend, q: MySQLQuery) ->
+  a = []
+  results = new MySQLResultSet(backend, a)
+
+  backend.rawQuery(q._getSQL!)
+  .then! (result) ->
+    for elem row in result[0]:
+      a.push(_deserializeRow(backend, row, q.readPattern))
+    results.setPagination(q, a.length)
+    results
+
+export class MySQLSource extends AsyncSource:
+  constructor(opts) ->
+    super(opts)
+    this.backend = opts.backend
+    this.errorOnMissingType = opts.errorOnMissingType
+    this.log = opts.log
+
+  readIdQuery(query: MySQLQuery): Promise<MySQLResultSet> ->
+    ids = query.ids
+    if ids.length == 0:
+      Promise.resolve(new MySQLResultSet([]))
+    else:
+      idQuery(this.backend, query, ids)
+
+  readFullQuery(query: MySQLQuery): Promise<MySQLResultSet> ->
+    if not query.whereClause:
+      throw new Error(`MySQLSource.read(): query must have a WHERE clause`)
+    generalQuery(this.backend, query)
+
+  read(query: MySQLQuery): Promise<MySQLResultSet> ->
+    if query.ids:
+      this.readIdQuery(query)
+    else:
+      this.readFullQuery(query)

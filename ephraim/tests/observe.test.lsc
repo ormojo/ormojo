@@ -1,5 +1,5 @@
 import { entity, field, observe, toPlainObject, createMemory as create } from '@ormojo/ephraim'
-import testObservable from 'observable-utils/lib/test'
+import { test as testObservable } from '@ormojo/fobs'
 
 test! 'observe', ->
   @entity() class E:
@@ -41,5 +41,6 @@ test! 'observe child', ->
   child.data = 1
   p.child = child
   p.child = create(Child)
+  sub.unsubscribe()
 
   expect(true).toBeTruthy!

@@ -1,0 +1,138 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+
+import { forEachField } from '@ormojo/ephraim'
+import { AsyncSink, SinkResult } from '@ormojo/ormojo'
+import { escapeValue as q, reflect } from './util'
+import { MySQLTable } from './metadata/table'
+
+class MySQLSinkResult extends SinkResult:
+  constructor() ->
+    this.results = []
+    this._err = null
+
+  _pushSuccess() ->
+    this.results.push(true)
+
+  _pushFailure(err) ->
+    if not this._err: this._err = err
+    this.results.push(err)
+
+  _lastResultWasSuccess() ->
+    res = this.results
+    if res.length > 0 and res[res.length - 1] == true: true else: false
+
+  firstError() -> this._err
+  hasError() -> if this._err: true else: false
+
+getInsertQueryForInstance(instance, tbl: MySQLTable) ->
+  columnForField = tbl.columnForField
+  colNames = []
+  colVals = []
+  instance~forEachField! (k, v): void ->
+    if v != undefined:
+      col = columnForField[k]
+      if col:
+        colNames.push(col.quotedName)
+        colVals.push(q(v))
+
+  `INSERT INTO ${tbl.quotedName} (${colNames.join(',')}) VALUES (${colVals.join(',')})`
+
+getUpdateQueryForInstance(instance, tbl: MySQLTable) ->
+  // Formulate SET clause
+  columnForField = tbl.columnForField
+  subclauses = []
+  instance~forEachField! (k, v): void ->
+    if v != undefined:
+      col = columnForField[k]
+      if col:
+        subclauses.push(`${col.quotedName}=${q(v)}`)
+
+  `UPDATE ${tbl.quotedName} SET ${subclauses.join(',')} WHERE ${tbl.pkColumnFqcn}=${q(instance[tbl.pkFieldKey])}`
+
+getUpsertQueryForInstance(instance, tbl: MySQLTable) ->
+  columnForField = tbl.columnForField
+  colNames = []
+  colVals = []
+  subclauses = []
+  instance~forEachField! (k, v): void ->
+    if v != undefined:
+      col = columnForField[k]
+      if col:
+        colNames.push(col.quotedName)
+        quotedValue = q(v)
+        colVals.push(quotedValue)
+        subclauses.push(`${col.quotedName}=${quotedValue}`)
+
+  `INSERT INTO ${tbl.quotedName} (${colNames.join(',')}) VALUES (${colVals.join(',')}) ON DUPLICATE KEY UPDATE ${subclauses.join(',')}`
+
+getCrupsertQueryForInstance(instance, tbl: MySQLTable) ->
+  if instance._isNewRecord:
+    getInsertQueryForInstance(instance, tbl)
+  else if instance.id~looseNotEq(null):
+    getUpdateQueryForInstance(instance, tbl)
+  else:
+    getUpsertQueryForInstance(instance, tbl)
+
+getDeleteQueryForInstance(instance, tbl: MySQLTable) ->
+  `DELETE FROM ${tbl.quotedName} WHERE ${tbl.pkColumnFqcn}=${q(instance[tbl.pkFieldKey])}`
+
+shouldThrowFirstError(data, opts) ->
+  if opts?.throwFirstError == true:
+    true
+  else if opts?.throwFirstError == false:
+    false
+  else if data.length == 1:
+    true
+  else:
+    false
+
+query(backend, builder, data, opts) ->
+  Promise.all([...for elem datum in data:
+    [backend.rawQuery(builder(datum, backend._getTableForInstance(datum)))~reflect!]
+  ])
+  .then! (results) ->
+    result = new MySQLSinkResult()
+    for idx i, elem r in results:
+      if r.status == 'resolved':
+        // For auto ID generation, pull ID back into ephraim entity
+        // TODO: verify if table is an autoincrement table before doing this
+        iid = r.value[0].insertId
+        if iid > 0: data[i].id = iid
+        result._pushSuccess(r.value)
+      else:
+        result._pushFailure(r.value)
+    if shouldThrowFirstError(data, opts) and result.hasError():
+      throw result.firstError()
+    result
+
+export class MySQLSink extends AsyncSink:
+  constructor(opts) ->
+    super(opts)
+    this.backend = opts.backend
+    this.log = opts.log
+
+  create(data, opts) ->
+    query(this.backend, getInsertQueryForInstance, data, opts)
+
+  update(data, opts) ->
+    query(this.backend, getUpdateQueryForInstance, data, opts)
+
+  upsert(data, opts) ->
+    query(this.backend, getUpsertQueryForInstance, data, opts)
+
+  crupsert(data, opts) ->
+    query(this.backend, getCrupsertQueryForInstance, data, opts)
+
+  delete(data, opts) ->
+    query(this.backend, getDeleteQueryForInstance, data, opts)
+
+  deleteById(tbl, ids) ->
+    qry = if Array.isArray(ids):
+      set = [...for elem id in ids: q(id)].join(',')
+      `DELETE FROM ${tbl.quotedName} WHERE ${tbl.pkColumnFqcn} IN (${set})`
+    else:
+      `DELETE FROM ${tbl.quotedName} WHERE ${tbl.pkColumnFqcn}=${q(ids)}`
+
+    this.backend.rawQuery(qry)
+    .then! ->
+      true

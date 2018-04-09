@@ -97,3 +97,6 @@ export augment(T, spec): void ->
       nextSpec = Object.assign({}, T.fields[k], v)
       normalizeFieldSpec(nextSpec)
       T.defineField(k, nextSpec)
+
+export setFieldType(T, field, type): void ->
+  augment(T, { [field]: { type } })

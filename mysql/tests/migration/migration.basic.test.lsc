@@ -1,0 +1,50 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+
+import { create, save, findById, destroy, find } from '@ormojo/ormojo'
+import { toPlainObject, entity, field, types, listOf, extendField } from '@ormojo/ephraim'
+import { createBackend } from '../backend'
+
+@entity() class Widget:
+  @field(types.string) id
+  @field(types.string) name = 'nameless'
+  @field(types.integer) qty = 2
+
+@entity() class Widget2 extends Widget {}
+
+@entity() class NuWidget extends Widget:
+  @field(types.string) extra
+
+@entity() class AutoInc:
+  @field(types.integer) id
+
+let backend = null
+beforeAll! ->
+  now backend = createBackend()
+
+afterAll! ->
+  backend.tables._dropAllTables()
+  .then! -> backend.shutdown!
+  .catch! (err) -> console.error(err)
+
+describe('migration tests: ', ->
+  it('should have static migration plan', ->
+    let id1, id2
+    backend.bind(Widget, { table: 'Widget_basic' })
+    backend.bind(Widget2)
+    backend.bind(NuWidget)
+    backend.bind(AutoInc, {
+      fields: {
+        id: {
+          column: 'IdNum'
+          autoIncrement: true
+        }
+      }
+    })
+    mig = backend.createMigration()
+    mig.prepare()
+    .then(->
+      console.log("DDL:", mig.ddl)
+      mig.execute()
+    )
+  )
+)

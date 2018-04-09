@@ -5,6 +5,7 @@
   "packages": [
     "ormojo",
     "elasticsearch",
+    "mysql",
     "ephraim",
     "fobs"
   ],

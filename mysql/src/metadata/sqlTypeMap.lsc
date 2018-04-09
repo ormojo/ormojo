@@ -1,0 +1,17 @@
+import { types } from '@ormojo/ephraim'
+
+export sqlTypeMap(orType) ->
+  if orType == types.string:
+    'VARCHAR(255)'
+  else if orType == types.text:
+    'TEXT'
+  else if orType == types.integer:
+    'INT(11)'
+  else if orType == types.boolean:
+    'BOOLEAN'
+  else if orType == types.number:
+    'DOUBLE'
+  else if orType == types.date:
+    'DATETIME'
+  else:
+    undefined

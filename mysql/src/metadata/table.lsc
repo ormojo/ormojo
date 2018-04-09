@@ -1,0 +1,192 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+
+import { sqlTypeMap } from './sqlTypeMap'
+import { declaredFieldKeys, declaredFields } from '@ormojo/ephraim'
+
+import { quoteIdentifier, array_move } from '../util'
+import { MySQLColumn } from './column'
+import { MySQLForeignKey } from './foreignKey'
+import { MySQLIndex } from './indices'
+
+_createColumn(table, colName, fieldKey, colType) ->
+  column = new MySQLColumn(table.backend, table.database, table.name, colName)
+  table.addColumn(column)
+  column.ephraimField = fieldKey
+  column.nullable = true
+  column.setType(colType)
+  column
+
+// Represents a MySQL table
+export class MySQLTable {
+  constructor(backend, database, name) ->
+    this.backend = backend
+    this.database = database
+    this.name = name
+    this.quotedName = quoteIdentifier(name)
+    this.columns = {}
+    this.ordinalColumns = []
+    this.indices = {}
+
+  _dropTable(): Promise<any> ->
+    this.backend.rawQuery(`DROP TABLE IF EXISTS ${this.quotedName};`)
+
+  _createColumnForInformationSchemaRow(row): void ->
+    col = new MySQLColumn(this.backend, this.database, this.name, row.column_name)
+    col._fromInformationSchemaRow(row)
+    this.columns[row.column_name] = col
+    this.ordinalColumns[row.ordinal_position - 1] = col
+
+  _getForeignKeys(): Promise<void> ->
+    this.backend.rawQuery('SELECT constraint_name, referenced_table_name, delete_rule, update_rule FROM information_schema.referential_constraints WHERE constraint_schema=? AND table_name=?', [this.database, this.name])
+    .then! (rst) =>
+      promises = [...for elem fkDef in rst[0] or []:
+        fk = new MySQLForeignKey(this)
+        fk._fromReferentialConstraintsColumn(fkDef)
+        this.addIndex(fk)
+        [fk._getColumnsFromInformationSchema!]
+      ]
+      Promise.all(promises)
+
+  _getDomesticKeys(): Promise<void> ->
+    this.backend.rawQuery('SELECT index_name, column_name, seq_in_index, non_unique FROM information_schema.statistics WHERE table_schema=? AND table_name=? AND index_name<>\'PRIMARY\'', [this.database, this.name])
+    .then! (rst): void =>
+      let currentIndex = null
+      for elem ixDef in rst[0] or []:
+        if (not this.indices[ixDef.index_name]) and ixDef.seq_in_index == 1:
+          now currentIndex = new MySQLIndex(this)
+          currentIndex.name = ixDef.index_name
+          this.addIndex(currentIndex)
+          if ixDef.non_unique == 0: ixDef.unique = true
+
+        if currentIndex and (currentIndex.name == ixDef.index_name):
+          currentIndex.columnNames.push(ixDef.column_name)
+
+  // Get columns from MySQL
+  _getTableMetadata(): Promise<any> ->
+    // Clear existing
+    this.columns = {}
+    this.ordinalColumns = []
+    this.backend.rawQuery('SELECT table_schema, table_name, column_name, ordinal_position, column_default, is_nullable, data_type, character_set_name, collation_name, column_type, column_key, extra FROM information_schema.columns WHERE table_name=? AND table_schema=?;', [this.name, this.database])
+    .then! (rst) =>
+      for elem row in rst[0] or []: this._createColumnForInformationSchemaRow(row)
+      this._getForeignKeys!
+    .then! =>
+      this._getDomesticKeys!
+
+
+  // Generate CREATE TABLE DDL
+  _toCreateDDL(unchecked): string ->
+    createDefs = [
+      ...for elem col in this.ordinalColumns: [col._toDDL!]
+      ...for val idx in this.indices: [idx._toDDL!]
+    ].join(',')
+    `CREATE TABLE ${if unchecked: '' else: 'IF NOT EXISTS'} ${quoteIdentifier(this.name)} (${createDefs})`
+
+  // Insert a column at the ordinally-last position in this table
+  addColumn(col: MySQLColumn): void ->
+    if this.columns[col.name]:
+      throw new Error(`Duplicate column name '${col.name}'`)
+    this.ordinalColumns.push(col)
+    this.columns[col.name] = col
+
+  // Add an index
+  addIndex(idx: MySQLIndex): void ->
+    this.indices[idx.getName!] = idx
+
+  // Derive a table from an Ormojo type plus an options object.
+  // opts = {
+  //    table: string -- name of table, defaults to T.name
+  //    fields: {
+  //      [ephraimFieldName]: {
+  //        column: string -- name of SQL table column for this field, defaults to field name
+  //        ignore: boolean -- if true, field will not be mapped to SQL
+  //        autoIncrement: boolean -- apply MySQL AUTOINCREMENT
+  //        default: string -- MySQL default clause
+  //      }
+  //      ...
+  //    }
+  //    indices: [
+  //      { columnNames: [col1, ...], unique: boolean }
+  //    ]
+  // }
+  deriveFromType(T, opts): void -> {
+    this.derivedFromType = T
+    fieldOpts = opts?.fields or {}
+    fieldSpecs = T~declaredFields()
+    fieldKeyList = T~declaredFieldKeys().slice()
+
+    // Information used while serializing and deserializing
+    columnSequence = [] // SELECT sequence
+    readPattern = [['create', T]] // Pattern for deserializing this type of object
+    columnForField = Object.create(null) // Field-name-to-column map
+    this.columnSequence = columnSequence
+    this.readPattern = readPattern
+    this.columnForField = columnForField
+
+    // Make id the ordinally-first column if it exists
+    if T~declaredFields().id:
+      array_move(fieldKeyList, fieldKeyList.indexOf('id'), 0)
+
+    // Enumerate keys and create columns
+    for elem fieldKey in fieldKeyList:
+      thisFieldSpec = fieldSpecs[fieldKey]
+      thisFieldOpts = fieldOpts[fieldKey] or {}
+      // Allow fields to be ignored
+      if thisFieldOpts.ignore: continue
+      // Allow fields to be renamed
+      colName = thisFieldOpts.column or fieldKey
+      // Only create columns if we can determine the data type
+      colType = thisFieldOpts.type or sqlTypeMap(thisFieldSpec.type)
+      if not colType: continue
+      // Create the column representation
+      column = _createColumn(this, colName, fieldKey, colType)
+      // Establish column demographics
+      if fieldKey == 'id' or thisFieldOpts.primaryKey:
+        if this.pkColumnFqcn:
+          throw new Error(`MySQLTable: multiple primary keys not allowed for type '${T.name}'`)
+        if thisFieldOpts.primaryKey and fieldKey != 'id' and fieldSpecs['id']:
+          throw new Error(`MySQLTable: 'id' column must be primary key for type '${T.name}`)
+        this.pkColumnFqcn = column.fqcn
+        this.pkFieldKey = fieldKey
+        if fieldKey == 'id': this.idColumnFqcn = column.fqcn
+        column.nullable = false
+        column.keyType = 'PRI'
+        if thisFieldOpts.autoIncrement:
+          column.autoIncrement = true
+          // Flag for auto-increment ID; upon insertion we will automatically
+          // read the ID from the database
+          this.hasAutoIncrementId = true
+      if thisFieldOpts.default != undefined:
+        column.default = thisFieldOpts.default
+      elif thisFieldSpec.defaultValue != undefined:
+        column.default = thisFieldSpec.defaultValue
+      // Build serialization structures
+      columnSequence.push(column.fqcn)
+      readPattern.push(['read', fieldKey])
+      columnForField[fieldKey] = column
+
+    // Allow flex fields
+    for key fieldKey, val thisFieldOpts in fieldOpts:
+      if not fieldSpecs[fieldKey]:
+        colName = thisFieldOpts.column or fieldKey
+        colType = thisFieldOpts.type
+        if not colType: continue
+        column = _createColumn(this, colName, fieldKey, colType)
+        if thisFieldOpts.default != undefined:
+          column.default = thisFieldOpts.default
+        columnSequence.push(column.fqcn)
+        readPattern.push(['read', fieldKey])
+        columnForField[fieldKey] = column
+
+    // Build extra data
+    this.selectFieldsClause = this.columnSequence.join(',')
+
+    // Allow indices
+    for elem indexDefinition in (opts.indices or []):
+      idx = new MySQLIndex(this)
+      idx.columnNames = indexDefinition.columnNames
+      idx.unique = indexDefinition.unique
+      this.addIndex(idx)
+  } // deriveFromType
+
+} // MySQLTable

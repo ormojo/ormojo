@@ -1,0 +1,52 @@
+import { MySQLTable } from './table'
+import { MySQLTables } from './tables'
+
+// List of ALTER TABLE clauses to turn the RHS into the LHS
+export getTableDiff(lhs: MySQLTable, rhs: MySQLTable) ->
+  differences = []
+  // Index drops must be done in separate ALTER clauses.
+  indexDrops = []
+
+  // Diff fields
+  for key colKey, val col in lhs.columns:
+    if rhs.columns[colKey]:
+      if not col.hasSameDefinition(rhs.columns[colKey]):
+        differences.push(`MODIFY COLUMN ${col._toDDL!}`)
+    else:
+      differences.push(`ADD COLUMN ${col._toDDL!}`)
+
+  for key colKey, val col in rhs.columns:
+    if not lhs.columns[colKey]:
+      differences.push(`DROP COLUMN ${col.quotedName}`)
+
+  // Diff indices
+  for key idxKey, val idx in lhs.indices:
+    if rhs.indices[idxKey]:
+      if not idx.hasSameDefinition(rhs.indices[idxKey]):
+        indexDrops.push(rhs.indices[idxKey]._toAlterDropDDL!)
+        differences.push(idx._toAlterAddDDL!)
+    else:
+      differences.push(idx._toAlterAddDDL!)
+
+  for key idxKey, val idx in rhs.indices:
+    if not lhs.indices[idxKey]:
+      indexDrops.push(idx._toAlterDropDDL!)
+
+  { differences, indexDrops }
+
+// List of ALTER TABLE queries to turn the entire RHS tableset into
+// a best match for the LHS
+export getTablesDiff(lhs: MySQLTables, rhs: MySQLTables) ->
+  differences = []
+
+  for key tableKey, val table in lhs.tables:
+    if rhs.tables[tableKey]:
+      tableDiff = getTableDiff(table, rhs.tables[tableKey])
+      if tableDiff.indexDrops.length > 0:
+        differences.push(`ALTER TABLE ${table.quotedName} ${tableDiff.indexDrops.join(',')}`)
+      if tableDiff.differences.length > 0:
+        differences.push(`ALTER TABLE ${table.quotedName} ${tableDiff.differences.join(',')}`)
+    else:
+      differences.push(table._toCreateDDL!)
+
+  differences
