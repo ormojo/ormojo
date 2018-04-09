@@ -5,7 +5,6 @@ import { declaredFields, dataSymbol } from '../../fields'
 import { definePrimitiveField } from './definePrimitiveField'
 import { defineEntityField } from './defineEntityField'
 import { getObservableEntityGhostClass } from './observable'
-import transformedTypeSymbol from '../transformedTypeSymbol'
 import { transformType } from '../transformType'
 
 class MemoryEntityType extends EntityType {
@@ -27,7 +26,7 @@ class MemoryEntityType extends EntityType {
 
 } // class MemoryEntityType
 
-export transformEntityType(ET) ->
+export transformEntityType(ET, transformedTypeSymbol) ->
   typeName = `memory(${ET.name})`
   EClass = ET.entityConstructor
   class MemoryEntityClass extends EClass {}

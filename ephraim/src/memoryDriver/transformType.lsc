@@ -1,18 +1,33 @@
 import { EntityType, PrimitiveType, ListType, typeFrom } from '../type'
 
-import transformedTypeSymbol from './transformedTypeSymbol'
 import { transformEntityType } from './entity/transformEntityType'
 import { transformListType } from './list/transformListType'
 
-export transformType(T) ->
+memoryTypeSymbol = Symbol.for("ephraim.transformedMemoryType")
+memoryDeltaTypeSymbol = Symbol.for("ephraim.transformedMemoryDeltaType")
+memoryObservableTypeSymbol = Symbol.for("ephraim.transformedMemoryObservableType")
+memoryObservableDeltaTypeSymbol = Symbol.for("ephraim.transformedMemoryObservableDeltaType")
+
+symbolForTransformProperties(isObservable, isDelta) ->
+  if (not isObservable) and (not isDelta):
+    memoryTypeSymbol
+  elif isObservable and (not isDelta):
+    memoryObservableTypeSymbol
+  elif (not isObservable) and isDelta:
+    memoryDeltaTypeSymbol
+  else:
+    memoryObservableDeltaTypeSymbol
+
+export transformType(T, isObservable, isDelta) ->
   now T = typeFrom(T)
+  transformedTypeSymbol = symbolForTransformProperties(isObservable, isDelta)
   if T[transformedTypeSymbol]: return T[transformedTypeSymbol]
 
   if T instanceof PrimitiveType:
     throw new Error("Cannot convert primitive types")
   elif T instanceof EntityType:
-    transformEntityType(T)
+    transformEntityType(T, transformedTypeSymbol, isObservable, isDelta)
   elif T instanceof ListType:
-    transformListType(T)
+    transformListType(T, transformedTypeSymbol, isObservable, isDelta)
   else:
     throw new Error(`Memory.transformType: unsupported type '${T.name}'`)
