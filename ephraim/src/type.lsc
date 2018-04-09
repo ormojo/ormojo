@@ -112,13 +112,17 @@ export EntityType = singleton("EntityType", ->
     defineField(key, spec): void ->
       spec.key = key
       this.fields[key] = spec
-      // Extract single-value defaults on primitive fields
       if spec.type~isPrimitiveType!:
-        if spec.initializer:
+        // Extract single-value defaults on primitive fields
+        if (spec.defaultValue == undefined) and spec.initializer:
           val = spec.initializer.call(null)
           if spec.type.validate(val):
             spec.defaultValue = val
+        // Extension point for defining primitive fields on local objects
+        this.definePrimitiveField(key, spec)
       spec.type.fieldOfTypeWasDefined(this, key, spec)
+
+    definePrimitiveField(key, spec): void -> return
 
     initialize(entity, spec, creator, initializer) ->
       creator(this)
