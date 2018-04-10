@@ -1,4 +1,5 @@
 import { typeOfPrototypeSymbol } from './type'
+import { fieldsSymbol } from './fields'
 
 export deltaSymbol = Symbol.for("ephraim.delta")
 export isDeltaSymbol = Symbol.for("ephraim.isDelta")
@@ -20,3 +21,17 @@ export getChangedFields(entity): Array<string> ->
 
 export hasChanges(entity): boolean ->
   entity[typeOfPrototypeSymbol].hasChanges(entity)
+
+// Iterate over all field keys and values, flex and declared
+export forEachChangedField(ent, f): void ->
+  // Declared fields
+  fields = ent[fieldsSymbol]
+  for elem k in ent[typeOfPrototypeSymbol].getChangedFields(ent):
+    f(k, ent[k], fields[k])
+
+  // Flex fields
+  for elem k in Object.keys(ent):
+    if k.charCodeAt(0) != 95:
+      v = ent[k]
+      if typeof(v) != "function":
+        f(k, v)
