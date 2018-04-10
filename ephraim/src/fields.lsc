@@ -46,4 +46,7 @@ export forEachField(ent, f): void ->
 
 // Directly set a field on an entity without triggering observers, deltas, et cetera
 export rawSet(ent, fieldKey, val): void ->
-  ent[typeOfPrototypeSymbol].rawSet(ent, fieldKey, val)
+  if ent[fieldsSymbol][fieldKey]:
+    ent[typeOfPrototypeSymbol].rawSet(ent, fieldKey, val)
+  else:
+    ent[fieldKey] = val

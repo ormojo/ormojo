@@ -19,10 +19,7 @@ class MemoryEntityType extends EntityType {
   construct() -> new (this.entityConstructor)()
 
   rawSet(entity, fieldKey, val) ->
-    if this.fields[fieldKey]:
-      entity[dataSymbol][fieldKey] = val
-    else:
-      entity[fieldKey] = val
+    entity[dataSymbol][fieldKey] = val
 
   createObservableGhost(entity) ->
     new (this~getObservableEntityGhostClass!)(entity)
@@ -40,10 +37,7 @@ class DeltaMemoryEntityType extends EntityType {
     proto[isDeltaSymbol] = true
 
   rawSet(entity,fieldKey, val) ->
-    if this.fields[fieldKey]:
-      entity[dataSymbol][fieldKey] = val
-    else:
-      entity[fieldKey] = val
+    entity[dataSymbol][fieldKey] = val
 
   clearDelta(entity): void ->
     entity[deltaSymbol] = Object.create(null)
