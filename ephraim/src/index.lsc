@@ -15,7 +15,7 @@ export {
 
 export {
   declaredFields, declaredFieldKeys, flexFieldKeys, fieldKeys, forEachField
-  dataSymbol, hasDeclaredField
+  dataSymbol, hasDeclaredField, rawSet
 } from './fields'
 
 export {

@@ -1,4 +1,4 @@
-import { typeFrom } from './type'
+import { typeFrom, typeOfPrototypeSymbol } from './type'
 
 export fieldsSymbol = Symbol.for("ephraim.fields")
 export dataSymbol = Symbol.for("ephraim.data")
@@ -43,3 +43,7 @@ export forEachField(ent, f): void ->
       v = ent[k]
       if typeof(v) != "function":
         f(k, v)
+
+// Directly set a field on an entity without triggering observers, deltas, et cetera
+export rawSet(ent, fieldKey, val): void ->
+  ent[typeOfPrototypeSymbol].rawSet(ent, fieldKey, val)

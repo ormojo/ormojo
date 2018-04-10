@@ -7,6 +7,8 @@ import { defineEntityField } from './defineEntityField'
 import { getObservableEntityGhostClass } from './observable'
 import { transformType } from '../transformType'
 
+hasOwnProperty = Object.prototype.hasOwnProperty
+
 class MemoryEntityType extends EntityType {
   definePrimitiveField(key, spec): void ->
     definePrimitiveField(this.entityPrototype, spec.type, key, spec, false)
@@ -15,6 +17,12 @@ class MemoryEntityType extends EntityType {
     defineEntityField(targetType.entityPrototype, spec.type, key, spec, false)
 
   construct() -> new (this.entityConstructor)()
+
+  rawSet(entity, fieldKey, val) ->
+    if this.fields[fieldKey]:
+      entity[dataSymbol][fieldKey] = val
+    else:
+      entity[fieldKey] = val
 
   createObservableGhost(entity) ->
     new (this~getObservableEntityGhostClass!)(entity)
@@ -31,6 +39,12 @@ class DeltaMemoryEntityType extends EntityType {
     super.bootstrapFromPrototype(proto)
     proto[isDeltaSymbol] = true
 
+  rawSet(entity,fieldKey, val) ->
+    if this.fields[fieldKey]:
+      entity[dataSymbol][fieldKey] = val
+    else:
+      entity[fieldKey] = val
+
   clearDelta(entity): void ->
     entity[deltaSymbol] = Object.create(null)
 
@@ -39,6 +53,7 @@ class DeltaMemoryEntityType extends EntityType {
     if not delta: return
     data = entity[dataSymbol] or Object.create(null)
     for key k, val v in delta: data[k] = v
+    entity[dataSymbol] = data
     entity[deltaSymbol] = Object.create(null)
 
   getChangedFields(entity): Array<string> ->
@@ -50,7 +65,8 @@ class DeltaMemoryEntityType extends EntityType {
     if delta: Object.keys(delta).length > 0 else: false
 
   fieldHasChanged(entity, field): boolean ->
-    if entity[deltaSymbol]?[field]: true else: false
+    delta = entity[deltaSymbol]
+    if delta and hasOwnProperty.call(delta, field): true else: false
 
   construct() -> new (this.entityConstructor)()
 

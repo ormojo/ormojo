@@ -123,8 +123,10 @@ export EntityType = singleton("EntityType", ->
         this.definePrimitiveField(key, spec)
       spec.type.fieldOfTypeWasDefined(this, key, spec)
 
+    // eslint-disable-next-line no-unused-vars
     definePrimitiveField(key, spec): void -> return
 
+    // eslint-disable-next-line no-unused-vars
     initialize(entity, spec, creator, initializer) ->
       creator(this)
 
@@ -226,6 +228,7 @@ export ListType = singleton("ListType", ->
       super(name)
       this.elementType = elementType
 
+    // eslint-disable-next-line no-unused-vars
     initialize(entity, spec, creator, initializer) ->
       creator(this)
 

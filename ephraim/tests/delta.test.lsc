@@ -1,4 +1,4 @@
-import { entity, field, augment, toPlainObject, createMemoryDelta as create, setFieldType, isDelta, hasChanges, clearDelta, flushDelta, fieldHasChanged, getChangedFields } from '@ormojo/ephraim'
+import { entity, field, augment, toPlainObject, createMemoryDelta as create, setFieldType, isDelta, hasChanges, clearDelta, flushDelta, fieldHasChanged, getChangedFields, rawSet } from '@ormojo/ephraim'
 
 test! 'basic', ->
   @entity() class E:
@@ -26,6 +26,27 @@ test! 'basic', ->
   expect(e.f).toBe(1)
   expect(e~hasChanges!).toBe(false)
   console.log(e)
+
+test! 'rawSet', ->
+  @entity() class E:
+    @field() f
+
+  e = create(E)
+  expect(e~isDelta!).toBe(true)
+  expect(e~hasChanges!).toBe(false)
+
+  e~rawSet('f', 1)
+  expect(e.f).toBe(1)
+  expect(e~isDelta!).toBe(true)
+  expect(e~hasChanges!).toBe(false)
+  console.log(e)
+
+  expect(e.g).toBe(undefined)
+  e~rawSet('g', 2)
+  console.log(e)
+  expect(e.g).toBe(2)
+  expect(e~isDelta!).toBe(true)
+  expect(e~hasChanges!).toBe(false)
 
 test! 'init', ->
   @entity() class E:
