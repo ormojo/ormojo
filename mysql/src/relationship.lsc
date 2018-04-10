@@ -1,5 +1,5 @@
 import { Relationship, setBackend } from '@ormojo/ormojo'
-import { createMemory as create } from '@ormojo/ephraim'
+import { createMemoryDelta as create } from '@ormojo/ephraim'
 import { MySQLForeignKey } from './metadata/foreignKey'
 
 export class MySQLRelationship extends Relationship:

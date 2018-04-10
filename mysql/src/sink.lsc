@@ -1,6 +1,6 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
 
-import { forEachField } from '@ormojo/ephraim'
+import { forEachField, forEachChangedField, rawSet, flushDelta } from '@ormojo/ephraim'
 import { AsyncSink, SinkResult } from '@ormojo/ormojo'
 import { escapeValue as q, reflect } from './util'
 import { MySQLTable } from './metadata/table'
@@ -41,11 +41,11 @@ getUpdateQueryForInstance(instance, tbl: MySQLTable) ->
   // Formulate SET clause
   columnForField = tbl.columnForField
   subclauses = []
-  instance~forEachField! (k, v): void ->
-    if v != undefined:
-      col = columnForField[k]
-      if col:
-        subclauses.push(`${col.quotedName}=${q(v)}`)
+  instance~forEachChangedField! (k, v): void ->
+    if v == undefined: now v = null
+    col = columnForField[k]
+    if col:
+      subclauses.push(`${col.quotedName}=${q(v)}`)
 
   `UPDATE ${tbl.quotedName} SET ${subclauses.join(',')} WHERE ${tbl.pkColumnFqcn}=${q(instance[tbl.pkFieldKey])}`
 
@@ -97,7 +97,24 @@ query(backend, builder, data, opts) ->
         // For auto ID generation, pull ID back into ephraim entity
         // TODO: verify if table is an autoincrement table before doing this
         iid = r.value[0].insertId
-        if iid > 0: data[i].id = iid
+        if iid > 0: rawSet(data[i], 'id', iid)
+        // Flush delta changes
+        data[i]~flushDelta!
+        result._pushSuccess(r.value)
+      else:
+        result._pushFailure(r.value)
+    if shouldThrowFirstError(data, opts) and result.hasError():
+      throw result.firstError()
+    result
+
+deleteQuery(backend, data, opts) ->
+  Promise.all([...for elem datum in data:
+    [backend.rawQuery(getDeleteQueryForInstance(datum, backend._getTableForInstance(datum)))~reflect!]
+  ])
+  .then! (results) ->
+    result = new MySQLSinkResult()
+    for idx i, elem r in results:
+      if r.status == 'resolved':
         result._pushSuccess(r.value)
       else:
         result._pushFailure(r.value)
@@ -124,7 +141,7 @@ export class MySQLSink extends AsyncSink:
     query(this.backend, getCrupsertQueryForInstance, data, opts)
 
   delete(data, opts) ->
-    query(this.backend, getDeleteQueryForInstance, data, opts)
+    deleteQuery(this.backend, data, opts)
 
   deleteById(tbl, ids) ->
     qry = if Array.isArray(ids):

@@ -1,7 +1,7 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
 
 import { Backend, normalizeLoggerObject, setBackend } from '@ormojo/ormojo'
-import { typeOf, typeFrom, createMemory as create, assignPlainObject, underlyingTypeOfType } from '@ormojo/ephraim'
+import { typeOf, typeFrom, createMemoryDelta as create, assignPlainObject, underlyingTypeOfType } from '@ormojo/ephraim'
 
 import { MySQLTables } from './metadata/tables'
 import { MySQLMigration } from './migration'

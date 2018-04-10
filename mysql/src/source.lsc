@@ -2,7 +2,7 @@
 
 import { AsyncSource, setBackend } from '@ormojo/ormojo'
 import { MySQLQuery, MySQLResultSet } from './query'
-import { createMemory as create } from '@ormojo/ephraim'
+import { createMemoryDelta as create, rawSet } from '@ormojo/ephraim'
 
 _deserializeRow(backend, row, readPattern) ->
   // Tools to read DB column data in sequence
@@ -26,13 +26,13 @@ _deserializeRow(backend, row, readPattern) ->
         entity = createEntity(backend, entry[1])
         if Array.isArray(result): result.push(entity) else: now result = [entity]
       | "read":
-        currentEntity[entry[1]] = nextColumn!
+        rawSet(currentEntity, entry[1], nextColumn!)
       | "create":
         createEntity(backend, entry[1])
       | "createChild":
         entity = createEntity(backend, entry[1])
-        result[entry[2]] = entity
-        if entry[3]: entity[entry[3]] = result
+        rawSet(result, entry[2], entity)
+        if entry[3]: rawSet(entity, entry[3], result)
 
   result
 

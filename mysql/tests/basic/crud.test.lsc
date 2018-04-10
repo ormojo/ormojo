@@ -87,6 +87,7 @@ describe('CRUD', ->
     let id = null
     backend.create(Widget, {name: 'whatsit', qty: 1000000})
     .then((widg) ->
+      debugger
       now id = widg.id
       backend.destroy(widg)
     ).then((widg) ->
