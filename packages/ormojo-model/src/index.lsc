@@ -1,4 +1,0 @@
-import Model from './Model'
-import field from './decorators/field'
-
-export { Model, field }
