@@ -1,6 +1,0 @@
-[submodule "submodules/toolbelt"]
-	path = submodules/toolbelt
-	url = https://wcjohnson@github.com/wcjohnson/toolbelt.git
-[submodule "submodules/redux-components"]
-	path = submodules/redux-components
-	url = https://wcjohnson@github.com/wcjohnson/redux-components.git
