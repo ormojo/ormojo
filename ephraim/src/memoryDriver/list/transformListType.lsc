@@ -7,23 +7,35 @@ import { defineEntityField } from '../entity/defineEntityField'
 import { transformType } from '../transformType'
 import { MemoryList } from './memoryList'
 
+createObservableGhost(ent) ->
+  createBehaviorSubject({
+    initialValue: ent
+    onObserversChanged(observers, added, removed) ->
+      if removed and observers.length == 0:
+        delete ent[observableGhostSymbol]
+  })
+
 class MemoryListType extends ListType:
   fieldOfTypeWasDefined(targetType, key, spec): void ->
-    defineEntityField(targetType.entityPrototype, spec.type, key, spec)
+    defineEntityField(targetType.entityPrototype, spec.type, key, spec, false)
 
   construct() -> new MemoryList(this)
 
-  createObservableGhost(ent) ->
-    createBehaviorSubject({
-      initialValue: ent
-      onObserversChanged(observers, added, removed) ->
-        if removed and observers.length == 0:
-          delete ent[observableGhostSymbol]
-    })
+  createObservableGhost(ent) -> createObservableGhost(ent)
 
-export transformListType(LT, transformedTypeSymbol) ->
+class DeltaMemoryListType extends ListType:
+  fieldOfTypeWasDefined(targetType, key, spec): void ->
+    defineEntityField(targetType.entityPrototype, spec.type, key, spec, false)
+
+  construct() -> new MemoryList(this)
+
+  createObservableGhost(ent) -> createObservableGhost(ent)
+
+export transformListType(LT, transformedTypeSymbol, transformedTypeQualifier, isObservable, isDelta) ->
+  typeClass = if isDelta: DeltaMemoryListType else: MemoryListType
+
   ET = if LT.elementType instanceof PrimitiveType: LT.elementType else: transformType(LT.elementType)
-  MT = new MemoryListType(`memory(listOf(${ET.name}))`, ET)
+  MT = new typeClass(`${transformedTypeQualifier}(listOf(${ET.name}))`, ET)
 
   // Cache now to prevent cycles/recursion
   LT[transformedTypeSymbol] = MT

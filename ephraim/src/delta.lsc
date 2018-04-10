@@ -1,5 +1,22 @@
+import { typeOfPrototypeSymbol } from './type'
+
 export deltaSymbol = Symbol.for("ephraim.delta")
 export isDeltaSymbol = Symbol.for("ephraim.isDelta")
 
 export isDelta(entity): boolean ->
-  entity[isDeltaSymbol]~looseNotEq(null)
+  entity[isDeltaSymbol] == true
+
+export clearDelta(entity): void ->
+  entity[typeOfPrototypeSymbol].clearDelta(entity)
+
+export flushDelta(entity): void ->
+  entity[typeOfPrototypeSymbol].flushDelta(entity)
+
+export fieldHasChanged(entity, field): boolean ->
+  entity[typeOfPrototypeSymbol].fieldHasChanged(entity, field)
+
+export getChangedFields(entity): Array<string> ->
+  entity[typeOfPrototypeSymbol].getChangedFields(entity)
+
+export hasChanges(entity): boolean ->
+  entity[typeOfPrototypeSymbol].hasChanges(entity)

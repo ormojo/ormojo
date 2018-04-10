@@ -36,4 +36,3 @@ test! "list field init", ->
 
   e = create(E)
   expect(e.strs.length).toBe(0)
-

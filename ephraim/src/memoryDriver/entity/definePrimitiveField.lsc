@@ -54,6 +54,6 @@ export definePrimitiveField(proto, type, key, spec, isDelta) ->
   Object.defineProperty(proto, key, {
     configurable: true
     enumerable: true
-    get: createGetterMethod(proto, type, key, spec, isDelta)
-    set: createSetterMethod(proto, type, key, spec, isDelta)
+    get: createGetterMethod(proto, type, key, isDelta)
+    set: createSetterMethod(proto, type, key, isDelta)
   })

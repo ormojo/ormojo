@@ -1,5 +1,6 @@
 import { EntityType, PrimitiveType, underlyingTypeSymbol } from '../../type'
 import { declaredFields, dataSymbol } from '../../fields'
+import { deltaSymbol, isDeltaSymbol } from '../../delta'
 
 import { definePrimitiveField } from './definePrimitiveField'
 import { defineEntityField } from './defineEntityField'
@@ -26,6 +27,31 @@ class DeltaMemoryEntityType extends EntityType {
   fieldOfTypeWasDefined(targetType, key, spec): void ->
     defineEntityField(targetType.entityPrototype, spec.type, key, spec, true)
 
+  bootstrapFromPrototype(proto): void ->
+    super.bootstrapFromPrototype(proto)
+    proto[isDeltaSymbol] = true
+
+  clearDelta(entity): void ->
+    entity[deltaSymbol] = Object.create(null)
+
+  flushDelta(entity): void ->
+    delta = entity[deltaSymbol]
+    if not delta: return
+    data = entity[dataSymbol] or Object.create(null)
+    for key k, val v in delta: data[k] = v
+    entity[deltaSymbol] = Object.create(null)
+
+  getChangedFields(entity): Array<string> ->
+    delta = entity[deltaSymbol]
+    if delta: Object.keys(delta) else: null
+
+  hasChanges(entity): boolean ->
+    delta = entity[deltaSymbol]
+    if delta: Object.keys(delta).length > 0 else: false
+
+  fieldHasChanged(entity, field): boolean ->
+    if entity[deltaSymbol]?[field]: true else: false
+
   construct() -> new (this.entityConstructor)()
 
   createObservableGhost(entity) ->
@@ -47,7 +73,7 @@ export transformEntityType(ET, transformedTypeSymbol, transformedTypeQualifier, 
 
   // Discard ES2015 constructor in favor of a simpler vanilla JS constructor
   memoryEntityClass = (): void ->
-    this[dataSymbol] = {}
+    this[dataSymbol] = Object.create(null)
   // Set constructor name to typename
   Object.defineProperty(memoryEntityClass, "name", { value: MT.name })
   memoryEntityClass.prototype = MemoryEntityClass.prototype
@@ -63,7 +89,7 @@ export transformEntityType(ET, transformedTypeSymbol, transformedTypeQualifier, 
     ...for key k, val spec in memoryEntityClass~declaredFields():
       nextSpec = Object.assign({}, spec)
       if not (nextSpec.type instanceof PrimitiveType):
-        nextSpec.type = transformType(nextSpec.type)
+        nextSpec.type = transformType(nextSpec.type, isDelta)
       {[k]: nextSpec}
   }
   // Apply field definitions

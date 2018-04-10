@@ -14,8 +14,8 @@ createDeltaSetterMethod(proto, type, key) ->
     this[dataSymbol][key] = val
 
     let delta = this[deltaSymbol]
-    if not delta: this[deltaSymbol] = now delta = {}
-    delta[key] = true
+    if not delta: this[deltaSymbol] = now delta = Object.create(null)
+    delta[key] = val
 
     observedFields = this[observedFieldsSymbol]
     if observedFields:

@@ -2,6 +2,7 @@ import { singleton } from './singleton'
 import { forEachField, fieldsSymbol } from './fields'
 
 export typeSymbol = Symbol.for("ephraim.type")
+export typeOfPrototypeSymbol = Symbol.for("ephraim.typeOfPrototype")
 export underlyingTypeSymbol = Symbol.for("ephraim.underlyingType")
 
 // Get all keys, enumerable or otherwise, up the prototype chain,
@@ -179,6 +180,7 @@ export EntityType = singleton("EntityType", ->
     bootstrapFromPrototype(proto): void ->
       // Set demographic information
       proto.constructor~setType(this)
+      proto[typeOfPrototypeSymbol] = this
       this.entityPrototype = proto
       proto[fieldsSymbol] = this.fields
 

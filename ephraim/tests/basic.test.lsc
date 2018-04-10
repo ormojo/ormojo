@@ -1,12 +1,16 @@
-import { entity, field, augment, toPlainObject, createMemory as create, setFieldType } from '@ormojo/ephraim'
+import { entity, field, augment, toPlainObject, createMemory as create, setFieldType, isDelta } from '@ormojo/ephraim'
 
 test! 'basic', ->
   @entity() class E:
     @field() f
 
+  debugger
   e = create(E)
   e.f = 1
   expect(e.f).toBe(1)
+  expect(e~isDelta!).toBe(false)
+  console.log(e)
+  console.log(Object.getPrototypeOf(e))
 
 test! 'init', ->
   @entity() class E:

@@ -10,24 +10,24 @@ memoryObservableDeltaTypeSymbol = Symbol.for("ephraim.transformedMemoryObservabl
 
 symbolForTransformProperties(isObservable, isDelta) ->
   if (not isObservable) and (not isDelta):
-    ['memory', memoryTypeSymbol]
+    ['memoryPlain', memoryTypeSymbol]
   elif isObservable and (not isDelta):
-    ['memoryObservable', memoryObservableTypeSymbol]
+    ['memory', memoryObservableTypeSymbol]
   elif (not isObservable) and isDelta:
-    ['memoryDelta', memoryDeltaTypeSymbol]
+    ['memoryPlainDelta', memoryDeltaTypeSymbol]
   else:
-    ['memoryObservableDelta', memoryObservableDeltaTypeSymbol]
+    ['memoryDelta', memoryObservableDeltaTypeSymbol]
 
-export transformType(T, isObservable, isDelta) ->
+export transformType(T, isDelta) ->
   now T = typeFrom(T)
-  [transformedTypeQualifier, transformedTypeSymbol] = symbolForTransformProperties(isObservable, isDelta)
+  [transformedTypeQualifier, transformedTypeSymbol] = symbolForTransformProperties(true, isDelta)
   if T[transformedTypeSymbol]: return T[transformedTypeSymbol]
 
   if T instanceof PrimitiveType:
     throw new Error("Cannot convert primitive types")
   elif T instanceof EntityType:
-    transformEntityType(T, transformedTypeSymbol, transformedTypeQualifier, isObservable, isDelta)
+    transformEntityType(T, transformedTypeSymbol, transformedTypeQualifier, true, isDelta)
   elif T instanceof ListType:
-    transformListType(T, transformedTypeSymbol, transformedTypeQualifier, isObservable, isDelta)
+    transformListType(T, transformedTypeSymbol, transformedTypeQualifier, true, isDelta)
   else:
     throw new Error(`Memory.transformType: unsupported type '${T.name}'`)

@@ -5,6 +5,11 @@ import { EntityType, typeFrom } from '../type'
 export { transformType }
 
 export create(T, skipInit) ->
-  x = transformType(T).construct()
+  x = transformType(T, false).construct()
   if (not skipInit) and (typeFrom(T) instanceof EntityType): x~initialize(create)
+  x
+
+export createDelta(T, skipInit) ->
+  x = transformType(T, true).construct()
+  if (not skipInit) and (typeFrom(T) instanceof EntityType): x~initialize(createDelta)
   x

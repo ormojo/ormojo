@@ -1,0 +1,63 @@
+import { entity, field, augment, toPlainObject, createMemoryDelta as create, setFieldType, isDelta, hasChanges, clearDelta, flushDelta, fieldHasChanged, getChangedFields } from '@ormojo/ephraim'
+
+test! 'basic', ->
+  @entity() class E:
+    @field() f
+
+  e = create(E)
+  expect(e~isDelta!).toBe(true)
+  expect(e~hasChanges!).toBe(false)
+  expect(e~getChangedFields!).toBe(null)
+  expect(e~fieldHasChanged('f')).toBe(false)
+
+  e.f = 1
+  expect(e.f).toBe(1)
+  console.log(e)
+  expect(e~hasChanges!).toBe(true)
+  expect(e~getChangedFields!).toEqual(['f'])
+  expect(e~fieldHasChanged('f')).toBe(true)
+
+  e~clearDelta()
+  expect(e.f).toBe(undefined)
+  console.log(e)
+
+  e.f = 1
+  e~flushDelta()
+  expect(e.f).toBe(1)
+  expect(e~hasChanges!).toBe(false)
+  console.log(e)
+
+test! 'init', ->
+  @entity() class E:
+    @field() f = 1
+
+  debugger
+  e = create(E)
+  expect(e.f).toBe(1)
+  console.log("init", e)
+
+test! 'subentity', ->
+  @entity() class E:
+    @field() e
+
+  @entity() class F:
+    @field(E) subE
+
+  f = create(F)
+  f.subE = create(E)
+  f.subE.e = 1
+
+  expect(f.subE.e).toBe(1)
+  expect(f~toPlainObject!).toEqual({ subE: { e: 1 }})
+
+test! 'subentity init', ->
+  @entity() class E:
+    @field() e = 1
+
+  @entity() class F:
+    @field(E) subE = {}
+
+  f = create(F)
+
+  expect(f.subE.e).toBe(1)
+  expect(f~toPlainObject!).toEqual({ subE: { e: 1 }})

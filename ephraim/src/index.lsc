@@ -19,7 +19,7 @@ export {
 } from './fields'
 
 export {
-  deltaSymbol, isDeltaSymbol, isDelta
+  deltaSymbol, isDeltaSymbol, isDelta, clearDelta, flushDelta, fieldHasChanged, getChangedFields, hasChanges
 } from './delta'
 
 export {
@@ -36,5 +36,6 @@ export {
 
 export {
   transformType as transformMemoryType,
-  create as createMemory
+  create as createMemory,
+  createDelta as createMemoryDelta
 } from './memoryDriver'
