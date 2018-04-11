@@ -114,10 +114,10 @@ export class MySQLQuery extends Query:
       ids = this.ids
       tbl = this._table
       if ids.length > 1:
-        set = [...for elem id in ids: [q(id)]].join(',')
-        `SELECT ${this._getFieldsClause()} FROM ${this._getFromClause()} WHERE ${tbl.pkColumnFqcn} IN (${set})`
+        set = [...for elem id in ids: if id~looseNotEq(null): [q(id)]]
+        if set.length == 0: null else: `SELECT ${this._getFieldsClause()} FROM ${this._getFromClause()} WHERE ${tbl.pkColumnFqcn} IN (${set.join(',')})`
       else:
-        `SELECT ${this._getFieldsClause()} FROM ${this._getFromClause()} WHERE ${tbl.pkColumnFqcn}=${q(ids[0])}`
+        if ids[0]~looseEq(null): null else: `SELECT ${this._getFieldsClause()} FROM ${this._getFromClause()} WHERE ${tbl.pkColumnFqcn}=${q(ids[0])}`
     else:
       `SELECT ${this._getFieldsClause()} FROM ${this._getFromClause()} WHERE ${this._getWhereClause()} ${this._getOrderByClause()} ${this._getOffsetClause()}`
 

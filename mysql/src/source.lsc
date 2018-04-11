@@ -39,6 +39,9 @@ _deserializeRow(backend, row, readPattern) ->
 idQuery(backend, qry: MySQLQuery, ids: Array<any>) ->
   a = Array(ids.length)
   results = new MySQLResultSet(backend, a)
+  sql = qry._getSQL!
+
+  if sql == null: return Promise.resolve(results)
 
   backend.rawQuery(qry._getSQL!)
   .then! (result) ->
