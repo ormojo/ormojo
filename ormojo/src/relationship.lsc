@@ -1,3 +1,71 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+
+import { rawSet } from '@ormojo/ephraim'
+
 export class Relationship:
   constructor(backend) ->
     this.backend = backend
+
+// TODO: check T.id is a declared field
+validateTapestryType(T) -> true
+
+// A Tapestry is a relationship spanning multiple backends.
+// - The Tapestry has a root type which queries are run against
+// - Upon receiving the results of a root query, the Tapestry runs a
+// sequence of Fetches, further augmenting the data returned by the root query
+// - Fetches are extensible; a user-provided Fetch class
+export class Tapestry extends Relationship:
+  constructor(backend, type) ->
+    super(backend)
+    validateTapestryType(type)
+    this.type = type
+    this.fetches = []
+
+  createQuery() ->
+    this.backend.createQuery()
+
+  // Complete a ResultSet by fetching all related material
+  _completeResultSet(resultSet) ->
+    if resultSet.isEmpty!: return
+    promises = [...for elem fetch in this.fetches:
+      fetch.performFetchForResults(resultSet)
+    ]
+    Promise.all(promises)
+
+export class Fetch:
+  constructor() -> return
+
+// Fetch an item whose id is computable from data on the root
+export class IdFetch extends Fetch:
+  constructor(backend, type, idMap, storeField) ->
+    super()
+    this.backend = backend
+    this.type = type
+    this.idMap = idMap // Function mapping root objects to child ids
+    this.storeField = storeField // Field on root object to store child
+
+  performFetchForResults(resultSet) ->
+    results = resultSet.getMutableResults!
+    targetIds = [ ...for elem r in results: [this.idMap(r)] ]
+    this.backend.findById(this.type, targetIds)
+    .then! (subResultSet): void ->
+      for idx i, elem r in subResultSet.getResults!:
+        if r~looseNotEq(null):
+          rawSet(results[i], this.storeField, r)
+
+// Fetch an item retrieved from a hand-built query
+export class QueryFetch extends Fetch:
+  constructor(backend, queryMap, storageMap) ->
+    super()
+    this.backend = backend
+    this.queryMap = queryMap
+    this.storageMap = storageMap
+
+  performFetchForResults(resultSet) ->
+    results = resultSet.getMutableResults!
+    promises = [ ...for elem r in results:
+      q = this.backend.createQuery()
+      this.queryMap(q, r)
+      [this.backend.find(q).then((subResultSet) => this.storageMap(r, subResultSet))]
+    ]
+    Promise.all(promises)
