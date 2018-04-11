@@ -1,9 +1,11 @@
+import { backendSymbol } from './symbols'
+
 export setBackend(entity, backend) ->
-  entity._backend = backend
+  entity[backendSymbol] = backend
   entity
 
 export getBackend(entity) ->
-  entity._backend
+  entity[backendSymbol]
 
 // Save changes to an entity
 export save(entity, opts) ->

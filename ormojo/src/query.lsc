@@ -97,6 +97,12 @@ export class ResultSet {
   // @return [Array<Instance>] The collection of results.
   getResults() -> this.results or []
 
+  // Return an array of results that can be mutated. May throw if
+  // the ResultSet is immutable.
+  getMutableResults() ->
+    if not this.results: this.results = []
+    this.results
+
   replaceResults(results) ->
     this.results = results
     this

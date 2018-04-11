@@ -12,12 +12,26 @@ export class Backend {
   //
   // Find an entity of a given type by ID.
   //
+  // ids may be a single string or number value, or an array.
+  // - If Ids is a single value, resolves to either an Entity or undefined
+  // depending as whether the object could be found.
+  // - If Ids is an array, resolves to an array of equal length consisting of
+  // Entities and undefined, in positions corresponding to the ids array,
+  // depending as whether the corresponding object could be found.
+  // - If any id is `null` or `undefined`, the corresponding result entry
+  // will always be `undefined`.
+  //
   findById(T: Type, id, opts): Promise<Entity | undefined | Array<Entity | undefined>> ->
     q = this.createQuery().setType(T).byId(id)
     if Array.isArray(id):
       this.find(q).then! resultSet -> resultSet.getResults!
     else:
       this.find(q).then! resultSet -> (resultSet.getResults!)[0]
+
+  //
+  // Generate an empty Query appropriate to this backend.
+  //
+  createQuery(): Query -> null
 
   //
   // Find entities matching a backend-specific Query.
