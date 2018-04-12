@@ -1,0 +1,60 @@
+import { Relationship } from '@ormojo/ormojo'
+import { assignPlainObject } from '@ormojo/ephraim'
+import { toParentId } from './util'
+
+export class ESRelationship extends Relationship:
+  constructor(backend) ->
+    super(backend)
+
+export class ESParentChildRelationship extends ESRelationship:
+  constructor(backend) ->
+    super(backend)
+
+  relate(parentType, childType) ->
+    parentTypeInfo = this.backend._getTypeInfo(parentType)
+    if not parentTypeInfo:
+      throw new Error(`cannot find binding for parent type '${parentType.name}'`)
+
+    childTypeInfo = this.backend._getTypeInfo(childType)
+    if not childTypeInfo:
+      throw new Error(`cannot find binding for parent type '${childType.name}'`)
+    if childTypeInfo.parentType:
+      throw new Error(`cannot bind child type '${childType.name}' to multiple parents`)
+    this.childType = childType
+
+    if parentTypeInfo.index != childTypeInfo.index:
+      throw new Error(`Child type '${childType.name}' must be bound to the same Elasticsearch index as '${parentType.name}'`)
+
+    childTypeInfo.parentType = parentTypeInfo.type
+    // Update Elasticsearch mapping for parent relationship
+    childTypeInfo.mapping._parent = { type: parentTypeInfo.type }
+    childTypeInfo.mapping._routing = { required: true }
+
+    this
+
+  createChild(parent, data, opts) ->
+    pid = parent~toParentId!
+    ent = this.backend.create(this.childType, null, opts)
+    ent._parent = pid
+    if data~looseNotEq(null):
+      ent~assignPlainObject(data)
+      this.backend.save(ent, opts)
+    else:
+      ent
+
+  destroyChildById(parent, childId) ->
+    this.backend.destroyById(this.childType, childId, { parent: parent~toParentId! })
+
+  isChildOf(child, parent) ->
+    pid = parent~toParentId!
+    child._parent == pid
+
+  findChildById(parent, id, opts) ->
+    q = this.backend.createQuery()
+    q.setType(this.childType).byId(id)
+    q.parent = parent~toParentId!
+    if Array.isArray(id):
+      this.backend.find(q, opts).then! resultSet -> resultSet.getResults!
+    else:
+      this.backend.find(q, opts).then! resultSet -> (resultSet.getResults!)[0]
+

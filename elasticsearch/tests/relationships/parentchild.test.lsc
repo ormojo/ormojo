@@ -1,10 +1,11 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
-import { create, save, findById, destroy, find } from '@ormojo/ormojo'
+import { save, findById, destroy, find } from '@ormojo/ormojo'
 import { toPlainObject, entity, field, types, listOf, extendField } from '@ormojo/ephraim'
 import es_client from '../es_client'
-import { createChild, destroyChildById, ESBackend } from '../..'
+import { ESBackend, ESParentChildRelationship } from '../..'
 
 let backend
+let rel
 
 @entity({
   // Elasticsearch backend type info
@@ -17,8 +18,7 @@ let backend
   @field(listOf(types.string)) tags = []
 
 @entity({
-  // Set a parent child relationship in ES
-  parent: Widget
+  index: `widget_parentchild`
   type: `kidget`
 }) class Kidget {
   @field(types.string) id
@@ -33,10 +33,12 @@ beforeAll! ->
     }
   })
 
-  backend.registerType(Widget)
-  backend.registerType(Kidget)
+  backend.bind(Widget)
+  backend.bind(Kidget)
 
-  mig = backend.getMigration()
+  now rel = new ESParentChildRelationship(backend).relate(Widget, Kidget)
+
+  mig = backend.createMigration()
   mig.prepare().then(-> mig.execute())
 
 afterAll! ->
@@ -48,21 +50,15 @@ afterAll! ->
 describe('parent-child tests: ', ->
   it('should make a widget and a kidget', ->
     let parent = null
-    Widget~create({ value: 'mom'})
+    backend.create(Widget, { value: 'mom'})
     .then((widg) ->
       now parent = widg
-      widg~createChild(Kidget, { value: 'kid' })
+      rel.createChild(widg, { value: 'kid' })
     ).then((kidg) ->
       expect(kidg.value).toBe('kid')
-      //backend.createQuery().setType(Kidget).setParent(parent).byId(kidg.id).find()
-      let q = backend.createQuery()
-      now q = q.setType(Kidget)
-      now q = q.setParent(parent)
-      debugger
-      now q = q.byId(kidg.id)
-      q.find()
+      rel.findChildById(parent, kidg.id)
     ).then((kidg) ->
-      expect(kidg._parent).toBe(parent.id)
+      expect(rel.isChildOf(kidg, parent))
       expect(kidg.value).toBe('kid')
       kidg.value = 'child'
       kidg~save()
@@ -72,17 +68,17 @@ describe('parent-child tests: ', ->
       kidg~destroy()
     .then! (rst) ->
       expect(rst).toBeTruthy()
-      kidg = parent~createChild(Kidget)
+      kidg = rel.createChild(parent)
       kidg.id = '12345'
       kidg.value = 'kid cudi'
       kidg~save()
     .then! (kidg) ->
       expect(kidg.id).toBe('12345')
       expect(kidg.value).toBe('kid cudi')
-      parent~destroyChildById(Kidget, kidg.id)
+      rel.destroyChildById(parent, kidg.id)
     .then! (rst) ->
       expect(rst).toBeTruthy()
-      backend.createQuery().setType(Kidget).setParent(parent).byId('12345').find()
+      rel.findChildById(parent, '12345')
     .then! (rst) ->
       expect(rst).toBe(undefined)
   )
