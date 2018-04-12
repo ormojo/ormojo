@@ -24,9 +24,9 @@ export class Backend {
   findById(T: Type, id, opts): Promise<Entity | undefined | Array<Entity | undefined>> ->
     q = this.createQuery().setType(T).byId(id)
     if Array.isArray(id):
-      this.find(q).then! resultSet -> resultSet.getResults!
+      this.find(q, opts).then! resultSet -> resultSet.getResults!
     else:
-      this.find(q).then! resultSet -> (resultSet.getResults!)[0]
+      this.find(q, opts).then! resultSet -> (resultSet.getResults!)[0]
 
   //
   // Generate an empty Query appropriate to this backend.
