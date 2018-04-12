@@ -4,6 +4,7 @@ import { ESQuery, ESResultSet, updateInstanceWithData } from './query'
 export class ESSource extends AsyncSource:
   constructor(opts) ->
     super(opts)
+    this.backend = opts.backend
     this.typeMap = opts.typeMap
     this.defaultType = opts.defaultType
     this.errorOnMissingType = opts.errorOnMissingType
@@ -12,7 +13,7 @@ export class ESSource extends AsyncSource:
 
   _get(query, id) ->
     // Elasticsearch GET
-    { log, es, typeMap, defaultType, errorOnMissingType } = this
+    { log, es, typeMap, defaultType, errorOnMissingType, backend } = this
     rq = {
       id
       index: query.index
@@ -24,13 +25,13 @@ export class ESSource extends AsyncSource:
     es.get(rq).then! (rst) ->
       log.trace("es.get <", rst)
       if rst.found:
-        new ESResultSet([rst])._hydrate(typeMap, defaultType, errorOnMissingType)
+        new ESResultSet(backend, [rst])._hydrate(typeMap, defaultType, errorOnMissingType)
       else:
-        new ESResultSet([])
+        new ESResultSet(backend, [])
 
   _mget(query, ids) ->
     // Elasticsearch MGET
-    { log, es, typeMap, defaultType, errorOnMissingType } = this
+    { log, es, typeMap, defaultType, errorOnMissingType, backend } = this
     rq = {
       index: query.index
       type: query.type
@@ -41,12 +42,12 @@ export class ESSource extends AsyncSource:
     es.mget(rq).then! (rst) ->
       log.trace("es.mget <", rst)
       docs = rst?.docs or []
-      new ESResultSet([
+      new ESResultSet(backend, [
         ...for elem doc in docs: if doc?.found: [doc] else: [undefined]
       ])._hydrate(typeMap, defaultType, errorOnMissingType)
 
   _find(query) ->
-    { log, es, typeMap, defaultType, errorOnMissingType } = this
+    { log, es, typeMap, defaultType, errorOnMissingType, backend } = this
     rq = {
       body: query.getQueryDsl()
       version: true
@@ -59,14 +60,14 @@ export class ESSource extends AsyncSource:
     es.search(rq).then! (rst) ->
       log.trace("es.search <", rst)
       if (not rst) or (not rst.hits):
-        new ESResultSet([], 0, 0, query, 0)
+        new ESResultSet(backend, [], 0, 0, query, 0)
       else:
-        new ESResultSet(rst.hits.hits, rst.hits.total, rq.from, query, rst.hits.max_score)._hydrate(typeMap, defaultType, errorOnMissingType)
+        new ESResultSet(backend, rst.hits.hits, rst.hits.total, rq.from, query, rst.hits.max_score)._hydrate(typeMap, defaultType, errorOnMissingType)
 
   readIdQuery(query: ESQuery): Promise<ESResultSet> ->
     ids = query.ids
     if ids.length == 0:
-      Promise.resolve(new ESResultSet([]))
+      Promise.resolve(new ESResultSet(this.backend, []))
     else if ids.length == 1:
       this._get(query, ids[0])
     else:

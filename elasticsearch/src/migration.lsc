@@ -21,11 +21,17 @@ class MigrationPlan:
   constructor(backend, index) ->
     this.backend = backend
     this.index = index
+
+    analysis = {}
+    if index.analyzer: analysis.analyzer = index.analyzer
+    if index.filter: analysis.filter = index.filter
+
+    settings = { analysis }
+    if index.settings: Object.assign(settings, index.settings)
+
     this.targetSettings = {
-      mappings: this.index.generateMappings()
-      settings: {
-        analysis: this.index.generateAnalysis()
-      }
+      mappings: this.index.mappings
+      settings: { analysis }
     }
 
   getTargetSettings() -> this.targetSettings

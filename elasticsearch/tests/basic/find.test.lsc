@@ -1,13 +1,13 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
 import { makeCorpus, cleanupCorpus } from '../makeCorpus'
-import { create, find, findAll } from '@ormojo/ormojo'
+import { find, findAll } from '@ormojo/ormojo'
 import { toPlainObject } from '@ormojo/ephraim'
 
 let backend, Widget
 
 beforeAll! ->
   now { backend, Widget } = makeCorpus('find')
-  mig = backend.getMigration()
+  mig = backend.createMigration()
   mig.prepare().then(-> mig.execute())
 
 afterAll! ->
@@ -17,9 +17,9 @@ describe('find', ->
 
   it('should find', ->
     widgets = [...for let i=0;i<10;i++:
-      [Widget~create({name: `findAll ${i}`, tags: ['findAll'], qty: i}, { noPersist: true })]
+      [backend.create(Widget, {name: `findAll ${i}`, tags: ['findAll'], qty: i}, { noPersist: true })]
     ]
-    widgets.push(Widget~create({name: 'uniquely named thing', qty: 50}, { noPersist: true }))
+    widgets.push(backend.create(Widget, {name: 'uniquely named thing', qty: 50}, { noPersist: true }))
     backend.save(widgets, { refresh: 'wait_for'})
     .then! ->
       // find one

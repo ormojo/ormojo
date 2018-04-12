@@ -1,38 +1,5 @@
 import { esTypeMap } from './esTypeMap'
-import { declaredFields } from '@ormojo/ephraim'
-import { getESTypeForType, getIndexForType } from './util'
-
-// Generate Elasticsearch mapping properties
-generateMappingForType(T) ->
-  m = {}
-  props = {}
-
-  for key k, val field in T~declaredFields():
-    if k != 'id':
-      mapping = field.mapping or {}
-      // Merge missing keys from typemap defaults
-      typeMap = esTypeMap(field.type)
-      if typeMap:
-        for key mk, val mv in typeMap:
-          if not (mk in mapping): mapping[mk] = mv
-
-      props[field.key] = mapping
-
-  // ES parent/child mapping
-  if T.entitySpec?.parent:
-    m._parent = { type: getESTypeForType(T.entitySpec.parent) }
-    m._routing = { required: true }
-
-  m.properties = props
-  m
-
-// Generate Elasticsearch analysis props
-generateAnalysisPropsForType(T) ->
-  props = {}
-  { analyzer, filter } = T.entitySpec
-  if analyzer: props.analyzer = analyzer
-  if filter: props.filter = filter
-  props
+import { declaredFields, typeFrom } from '@ormojo/ephraim'
 
 // Represents an index in Elasticsearch.
 export class ESIndex:
@@ -40,43 +7,72 @@ export class ESIndex:
     this.backend = backend
     this.name = name
     this.types = {}
+    this.mappings = {}
 
-  addEntityType(T): void ->
-    this.types[T.entitySpec.type] = T
+  addEntityType(T, opts): void ->
+    this.types[opts.type] = opts
+
+    if opts.analyzer:
+      this.analyzer = Object.assign(this.analyzer or {}, opts.analyzer)
+    if opts.filter:
+      this.filter = Object.assign(this.filter or {}, opts.filter)
+
+    // Build mapping
+    m = { properties: {} }
+    properties = m.properties
+    fields = opts.fields or {}
+
+    // Individual field mappings
+    for key k, val spec in T~declaredFields():
+      if k != 'id':
+        mapping = fields[k]?.mapping or spec.mapping or {}
+        // Merge missing keys from typemap defaults
+        typeMap = esTypeMap(spec.type)
+        if typeMap:
+          for key mk, val mv in typeMap:
+            if not (mk in mapping): mapping[mk] = mv
+
+        properties[fields[k]?.key or spec.key] = mapping
+
+    opts.mapping = m
+    this.mappings[opts.type] = m
 
   _deleteIndex(): void ->
     this.backend.es.indices.delete({index: this.name})
-
-  ////////////////////////////////////////////////////////////////// MAPPING
-  generateMappings() ->
-    mappings = {}
-    for key type, val T in this.types:
-      mappings[type] = generateMappingForType(T)
-    mappings
-
-  generateAnalysis() ->
-    analysis = { }
-    for val T in this.types:
-      props = generateAnalysisPropsForType(T)
-      if props.analyzer: analysis.analyzer = Object.assign(analysis.analyzer or {}, props.analyzer)
-      if props.filter: analysis.filter = Object.assign(analysis.filter or {}, props.filter)
-    analysis
 
 // Represents the collection of indices associated with a backend.
 export class ESIndices:
   constructor(backend) ->
     this.backend = backend
+    this.typeMap = new Map()
     this.indices = {}
     this.prefixedIndices = {}
 
-  addEntityType(T) ->
-    indexName = getIndexForType(T)
-    if not this.indices[indexName]:
-      this.indices[indexName] = new ESIndex(this.backend, indexName)
-    this.indices[indexName].addEntityType(T)
+  addEntityType(T, opts): void ->
+    // Compute index name from options data
+    if not opts.index:
+      throw new Error(`could not determine Elasticsearch index name for type '${T.name}'.`)
+    if opts.indexPrefix:
+      opts.index = opts.indexPrefix + opts.index
+
+    // Verify type name
+    if not opts.type:
+      throw new Error(`could not determine Elasticsearch type name for type '${T.name}'`)
+
+    let index = this.indices[opts.index]
+    if not index:
+      now index = new ESIndex(this.backend, opts.index)
+      this.indices[opts.index] = index
+    opts.indexRepresentation = index
+
+    this.typeMap.set(T, opts)
+    index.addEntityType(T, opts)
 
   getIndices() ->
     this.indices
+
+  getTypeInfo(T) ->
+    this.typeMap.get(T)
 
   findIndexByName(name) ->
     // Locate by name
@@ -96,4 +92,4 @@ export class ESIndices:
 
   getEphraimTypeForESType(esIndex, esType) ->
     idx = this.findIndexByName(esIndex)
-    if idx: idx.types[esType]
+    if idx: idx.types[esType].ephraimType

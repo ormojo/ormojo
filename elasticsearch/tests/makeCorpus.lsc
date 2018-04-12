@@ -1,6 +1,6 @@
 import { entity, field, types, listOf, extendField } from '@ormojo/ephraim'
 import es_client from './es_client'
-import { ESBackend, ESQuery, QueryDsl } from '..'
+import { ESBackend, QueryDsl } from '..'
 
 export makeCorpus(extraName) ->
   logger = console.log.bind(console)
@@ -27,7 +27,7 @@ export makeCorpus(extraName) ->
       mapping: (new QueryDsl).q('fields', 'raw', { type: 'keyword'}).body
     }) tags
 
-  backend.registerType(ESWidget)
+  backend.bind(ESWidget)
 
   { backend, Widget: ESWidget }
 

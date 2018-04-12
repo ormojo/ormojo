@@ -1,5 +1,4 @@
-import { Query, Cursor, ResultSet } from '@ormojo/ormojo'
-import { getIndexForType, getESTypeForType, toParentId } from './util'
+import { Query, Cursor, ResultSet, setBackend } from '@ormojo/ormojo'
 import { createMemory as create, assignPlainObject } from '@ormojo/ephraim'
 import { createNestedObject, QueryDsl } from './queryDsl'
 
@@ -9,16 +8,13 @@ export class ESQuery extends Query:
 
   setType(T) ->
     super.setType(T)
-    this.index = getIndexForType(T)
-    this.type = getESTypeForType(T)
+    typeInfo = this.backend._getTypeInfo(T)
+    this.index = typeInfo.index
+    this.type = typeInfo.type
     this
 
   setIndexName(idx) ->
     this.index = idx
-    this
-
-  setParent(entOrId) ->
-    this.parent = entOrId~toParentId!
     this
 
   setQueryDsl(body) ->
@@ -35,12 +31,7 @@ export class ESQuery extends Query:
     this
 
   setQuery(other) ->
-    this.body = other.body
-    this.limit = other.limit
-    this.offset = other.offset
-    this.index = other.index
-    this.type = other.type
-    this.ephraimType = other.ephraimType
+    Object.assign(this, other)
 
   resumeFrom(cursor) ->
     this.setQuery(cursor.query)
@@ -104,10 +95,9 @@ export updateInstanceWithData(instance, esData) ->
   instance
 
 export class ESResultSet extends ResultSet:
-  constructor(data, total, offset, originalQuery, maxScore = 0) ->
-    super()
+  constructor(backend, data, total, offset, originalQuery, maxScore = 0) ->
+    super(backend, data or [])
     this.maxScore = maxScore
-    this.results = data or []
     this.total = total or this.results.length
     nextOffset = (offset or 0) + this.results.length
     if nextOffset < this.total:
@@ -120,11 +110,12 @@ export class ESResultSet extends ResultSet:
   getMaxScore() -> this.maxScore
 
   _hydrate(typeMap, defaultType, errorOnMissingType) ->
+    backend = this.backend
     nextResults = [...for elem result in this.results:
       if result:
         T = resolveType(typeMap, defaultType, errorOnMissingType, result)
         if T:
-          instance = T~create()
+          instance = T~create()~setBackend(backend)
           [updateInstanceWithData(instance, result)]
       else:
         [undefined]

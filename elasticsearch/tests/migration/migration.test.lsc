@@ -1,5 +1,4 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
-import { create, findById } from '@ormojo/ormojo'
 import {  entity, field, types, listOf } from '@ormojo/ephraim'
 import es_client from '../es_client'
 import { ESBackend,QueryDsl } from '../..'
@@ -49,12 +48,14 @@ afterAll! ->
     ignore: [404]
   })
 
+let be, be2, be3
+
 describe('migration tests: ', ->
   it('should have static migration plan', ->
     let id1, id2
-    let be = createBackend()
-    be.registerType(Widget)
-    mig = be.getMigration()
+    now be = createBackend()
+    be.bind(Widget)
+    mig = be.createMigration()
     mig.prepare()
     .then(->
       plan = mig.getMigrationPlan()
@@ -64,20 +65,20 @@ describe('migration tests: ', ->
       mig.execute()
     )
     .then! ->
-      Widget~create({name: 'bob'})
+      be.create(Widget, {name: 'bob'})
     .then! (w1) ->
       now id1 = w1.id
-      be2 = createBackend()
-      be2.registerType(Widget2)
-      mig2 = be2.getMigration()
+      now be2 = createBackend()
+      be2.bind(Widget2)
+      mig2 = be2.createMigration()
       mig2.prepare()
     .then! (mig2) ->
       plan = mig2.getMigrationPlan!
       // console.dir(plan, { depth: 50 })
       expect(plan[0].strategy).toBe('NOT_NEEDED')
-      be3 = createBackend()
-      be3.registerType(NuWidget)
-      mig3 = be3.getMigration()
+      now be3 = createBackend()
+      be3.bind(NuWidget)
+      mig3 = be3.createMigration()
       mig3.prepare()
     .then! (mig3) ->
       plan = mig3.getMigrationPlan!
@@ -85,11 +86,11 @@ describe('migration tests: ', ->
       expect(plan[0].strategy).toBe('REINDEX')
       mig3.execute()
     .then! ->
-      NuWidget~create({name: 'joe', extra: 'pickles'})
+      be3.create(NuWidget, {name: 'joe', extra: 'pickles'})
     .then! (w2) ->
       now id2 = w2.id
       // Check that data survived migration
-      NuWidget~findById([id1, id2])
+      be3.findById(NuWidget, [id1, id2])
     .then! (results) ->
       expect(results[0].name).toBe('bob')
       expect(results[1].extra).toBe('pickles')

@@ -1,10 +1,9 @@
-import { Backend, setBackend, getBackend, normalizeLoggerObject } from '@ormojo/ormojo'
+import { Backend, setBackend, normalizeLoggerObject } from '@ormojo/ormojo'
 import { ESIndices } from './indices'
 import { ESMigration } from './migration'
 import { ESQuery } from './query'
-import { typeFrom, createMemory as create, assignPlainObject } from '@ormojo/ephraim'
-import { getIndexForType, getESTypeForType } from './util'
-import { ESSink } from './bulkSink'
+import { typeOf, underlyingTypeOfType, typeFrom, createMemory as create, assignPlainObject } from '@ormojo/ephraim'
+import { ESSink } from './sink'
 import { ESSource } from './source'
 
 export class ESBackend extends Backend:
@@ -13,38 +12,53 @@ export class ESBackend extends Backend:
     this.es = es
     this.log = normalizeLoggerObject(opts?.log)
     this.indices = new ESIndices(this)
-    this.typeMap = new Map()
-    this.sink = new ESSink({es: this.es, log: this.log })
+    this.sink = new ESSink({backend: this, es: this.es, log: this.log })
     // Source constructor
     typeMap(idx, ty) => this.indices.getEphraimTypeForESType(idx, ty)
-    this.source = new ESSource({es: this.es, log: this.log, typeMap, defaultType: null, errorOnMissingType: true})
+    this.source = new ESSource({backend: this, es: this.es, log: this.log, typeMap, defaultType: null, errorOnMissingType: true})
     if opts?.indexPrefix: this.indexPrefix = opts.indexPrefix
 
-  registerType(T): void ->
+  bind(T, opts): void ->
     now T = typeFrom(T)
-    if T~getBackend():
-      throw new Error(`ESBackend.registerType(): Type ${T.name} was previously registered with another backend. To register with this backend, create a subclass.`)
-    idx = getIndexForType(T)
-    est = getESTypeForType(T)
-    if not idx:
-      throw new Error(`ESBackend.registerType(): Type ${T.name} was registered without an Elasticsearch index set.`)
-    if not est:
-      throw new Error(`ESBackend.registerType(): Type ${T.name} was registered without an Elasticsearch type set.`)
-    T~setBackend(this)
-    this.typeMap.set(T, true)
-    this.indices.addEntityType(T)
+    if not T: throw new Error(`ESBackend.bind: a type is required`)
+    if this.indices.getTypeInfo(T):
+      throw new Error(`ESBackend.bind: duplicate registration of type '${T.name}'`)
 
-  getMigration() ->
+    trueOpts = Object.assign({}, opts)
+
+    // Pass through options from type definition.
+    trueOpts.ephraimType = T
+    trueOpts.parent = trueOpts.parent or T.entitySpec.parent
+    trueOpts.index = trueOpts.index or T.entitySpec.index or T.name
+    trueOpts.type = trueOpts.type or T.entitySpec.type or T.name
+    trueOpts.indexPrefix = this.indexPrefix
+    trueOpts.analyzer = trueOpts.analyzer or T.entitySpec.analyzer
+    trueOpts.filter = trueOpts.filter or T.entitySpec.filter
+
+    this.indices.addEntityType(T, trueOpts)
+
+  _getTypeInfo(T) ->
+    opts = this.indices.getTypeInfo(typeFrom(T))
+    if not opts:
+      throw new Error(`ESBackend: Type '${T.name}' is not bound to this backend.`)
+    opts
+
+  _getTypeInfoForInstance(inst) ->
+    this._getTypeInfo(underlyingTypeOfType(typeOf(inst)))
+
+  createMigration(): ESMigration ->
     new ESMigration(this)
 
   createQuery(): ESQuery ->
     new ESQuery(this)
 
   create(type, data, opts) ->
+    typeInfo = this._getTypeInfo(type)
     instance = create(type)
+    instance~setBackend(this)
     instance._isNewRecord = true
-    instance._index = getIndexForType(type)
-    instance._type = getESTypeForType(type)
+    instance._index = typeInfo.index
+    instance._type = typeInfo.type
     if data~looseNotEq(null):
       instance~assignPlainObject(data)
       if not opts?.noPersist:
@@ -67,14 +81,16 @@ export class ESBackend extends Backend:
       if rst?.results[0]: instance._wasDeleted = true
       instance
 
-  destroyById(type, id, opts) ->
-    target = {
+  destroyById(type, ids, opts) ->
+    typeInfo = this._getTypeInfo(type)
+    if not Array.isArray(ids): now ids = [ids]
+    targets = [ ...for elem id in ids: [{
       _id: id
-      _type: getESTypeForType(type)
-      _index: getIndexForType(type)
-    }
-    if opts?.parent: target._parent = opts.parent
-    this.sink.delete([target]).then! rst -> rst?.results[0]
+      _index: typeInfo.index
+      _type: typeInfo.type
+      ...if opts?.parent: { _parent: opts.parent }
+    }]]
+    this.sink.delete(targets)
 
   find(query) ->
     this.source.read(query)

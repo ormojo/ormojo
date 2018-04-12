@@ -1,5 +1,4 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
-import { create } from '@ormojo/ormojo'
 import { entity, field, types, isa } from '@ormojo/ephraim'
 import es_client from '../es_client'
 import { ESBackend } from '../..'
@@ -62,12 +61,12 @@ beforeAll! ->
     }
   })
 
-  backend.registerType(ESHuman)
-  backend.registerType(ESElephant)
-  backend.registerType(ESAnimal)
-  backend.registerType(ESEinstein)
+  backend.bind(ESHuman)
+  backend.bind(ESElephant)
+  backend.bind(ESAnimal)
+  backend.bind(ESEinstein)
 
-  mig = backend.getMigration()
+  mig = backend.createMigration()
   debugger
   mig.prepare().then(-> mig.execute())
 
@@ -80,10 +79,10 @@ afterAll! ->
 describe('multiple inheritance tests: ', ->
   it! 'should create, store, and rehydrate multitype objects', ->
     let humanId, elephantId, animalId, einsteinId
-    creatures = [ ESHuman~create(), ESElephant~create(), ESAnimal~create(), ESEinstein~create() ]
+    creatures = [ backend.create(ESHuman), backend.create(ESElephant), backend.create(ESAnimal), backend.create(ESEinstein) ]
     backend.save(creatures, { refresh: 'wait_for'})
     .then! (rst) ->
-      now [ humanId, elephantId, animalId, einsteinId ] = [ rst[0].id, rst[1].id, rst[2].id, rst[3].id ]
+      now [ humanId, elephantId, animalId, einsteinId ] = rst.map(x -> x.id)
       q = backend.createQuery()
       q.setIndexName("es_test_mi")
       q.q("query", "range", "iq", "gte", 0)
