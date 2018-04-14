@@ -1,5 +1,5 @@
 import { typeOfPrototypeSymbol } from './type'
-import { fieldsSymbol } from './fields'
+import { fieldsSymbol, dataSymbol } from './fields'
 
 export deltaSymbol = Symbol.for("ephraim.delta")
 export isDeltaSymbol = Symbol.for("ephraim.isDelta")
@@ -16,11 +16,18 @@ export flushDelta(entity): void ->
 export fieldHasChanged(entity, field): boolean ->
   entity[typeOfPrototypeSymbol].fieldHasChanged(entity, field)
 
-export getChangedFields(entity): Array<string> ->
+export getChangedFieldKeys(entity): Array<string> ->
   entity[typeOfPrototypeSymbol].getChangedFields(entity)
 
 export hasChanges(entity): boolean ->
   entity[typeOfPrototypeSymbol].hasChanges(entity)
+
+export getPreviousValue(entity, fieldName) ->
+  entity[dataSymbol][fieldName]
+
+// Set underlying data value for a delta entity
+export setDataValue(entity, fieldName, fieldValue) ->
+  entity[dataSymbol][fieldName] = fieldValue
 
 // Iterate over all field keys and values, flex and declared
 export forEachChangedField(ent, f): void ->

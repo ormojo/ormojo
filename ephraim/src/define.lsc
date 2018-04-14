@@ -24,35 +24,27 @@ normalizeFieldSpec(spec) ->
 
 // @field decorator
 export field(spec) ->
-  now spec = normalizeFieldSpec(spec)
-
   (proto, key, descriptor) ->
     // Key may not contain dot or begin with underscore
     if ( /\./.test(key) or /^_/.test(key) ):
       throw new Error(`Field '${key}' may not begin with '_' or contain '.'`)
 
+    // Generate entity prototype
     bootstrapPrototype(proto, EntityType)
     T = typeFrom(proto.constructor)
-    spec.initializer = descriptor.initializer
-    T.defineField(key, spec)
-    T.nativeProperties[key] = true
-    {
-      configurable: true, enumerable: true
-      get: -> undefined
-      set: -> throw new Error("setting abstract entity property")
-    }
 
-// @extendField decorator
-export extendField(spec) ->
-  (proto, key, descriptor) ->
-    bootstrapPrototype(proto, EntityType)
-    T = typeFrom(proto.constructor)
+    // Normalize field specification; allow existing fields to be extended
+    // via Object.assign
     lastSpec = T.fields[key]
-    if not lastSpec:
-      throw new Error(`@extendField() must extend an existing field.`)
-    nextSpec = normalizeFieldSpec(Object.assign({}, lastSpec, spec))
-    if descriptor.initializer: nextSpec.initializer = descriptor.initializer
+    nextSpec = if lastSpec:
+      normalizeFieldSpec(Object.assign({}, lastSpec, spec))
+    else:
+      normalizeFieldSpec(spec)
+    if descriptor.initializer != undefined: nextSpec.initializer = descriptor.initializer
+
+    // Apply field descriptor to type
     T.defineField(key, nextSpec)
+    T.nativeProperties[key] = true
     {
       configurable: true, enumerable: true
       get: -> undefined
@@ -90,13 +82,14 @@ export entity(spec) ->
     throwOnlyConstructor
 
 // Augment specifications for fields
-export augment(T, spec): void ->
+export augmentField(T, field, spec): void ->
   now T = typeFrom(T)
-  for key k, val v in spec:
-    if T.fields[k]:
-      nextSpec = Object.assign({}, T.fields[k], v)
-      normalizeFieldSpec(nextSpec)
-      T.defineField(k, nextSpec)
+  if T.fields[field]:
+    nextSpec = normalizeFieldSpec(Object.assign({}, T.fields[field], spec))
+    T.defineField(field, nextSpec)
+
+export augment(T, specs): void ->
+  for key k, val v in specs: augmentField(T, k, v)
 
 export setFieldType(T, field, type): void ->
-  augment(T, { [field]: { type } })
+  augmentField(T, field, { type } )
