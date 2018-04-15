@@ -1,5 +1,6 @@
 import { PrimitiveType, typeSymbol } from './type'
 import { singleton } from './singleton'
+import isEqual from 'lodash.isequal'
 
 export any = singleton("any", ->
   const any = new PrimitiveType("any")
@@ -48,6 +49,7 @@ export integer = singleton("integer", ->
 export date = singleton("date", ->
   const date = new PrimitiveType("date")
   date.validate = (x) -> x~looseEq(null) or (x instanceof Date)
+  date.eq = (a, b) -> a.getTime() == b.getTime()
   date
 )
 
@@ -59,6 +61,7 @@ export object = singleton("object", ->
       typeof x == "object" and
       (not Array.isArray(x))
     )
+  object.eq = isEqual
   object
 )
 
@@ -70,6 +73,7 @@ export array = singleton("array", ->
       typeof x != "function" and
       x.length >= 0
     )
+  array.eq = isEqual
   array
 )
 
@@ -87,6 +91,7 @@ export json = singleton("json", ->
       or t == "object"
       or Array.isArray(x)
     )
+  json.eq = isEqual
   json
 )
 

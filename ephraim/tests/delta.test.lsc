@@ -1,8 +1,8 @@
-import { entity, field, augment, toPlainObject, createMemoryDelta as create, setFieldType, isDelta, hasChanges, clearDelta, flushDelta, fieldHasChanged, getChangedFieldKeys, rawSet } from '@ormojo/ephraim'
+import { entity, field, augment, toPlainObject, createMemoryDelta as create, setFieldType, isDelta, hasChanges, clearDelta, fieldHasChanged, getChangedFieldKeys, rawSet, getPreviousValue } from '@ormojo/ephraim'
 
 test! 'basic', ->
   @entity() class E:
-    @field() f
+    @field() f = 0
 
   e = create(E)
   expect(e~isDelta!).toBe(true)
@@ -11,18 +11,14 @@ test! 'basic', ->
   expect(e~fieldHasChanged('f')).toBe(false)
 
   e.f = 1
+  console.log("after field change", e)
   expect(e.f).toBe(1)
-  console.log(e)
+  expect(e~getPreviousValue('f')).toBe(0)
   expect(e~hasChanges!).toBe(true)
   expect(e~getChangedFieldKeys!).toEqual(['f'])
   expect(e~fieldHasChanged('f')).toBe(true)
 
   e~clearDelta()
-  expect(e.f).toBe(undefined)
-  console.log(e)
-
-  e.f = 1
-  e~flushDelta()
   expect(e.f).toBe(1)
   expect(e~hasChanges!).toBe(false)
   console.log(e)

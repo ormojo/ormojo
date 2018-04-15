@@ -15,11 +15,11 @@ export {
 
 export {
   declaredFields, declaredFieldKeys, flexFieldKeys, fieldKeys, forEachField
-  dataSymbol, hasDeclaredField, rawSet
+  dataSymbol, hasDeclaredField, rawSet, primitiveFields, primitiveFieldKeys
 } from './fields'
 
 export {
-  deltaSymbol, isDeltaSymbol, isDelta, clearDelta, flushDelta, fieldHasChanged, getChangedFieldKeys, hasChanges, forEachChangedField, getPreviousValue, setDataValue
+  deltaSymbol, isDelta, clearDelta, fieldHasChanged, getChangedFieldKeys, hasChanges, forEachChangedField, getPreviousValue
 } from './delta'
 
 export {

@@ -1,7 +1,8 @@
-import { typeFrom, typeOfPrototypeSymbol } from './type'
+import { typeFrom } from './type'
 
 export fieldsSymbol = Symbol.for("ephraim.fields")
 export dataSymbol = Symbol.for("ephraim.data")
+export rawSetSymbol = Symbol.for("ephraim.rawSet")
 
 // Get fields
 export declaredFields(x) ->
@@ -15,6 +16,14 @@ export hasDeclaredField(x, f) ->
 export declaredFieldKeys(x) ->
   T = typeFrom(x) or typeFrom(x.constructor)
   Object.keys(T.fields)
+
+export primitiveFields(x) ->
+  T = typeFrom(x) or typeFrom(x.constructor)
+  T.primitiveFields
+
+export primitiveFieldKeys(x) ->
+  T = typeFrom(x) or typeFrom(x.constructor)
+  Object.keys(T.primitiveFields)
 
 // Get keys of flex fields -- undeclared fields not present on the
 // prototype, but present on the object itself.
@@ -47,6 +56,6 @@ export forEachField(ent, f): void ->
 // Directly set a field on an entity without triggering observers, deltas, et cetera
 export rawSet(ent, fieldKey, val): void ->
   if ent[fieldsSymbol][fieldKey]:
-    ent[typeOfPrototypeSymbol].rawSet(ent, fieldKey, val)
+    ent[rawSetSymbol](fieldKey, val)
   else:
     ent[fieldKey] = val

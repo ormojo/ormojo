@@ -45,6 +45,7 @@
     "testRegex": "(\\.|/)test\\.lsc$"
   },
   "dependencies": {
-    "@ormojo/fobs": "^1.0.0"
+    "@ormojo/fobs": "^1.0.0",
+    "lodash.isequal": "^4.5.0"
   }
 }

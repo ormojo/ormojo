@@ -108,12 +108,14 @@ export EntityType = singleton("EntityType", ->
       super(name)
       this.entitySpec = {}
       this.fields = {}
+      this.primitiveFields = {}
       this.nativeProperties = {}
 
     defineField(key, spec): void ->
       spec.key = key
       this.fields[key] = spec
       if spec.type~isPrimitiveType!:
+        this.primitiveFields[key] = spec
         // Extract single-value defaults on primitive fields
         if (spec.defaultValue == undefined) and spec.initializer:
           val = spec.initializer.call(null)

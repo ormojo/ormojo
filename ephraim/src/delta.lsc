@@ -1,39 +1,36 @@
-import { typeOfPrototypeSymbol } from './type'
-import { fieldsSymbol, dataSymbol } from './fields'
+import { fieldsSymbol } from './fields'
 
 export deltaSymbol = Symbol.for("ephraim.delta")
-export isDeltaSymbol = Symbol.for("ephraim.isDelta")
+
+export clearDeltaSymbol = Symbol.for("ephraim.clearDelta")
+export fieldHasChangedSymbol = Symbol.for("ephraim.fieldHasChanged")
+export getChangedFieldKeysSymbol = Symbol.for("ephraim.getChangedFieldKeys")
+export hasChangesSymbol = Symbol.for("ephraim.hasChanges")
+export getPreviousValueSymbol = Symbol.for("ephraim.getPreviousValue")
 
 export isDelta(entity): boolean ->
-  entity[isDeltaSymbol] == true
+  entity[clearDeltaSymbol]~looseNotEq(null)
 
 export clearDelta(entity): void ->
-  entity[typeOfPrototypeSymbol].clearDelta(entity)
-
-export flushDelta(entity): void ->
-  entity[typeOfPrototypeSymbol].flushDelta(entity)
+  entity[clearDeltaSymbol]()
 
 export fieldHasChanged(entity, field): boolean ->
-  entity[typeOfPrototypeSymbol].fieldHasChanged(entity, field)
+  entity[fieldHasChangedSymbol](field)
 
 export getChangedFieldKeys(entity): Array<string> ->
-  entity[typeOfPrototypeSymbol].getChangedFields(entity)
+  entity[getChangedFieldKeysSymbol]()
 
 export hasChanges(entity): boolean ->
-  entity[typeOfPrototypeSymbol].hasChanges(entity)
+  entity[hasChangesSymbol]()
 
 export getPreviousValue(entity, fieldName) ->
-  entity[dataSymbol][fieldName]
-
-// Set underlying data value for a delta entity
-export setDataValue(entity, fieldName, fieldValue) ->
-  entity[dataSymbol][fieldName] = fieldValue
+  entity[getPreviousValueSymbol](fieldName)
 
 // Iterate over all field keys and values, flex and declared
 export forEachChangedField(ent, f): void ->
   // Declared fields
   fields = ent[fieldsSymbol]
-  for elem k in ent[typeOfPrototypeSymbol].getChangedFields(ent):
+  for elem k in ent[getChangedFieldKeysSymbol]():
     f(k, ent[k], fields[k])
 
   // Flex fields

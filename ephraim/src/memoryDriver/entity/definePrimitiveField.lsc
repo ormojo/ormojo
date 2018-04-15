@@ -4,27 +4,24 @@ import { typeCheckAssignment } from '../../util'
 import { observedFieldsSymbol } from '../../observe'
 import { any } from '../../primitiveTypes'
 
-createGetterMethod(proto, type, key, isDelta) ->
-  if isDelta:
-    () ->
-      r = this[deltaSymbol]?[key]
-      if r == undefined: this[dataSymbol]?[key] else: r
-  else:
+tripleEquals(a,b) -> a == b
+
+createGetterMethod(proto, type, key) ->
     () -> this[dataSymbol]?[key]
 
 createDeltaSetterMethod(proto, type, key) ->
+  eq = type.eq or tripleEquals
   // TODO: special handling for id
   // id is nullable but reassigning it fails if not null
   (val): void ->
-    let delta = this[deltaSymbol]
-    let curVal = delta?[key]
-    if curVal == undefined: now curVal = this[dataSymbol]?[key]
-    if curVal == val: return
-
+    let prevVal = this[dataSymbol][key]
+    if eq(prevVal, val): return
     if type != any: typeCheckAssignment(type, key, val)
+    this[dataSymbol][key] = val
 
-    if not delta: this[deltaSymbol] = now delta = {}
-    delta[key] = val
+    let delta = this[deltaSymbol]
+    if not delta: this[deltaSymbol] = now delta = Object.create(null)
+    delta[key] = prevVal
 
     observedFields = this[observedFieldsSymbol]
     if observedFields:

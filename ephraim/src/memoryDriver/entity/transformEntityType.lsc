@@ -1,15 +1,30 @@
 import { EntityType, PrimitiveType, underlyingTypeSymbol } from '../../type'
-import { declaredFields, dataSymbol } from '../../fields'
-import { deltaSymbol, isDeltaSymbol } from '../../delta'
+import { declaredFields, dataSymbol, rawSetSymbol } from '../../fields'
+import { deltaSymbol, clearDeltaSymbol, fieldHasChangedSymbol, getChangedFieldKeysSymbol, hasChangesSymbol, getPreviousValueSymbol } from '../../delta'
 
 import { definePrimitiveField } from './definePrimitiveField'
 import { defineEntityField } from './defineEntityField'
 import { getObservableEntityGhostClass } from './observable'
 import { transformType } from '../transformType'
 
-hasOwnProperty = Object.prototype.hasOwnProperty
+rawSet(k, v): void -> this[dataSymbol][k] = v
+clearDelta(): void -> this[deltaSymbol] = undefined
+hasChanges(): boolean -> this[deltaSymbol]~looseNotEq(null)
+getChangedFieldKeys(): Array<string> ->
+  delta = this[deltaSymbol]
+  if delta: Object.keys(delta) else: null
+fieldHasChanged(field): boolean ->
+  delta = this[deltaSymbol]
+  if delta and Object.hasOwnProperty.call(delta, field): return true
+  false
+getPreviousValue(field): any ->
+  delta = this[deltaSymbol]
+  if delta and Object.hasOwnProperty.call(delta, field):
+    delta[field]
+  else:
+    this[field]
 
-class MemoryEntityType extends EntityType {
+class MemoryEntityType extends EntityType:
   definePrimitiveField(key, spec): void ->
     definePrimitiveField(this.entityPrototype, spec.type, key, spec, false)
 
@@ -18,14 +33,14 @@ class MemoryEntityType extends EntityType {
 
   construct() -> new (this.entityConstructor)()
 
-  rawSet(entity, fieldKey, val) ->
-    entity[dataSymbol][fieldKey] = val
+  bootstrapFromPrototype(proto): void ->
+    super.bootstrapFromPrototype(proto)
+    proto[rawSetSymbol] = rawSet
 
   createObservableGhost(entity) ->
     new (this~getObservableEntityGhostClass!)(entity)
-} // class MemoryEntityType
 
-class DeltaMemoryEntityType extends EntityType {
+class DeltaMemoryEntityType extends EntityType:
   definePrimitiveField(key, spec): void ->
     definePrimitiveField(this.entityPrototype, spec.type, key, spec, true)
 
@@ -34,39 +49,18 @@ class DeltaMemoryEntityType extends EntityType {
 
   bootstrapFromPrototype(proto): void ->
     super.bootstrapFromPrototype(proto)
-    proto[isDeltaSymbol] = true
-
-  rawSet(entity,fieldKey, val) ->
-    entity[dataSymbol][fieldKey] = val
-
-  clearDelta(entity): void ->
-    entity[deltaSymbol] = Object.create(null)
-
-  flushDelta(entity): void ->
-    delta = entity[deltaSymbol]
-    if not delta: return
-    data = entity[dataSymbol] or Object.create(null)
-    for key k, val v in delta: data[k] = v
-    entity[dataSymbol] = data
-    entity[deltaSymbol] = Object.create(null)
-
-  getChangedFields(entity): Array<string> ->
-    delta = entity[deltaSymbol]
-    if delta: Object.keys(delta) else: null
-
-  hasChanges(entity): boolean ->
-    delta = entity[deltaSymbol]
-    if delta: Object.keys(delta).length > 0 else: false
-
-  fieldHasChanged(entity, field): boolean ->
-    delta = entity[deltaSymbol]
-    if delta and hasOwnProperty.call(delta, field): true else: false
+    proto[rawSetSymbol] = rawSet
+    proto[clearDeltaSymbol] = clearDelta
+    proto[fieldHasChangedSymbol] = fieldHasChanged
+    proto[getChangedFieldKeysSymbol] = getChangedFieldKeys
+    proto[hasChangesSymbol] = hasChanges
+    proto[getPreviousValueSymbol] = getPreviousValue
 
   construct() -> new (this.entityConstructor)()
 
   createObservableGhost(entity) ->
     new (this~getObservableEntityGhostClass!)(entity)
-} // class MemoryEntityType
+
 
 export transformEntityType(ET, transformedTypeSymbol, transformedTypeQualifier, isObservable, isDelta) ->
   typeClass = if isDelta: DeltaMemoryEntityType else: MemoryEntityType

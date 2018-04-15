@@ -1,6 +1,6 @@
 import { typeOf } from './primitiveTypes'
 import { typeFrom, EntityType, ListType, PrimitiveType, typeOfPrototypeSymbol } from './type'
-import { declaredFields, rawSet } from './fields'
+import { declaredFields, rawSetSymbol } from './fields'
 
 // Typecheck an assignment of val to a key of type T, throwing a standard
 // error message if the typecheck fails.
@@ -77,10 +77,8 @@ export assignPlainObject(x, y): void ->
   T.recurseRight(x, y, state)
 
 export initialize(ent, creator): void ->
-  T = ent[typeOfPrototypeSymbol]
-
   for key k, val spec in ent~declaredFields():
     if spec.initializer:
-      T.rawSet(ent, k, spec.type.initialize(ent, spec, creator, spec.initializer))
+      ent[rawSetSymbol](k, spec.type.initialize(ent, spec, creator, spec.initializer))
 
   ent._init?()
