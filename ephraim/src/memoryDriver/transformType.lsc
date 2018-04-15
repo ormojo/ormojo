@@ -1,4 +1,6 @@
-import { EntityType, PrimitiveType, ListType, typeFrom } from '../type'
+import { PrimitiveType, typeFrom } from '../types/type'
+import { EntityType } from '../types/entityType'
+import { ListType } from '../types/listType'
 
 import { transformEntityType } from './entity/transformEntityType'
 import { transformListType } from './list/transformListType'

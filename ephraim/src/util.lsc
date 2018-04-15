@@ -1,5 +1,7 @@
-import { typeOf } from './primitiveTypes'
-import { typeFrom, EntityType, ListType, PrimitiveType, typeOfPrototypeSymbol } from './type'
+import { typeOf } from './types/typeOf'
+import { typeFrom, PrimitiveType } from './types/type'
+import { EntityType } from './types/entityType'
+import { ListType } from './types/listType'
 import { declaredFields, rawSetSymbol } from './fields'
 
 // Typecheck an assignment of val to a key of type T, throwing a standard

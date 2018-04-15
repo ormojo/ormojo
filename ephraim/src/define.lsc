@@ -1,6 +1,7 @@
 // Helpers for defining types
-import { typeFrom, isType, EntityType } from './type'
-import { any } from './primitiveTypes'
+import { typeFrom, isType } from './types/type'
+import { EntityType } from './types/entityType'
+import { any } from './types/primitiveTypes'
 import { fieldsSymbol } from './fields'
 
 // Associate a prototype with an Ephraim EntityType

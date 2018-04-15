@@ -1,6 +1,7 @@
 import { transformType } from './transformType'
 import { initialize } from '../util'
-import { EntityType, typeFrom } from '../type'
+import { typeFrom } from '../types/type'
+import { EntityType } from '../types/entityType'
 
 export { transformType }
 

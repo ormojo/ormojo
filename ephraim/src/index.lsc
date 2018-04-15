@@ -1,13 +1,28 @@
-import * as types from './primitiveTypes'
+import * as primitiveTypes from './types/primitiveTypes'
+import * as opaqueTypes from './types/opaqueTypes'
+
+types = Object.assign({}, primitiveTypes, opaqueTypes)
 export { types }
 
-export { typeOf } from './primitiveTypes'
+export { typeOf } from './types/typeOf'
 
 export {
-  Type, PrimitiveType, ComplexType, EntityType, ListType, MapType
-  typeFrom, isType, setType, listOf, isa, isKindOf, underlyingTypeSymbol
+  Type, PrimitiveType, OpaqueType, ComplexType,
+  typeFrom, isType, setType, isa, isKindOf, underlyingTypeSymbol
   isPrimitiveType, underlyingTypeOfType
-} from './type'
+} from './types/type'
+
+export {
+  EntityType
+} from './types/entityType'
+
+export {
+  ListType, listOf
+} from './types/listType'
+
+export {
+  MapType, mapOf
+} from './types/mapType'
 
 export {
   field, entity, augment, augmentField, setFieldType

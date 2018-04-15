@@ -1,5 +1,5 @@
-import { typeOf } from '../../primitiveTypes'
-import { setType } from '../../type'
+import { typeOf } from '../../types/typeOf'
+import { setType } from '../../types/type'
 import { observableGhostSymbol } from '../../observe'
 
 // List entry typechecks

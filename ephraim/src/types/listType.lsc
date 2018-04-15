@@ -1,0 +1,47 @@
+import { singleton } from '../singleton'
+import { ComplexType, typeSymbol, typeFrom } from './type'
+
+listOfSymbol = Symbol.for("ephraim.listOfType")
+
+export ListType = singleton("ListType", ->
+  class ListType extends ComplexType:
+    constructor(name, elementType) ->
+      super(name)
+      this.elementType = elementType
+
+    // eslint-disable-next-line no-unused-vars
+    initialize(entity, spec, creator, initializer) ->
+      creator(this)
+
+    isKindOf(otherT): boolean ->
+      (otherT instanceof ListType)
+      and (this.elementType.isKindOf(otherT.elementType))
+
+    validate(x): boolean ->
+      x~looseEq(null) or (
+        x[typeSymbol] and x[typeSymbol].isKindOf(this)
+      )
+
+    recurseLeft(left, state) ->
+      T = this.elementType
+      memo = state.seen(left)
+      if memo: return memo
+      obj = state.create(this)
+      state.remember(left, obj)
+      left.forEach! (v, i): void -> state.visitListEntry(obj, i, v, T)
+      obj
+
+    recurseRight(left, right, state): void ->
+      T = this.elementType
+      state.remember(right, left)
+      if typeof(right.forEach) != "function":
+        throw new Error("ListType.recurseRight: rhs wasn't an array or list. This is most likely caused by using assignPlainObject on an object with a list key, but a non-list value.")
+      right.forEach! (v, i): void ->
+        seen = state.seen(v)
+        state.visitListEntry(left, T, right, i, v, seen)
+)
+
+export listOf(T) ->
+  now T = typeFrom(T)
+  if T[listOfSymbol]: return T[listOfSymbol]
+  T[listOfSymbol] = new ListType(`listOf(${T.name})`, T)

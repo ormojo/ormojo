@@ -1,0 +1,147 @@
+import { singleton } from '../singleton'
+import { ComplexType, isPrimitiveType, setType, typeSymbol, typeFrom } from './type'
+import { fieldsSymbol, forEachField } from '../fields'
+
+// Get all keys, enumerable or otherwise, up the prototype chain,
+// excluding Object.
+_getAllPrototypeKeys(buf, proto): void ->
+  if (not proto) or (proto == Object.prototype): return
+
+  for elem name in Object.getOwnPropertyNames(proto): buf.push(name)
+
+  _getAllPrototypeKeys(buf, Object.getPrototypeOf(proto))
+
+getAllPrototypeKeys(proto) ->
+  buf = []
+  _getAllPrototypeKeys(buf, proto)
+  buf
+
+getPropertyDescriptorFromPrototypeChain(proto, key) ->
+  if (not proto) or (proto == Object.prototype): return undefined
+
+  desc = Object.getOwnPropertyDescriptor(proto, key)
+  if desc: return desc
+
+  getPropertyDescriptorFromPrototypeChain(Object.getPrototypeOf(proto), key)
+
+export EntityType = singleton("EntityType", ->
+  class EntityType extends ComplexType:
+    constructor(name) ->
+      super(name)
+      this.entitySpec = {}
+      this.fields = {}
+      this.primitiveFields = {}
+      this.nativeProperties = {}
+
+    defineField(key, spec): void ->
+      spec.key = key
+      this.fields[key] = spec
+      if spec.type~isPrimitiveType!:
+        this.primitiveFields[key] = spec
+        // Extract single-value defaults on primitive fields
+        if (spec.defaultValue == undefined) and spec.initializer:
+          val = spec.initializer.call(null)
+          if spec.type.validate(val):
+            spec.defaultValue = val
+        // Extension point for defining primitive fields on local objects
+        this.definePrimitiveField(key, spec)
+      spec.type.fieldOfTypeWasDefined(this, key, spec)
+
+    // eslint-disable-next-line no-unused-vars
+    definePrimitiveField(key, spec): void -> return
+
+    // eslint-disable-next-line no-unused-vars
+    initialize(entity, spec, creator, initializer) ->
+      creator(this)
+
+    setEntityConstructor(constr): void ->
+      // Wire javascript prototype propertly
+      proto = this.entityPrototype
+      constr.prototype = proto
+      proto.constructor = constr
+
+      // Wire Ephraim type properly
+      setType(constr, this)
+      this.entityConstructor = constr
+
+      // Set constructor name to typename
+      Object.defineProperty(constr, "name", { value: this.name })
+
+    extends(otherT): void ->
+      if not (otherT instanceof EntityType):
+        throw new Error(`Invalid inheritance: entity type '${this.name}' cannot extend non-entity type '${otherT.name}'`)
+      super.extends(otherT)
+
+      // Native fields override those from extensions
+      for key k, val v in otherT.fields:
+        if not this.nativeProperties[k]:
+          this.fields[k] = v
+      Object.assign(this.entitySpec, otherT.entitySpec)
+
+    extendsPrototypically(otherT): void ->
+      this.extends(otherT)
+      this.extendsPrototypically = otherT
+
+    extendsAprototypically(otherTs): void ->
+      for elem otherT in otherTs:
+        this.extends(otherT)
+        this.adoptPrototypeProperties(otherT)
+
+    adoptPrototypeProperties(otherT): void ->
+      // Transfer own AND non-own properties from otherT's prototype
+      // onto this prototype
+      myProto = this.entityPrototype
+      otherProto = otherT.entityPrototype
+      for elem k in getAllPrototypeKeys(otherProto):
+        if k != "constructor" and (not this.nativeProperties[k]):
+          desc = getPropertyDescriptorFromPrototypeChain(otherProto, k)
+          if desc: Object.defineProperty(myProto, k, desc)
+
+    freezeNativeProperties(): void ->
+      Object.assign(this.nativeProperties, {
+        ...for elem k in Object.getOwnPropertyNames(this.entityPrototype):
+          {[k]: true}
+      })
+
+    bootstrapFromPrototype(proto): void ->
+      // Set demographic information
+      proto.constructor~setType(this)
+      proto[typeSymbol] = this
+      this.entityPrototype = proto
+      proto[fieldsSymbol] = this.fields
+
+      // Compute JavaScript inheritance
+      extendsProto = Object.getPrototypeOf(proto)
+      extendsType = if extendsProto?.constructor: typeFrom(extendsProto.constructor)
+      if extendsType:
+        this.extendsPrototypically(extendsType)
+
+    validate(x): boolean ->
+      if x~looseEq(null): return true
+      if typeof(x) != "object": return false
+      Tx = x[typeSymbol] or x.constructor?[typeSymbol]
+      Tx.isKindOf(this)
+
+    createObservableGhost() ->
+      throw new Error("entities without a driver cannot be observed")
+
+    recurseLeft(left, state) ->
+      memo = state.seen(left)
+      if memo: return memo
+      obj = state.create(this)
+      state.remember(left, obj)
+      left~forEachField! (k, v, spec): void ->
+        if v != undefined: state.visitField(obj, k, v, spec)
+      obj
+
+    recurseRight(left, right, state): void ->
+      T = this
+      state.remember(right, left)
+      state.iterate(right, (k, v): void ->
+        seen = state.seen(v)
+        if T.fields[k]:
+          state.visitCorrespondingField(left, T.fields[k], right, k, v, seen)
+        else:
+          state.visitUnknownField(left, right, k, v, seen)
+      )
+)

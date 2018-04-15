@@ -2,7 +2,7 @@ import { deltaSymbol } from '../../delta'
 import { dataSymbol } from '../../fields'
 import { typeCheckAssignment } from '../../util'
 import { observedFieldsSymbol } from '../../observe'
-import { any } from '../../primitiveTypes'
+import { any } from '../../types/primitiveTypes'
 
 tripleEquals(a,b) -> a == b
 

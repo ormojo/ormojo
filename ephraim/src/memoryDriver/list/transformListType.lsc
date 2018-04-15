@@ -1,4 +1,5 @@
-import { PrimitiveType, ListType, underlyingTypeSymbol } from '../../type'
+import { PrimitiveType, underlyingTypeSymbol } from '../../types/type'
+import { ListType } from '../../types/listType'
 import { observableGhostSymbol } from '../../observe'
 
 import { createBehaviorSubject } from '@ormojo/fobs'

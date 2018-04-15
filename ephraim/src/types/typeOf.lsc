@@ -1,0 +1,19 @@
+import { typeSymbol } from './type'
+import { nil, number, string, boolean } from './primitiveTypes'
+import { array, date, object } from './opaqueTypes'
+
+// typeOf helper
+export typeOf(x) ->
+  if x~looseEq(null): return nil
+
+  // prims
+  t = typeof x
+  if t == "number": return number
+  elif t == "string": return string
+  elif t == "boolean": return boolean
+  if Array.isArray(x): return array
+
+  // complexes
+  if date.validate(x): return date
+  elif x[typeSymbol]: return x[typeSymbol]
+  else: object

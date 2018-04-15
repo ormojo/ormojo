@@ -1,0 +1,45 @@
+import { PrimitiveType } from './type'
+import { singleton } from '../singleton'
+
+export any = singleton("any", ->
+  const any = new PrimitiveType("any")
+  any.validate = -> true
+  any
+)
+
+export nil = singleton("nil", ->
+  const nil = new PrimitiveType("nil")
+  nil.validate = (x) -> x~looseEq(null)
+  nil
+)
+
+export number = singleton("number", ->
+  const number = new PrimitiveType("number")
+  number.validate = (x) -> x~looseEq(null) or typeof x == "number"
+  number
+)
+
+export string = singleton("string", ->
+  const string = new PrimitiveType("string")
+  string.validate = (x) -> x~looseEq(null) or typeof x == "string"
+  string
+)
+
+export text = singleton("text", ->
+  const text = new PrimitiveType("text")
+  text.validate = (x) -> x~looseEq(null) or typeof x == "string"
+  text
+)
+
+export boolean = singleton("boolean", ->
+  const boolean = new PrimitiveType("boolean")
+  boolean.validate = (x) -> x~looseEq(null) or typeof x == "boolean"
+  boolean
+)
+
+// TODO: improve this
+export integer = singleton("integer", ->
+  const integer = new PrimitiveType("integer")
+  integer.validate = (x) -> x~looseEq(null) or typeof x == "number"
+  integer
+)

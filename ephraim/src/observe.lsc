@@ -1,5 +1,5 @@
-import { typeOf } from './primitiveTypes'
-import { typeFrom } from './type'
+import { typeOf } from './types/typeOf'
+import { typeFrom } from './types/type'
 import { createBehaviorSubject } from '@ormojo/fobs'
 
 export observedFieldsSymbol = Symbol.for("ephraim.observedFields")

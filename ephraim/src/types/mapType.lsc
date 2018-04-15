@@ -1,0 +1,21 @@
+import { singleton } from '../singleton'
+import { ComplexType, typeFrom } from './type'
+
+mapOfSymbol = Symbol.for("ephraim.mapOfType")
+
+export MapType = singleton("MapType", ->
+  class MapType extends ComplexType:
+    constructor(keyType, valueType) ->
+      super()
+      this.keyType = keyType
+      this.valueType = valueType
+)
+
+export mapOf(T1, T2) ->
+  now T1 = typeFrom(T1)
+  now T2 = typeFrom(T2)
+  cached = T1[mapOfSymbol]?[T2.typeIdentity]
+  if cached: return cached
+  // No cached map type, create
+  T1[mapOfSymbol] = T1[mapOfSymbol] or {}
+  T1[mapOfSymbol][T2.typeIdentity] = new MapType(T1, T2)
