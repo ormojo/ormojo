@@ -1,4 +1,6 @@
 export { ESBackend } from './backend'
 export { ESQuery } from './query'
 export { QueryDsl } from './queryDsl'
+export { VersionConflictError } from './errors'
 export { ESRelationship, ESParentChildRelationship } from './relationship'
+export { _clone } from './util'

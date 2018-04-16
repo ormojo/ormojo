@@ -1,7 +1,7 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
 import { makeCorpus, cleanupCorpus } from '../makeCorpus'
 import { save, destroy, getBackend } from '@ormojo/ormojo'
-import { toPlainObject } from '@ormojo/ephraim'
+import { toPlainObject, hasChanges } from '@ormojo/ephraim'
 
 let backend, Widget
 
@@ -18,10 +18,12 @@ afterAll! ->
 test('should create, save, find by id', ->
   awidget = backend.create(Widget)
   awidget.name = "whosit"
+  expect(awidget~hasChanges!).toBe(true)
   debugger
   awidget~save()
   .then! (widg) ->
-    console.log(widg~toPlainObject!)
+    console.log("postSave", widg)
+    expect(awidget~hasChanges!).toBe(false)
     debugger
     backend.findById(Widget, widg.id)
   .then! (widg) ->
@@ -102,4 +104,3 @@ test('should CRUD', ->
     expect(x).toBe(undefined)
   )
 )
-

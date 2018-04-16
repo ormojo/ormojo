@@ -1,0 +1,59 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+import { getPreviousValue, typeOf, setPreviousValue, underlyingTypeOfType, primitiveFields, opaqueFields } from '@ormojo/ephraim'
+import { VersionConflictError } from './errors'
+
+defaultIsConflictFixable(newVersion, proposedChange) ->
+  true
+
+defaultFixConflict(newVersion, proposedChange) ->
+  // Assign fields without clobbering deltas
+  for key k in newVersion~primitiveFields!:
+    proposedChange~setPreviousValue(k, newVersion~getPreviousValue(k))
+  for key k in newVersion~opaqueFields!:
+    proposedChange~setPreviousValue(k, newVersion~getPreviousValue(k))
+
+  // Square up version IDs
+  proposedChange._version = newVersion._version
+
+  return
+
+getConflicts(results, entities) ->
+  [ ...for idx i, elem e in results:
+    if e instanceof VersionConflictError:
+      [{index: i, entity: entities[i]}]
+  ]
+
+areConflictsFixable(conflicts, findResults, isConflictFixable) ->
+  for idx i, elem {entity} in conflicts:
+    if not findResults[i]: return false
+    if not isConflictFixable(findResults[i], entity): return false
+
+  true
+
+fixConflicts(conflicts, findResults, fixConflict) ->
+  for idx i, elem {entity} in conflicts: fixConflict(findResults[i], entity)
+
+export fixVersionConflicts(backend, entities, sinkResult, saveOpts, isConflictFixable = defaultIsConflictFixable, fixConflict = defaultFixConflict) -/>
+  // Get conflicts
+  results = sinkResult.results
+  conflicts = getConflicts(results, entities)
+  if conflicts.length == 0: return true
+
+  // Verify type homogeneity
+  T = underlyingTypeOfType(typeOf(conflicts[0].entity))
+  for elem {entity} in conflicts: if underlyingTypeOfType(typeOf(entity)) != T: return false
+
+  // Grab latest version of conflicted objects
+  latestVersions <- backend.findById(T, [ ...for elem {entity} in conflicts: [entity.id] ])
+
+  if not conflicts~areConflictsFixable(latestVersions, isConflictFixable): return false
+  conflicts~fixConflicts(latestVersions, fixConflict)
+
+  // Re-save all conflicted objects
+  saveResults <- backend.save([ ...for elem {entity} in conflicts: [entity] ], saveOpts)
+  // Replace errors with success where conflicts could be resolved
+  for idx i, elem e in saveResults:
+    if e: results[conflicts[i].index] = true
+  sinkResult._recomputeErrorState!
+
+  true

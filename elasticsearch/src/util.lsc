@@ -1,3 +1,6 @@
+import { getBackend } from '@ormojo/ormojo'
+import { typeOf, underlyingTypeOfType, assignPlainObject, toPlainObject, clearDelta } from '@ormojo/ephraim'
+
 export toParentId(parent) ->
   if (typeof(parent) == 'string' or typeof(parent) == 'number'):
     parent.toString()
@@ -5,3 +8,14 @@ export toParentId(parent) ->
     parent.id
   else:
     throw new Error("bad parent")
+
+export _clone(obj) ->
+  backend = obj~getBackend!
+  next = backend.create(underlyingTypeOfType(typeOf(obj)))
+  next~assignPlainObject(obj~toPlainObject!)
+  for key k, val v in obj:
+    if k.charCodeAt(0) == 95:
+      next[k] = v
+  next~clearDelta!
+
+  next

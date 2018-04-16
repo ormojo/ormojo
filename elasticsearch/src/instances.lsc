@@ -1,0 +1,61 @@
+import { createMemoryDelta as create, assignPlainObject, clearDelta } from '@ormojo/ephraim'
+import { setBackend } from '@ormojo/ormojo'
+
+export _create(type, backend) ->
+  create(type)~setBackend(backend)
+
+export _createNew(type, backend) ->
+  instance = create(type)~setBackend(backend)
+  instance._isNewRecord = true
+  instance
+
+// Helper: Update an instance from an ES API return value.
+// XXX: assign vs set...
+export hydrateInstance(instance, esData) ->
+  instance._isNewRecord = undefined
+  if not esData:
+    instance~clearDelta!
+    return instance
+
+  // Data
+  if esData._id: instance.id = esData._id
+  if esData._source:
+    // TODO: smarter assignment here
+    instance~assignPlainObject(esData._source)
+    instance~clearDelta!
+  else:
+    instance~clearDelta!
+
+  // Metadata
+  if esData._index: instance._index = esData._index
+  if esData._version: instance._version = esData._version
+  if esData._type: instance._type = esData._type
+  if esData._score: instance._score = esData._score
+  if esData._routing: instance._routing = esData._routing
+  if esData._parent: instance._parent = esData._parent
+
+  instance
+
+resolveType(typeMap, defaultType, errorOnMissingType, datum) ->
+  idx = datum._index
+  ty = datum._type
+  if (not idx) or (not ty):
+    if errorOnMissingType:
+      // TODO: specific error class for this
+      throw new Error("could not map Elasticsearch result to Ephraim type")
+    else:
+      return defaultType
+  T = typeMap(idx, ty)
+  if not T:
+    if errorOnMissingType:
+      throw new Error("could not map Elasticsearch result to Ephraim type")
+    else:
+      return defaultType
+  T
+
+export hydrate(esResult, backend, typeMap, defaultType, errorOnMissingType) ->
+  T = resolveType(typeMap, defaultType, errorOnMissingType, esResult)
+  if T:
+    hydrateInstance(_create(T, backend), esResult)
+  else:
+    undefined

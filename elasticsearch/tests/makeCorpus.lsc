@@ -1,4 +1,4 @@
-import { entity, field, types, listOf, extendField } from '@ormojo/ephraim'
+import { entity, field, types, listOf } from '@ormojo/ephraim'
 import es_client from './es_client'
 import { ESBackend, QueryDsl } from '..'
 
@@ -23,7 +23,7 @@ export makeCorpus(extraName) ->
   }) class ESWidget extends Widget:
     // Augment the definition of the `tags` field with some special elasticsearch
     // options
-    @extendField({
+    @field({
       mapping: (new QueryDsl).q('fields', 'raw', { type: 'keyword'}).body
     }) tags
 

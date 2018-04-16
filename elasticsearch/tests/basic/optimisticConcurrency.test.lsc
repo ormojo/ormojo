@@ -1,0 +1,73 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+import { makeCorpus, cleanupCorpus } from '../makeCorpus'
+import { save, destroy, getBackend } from '@ormojo/ormojo'
+import { toPlainObject, assignPlainObject } from '@ormojo/ephraim'
+import { VersionConflictError, _clone } from '../..'
+
+let backend, Widget
+
+beforeAll! ->
+  now { backend, Widget } = makeCorpus('occ')
+  mig = backend.createMigration()
+  debugger
+  mig.prepare().then(-> mig.execute())
+
+afterAll! ->
+  cleanupCorpus('occ')
+
+// test('should fail update due to optimistic concurrency violation', -/>
+//   awidget = backend.create(Widget)
+//   awidget.name = "v1"
+//   debugger
+//   let widg = await awidget~save()
+//   let dupe = _clone(widg)
+//   console.log("dupe", dupe)
+//   widg.name = "v2"
+//   await widg~save!
+//   console.log("widg after update", widg)
+//   dupe.name = "conflict"
+
+//   try:
+//     await dupe~save!
+//     expect(true).toBe(false)
+//   catch err:
+//     expect(err).toBeInstanceOf(VersionConflictError)
+// )
+
+// test('should update while ignoring optimistic concurrency controls', -/>
+//   awidget = backend.create(Widget)
+//   awidget.name = "v1"
+//   awidget.qty = 1
+//   let widg = await awidget~save()
+//   id = widg.id
+//   let dupe = _clone(widg)
+//   widg.name = "v2"
+//   widg.qty = 7
+//   await widg~save!
+//   dupe.name = "conflict"
+//   console.log("orig", widg)
+//   console.log("dupe", dupe)
+//   await dupe~save({ ignoreVersionConflicts: true })
+//   latestWidget = await backend.findById(Widget, id)
+//   expect(latestWidget.qty).toBe(1)
+//   expect(latestWidget.name).toBe("conflict")
+// )
+
+test('should update with automatic conflict resolution', -/>
+  awidget = backend.create(Widget)
+  awidget.name = "v1"
+  awidget.qty = 1
+  let widg = await awidget~save()
+  console.log("saved widg", widg)
+  id = widg.id
+  let dupe = _clone(widg)
+  console.log("dupe", dupe)
+  widg.name = "v2"
+  widg.qty = 7
+  await widg~save!
+  dupe.name = "conflict"
+  await dupe~save({ fixVersionConflicts: true })
+  latestWidget = await backend.findById(Widget, id)
+  expect(latestWidget.qty).toBe(7)
+  expect(latestWidget.name).toBe("conflict")
+)

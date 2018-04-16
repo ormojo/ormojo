@@ -1,10 +1,11 @@
-import { Backend, setBackend, normalizeLoggerObject } from '@ormojo/ormojo'
+import { Backend, normalizeLoggerObject } from '@ormojo/ormojo'
 import { ESIndices } from './indices'
 import { ESMigration } from './migration'
 import { ESQuery } from './query'
-import { typeOf, underlyingTypeOfType, typeFrom, createMemory as create, assignPlainObject } from '@ormojo/ephraim'
+import { typeOf, underlyingTypeOfType, typeFrom, assignPlainObject } from '@ormojo/ephraim'
 import { ESSink } from './sink'
 import { ESSource } from './source'
+import { _createNew } from './instances'
 
 export class ESBackend extends Backend:
   constructor(es, opts) ->
@@ -54,9 +55,7 @@ export class ESBackend extends Backend:
 
   create(type, data, opts) ->
     typeInfo = this._getTypeInfo(type)
-    instance = create(type)
-    instance~setBackend(this)
-    instance._isNewRecord = true
+    instance = _createNew(type, this)
     instance._index = typeInfo.index
     instance._type = typeInfo.type
     if data~looseNotEq(null):

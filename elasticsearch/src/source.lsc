@@ -1,5 +1,5 @@
 import { AsyncSource } from '@ormojo/ormojo'
-import { ESQuery, ESResultSet, updateInstanceWithData } from './query'
+import { ESQuery, ESResultSet } from './query'
 
 export class ESSource extends AsyncSource:
   constructor(opts) ->
@@ -81,5 +81,3 @@ export class ESSource extends AsyncSource:
       this.readIdQuery(query)
     else:
       this.readFullQuery(query)
-
-export { updateInstanceWithData }
