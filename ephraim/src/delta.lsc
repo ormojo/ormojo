@@ -7,6 +7,7 @@ export fieldHasChangedSymbol = Symbol.for("ephraim.fieldHasChanged")
 export getChangedFieldKeysSymbol = Symbol.for("ephraim.getChangedFieldKeys")
 export hasChangesSymbol = Symbol.for("ephraim.hasChanges")
 export getPreviousValueSymbol = Symbol.for("ephraim.getPreviousValue")
+export setPreviousValueSymbol = Symbol.for("ephraim.setPreviousValue")
 
 export isDelta(entity): boolean ->
   entity[clearDeltaSymbol]~looseNotEq(null)
@@ -25,6 +26,9 @@ export hasChanges(entity): boolean ->
 
 export getPreviousValue(entity, fieldName) ->
   entity[getPreviousValueSymbol](fieldName)
+
+export setPreviousValue(entity, fieldName, val): void ->
+  entity[setPreviousValueSymbol](fieldName, val)
 
 // Iterate over all field keys and values, flex and declared
 export forEachChangedField(ent, f): void ->

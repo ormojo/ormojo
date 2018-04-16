@@ -1,4 +1,6 @@
-import { entity, field, augment, toPlainObject, createMemoryDelta as create, setFieldType, isDelta, hasChanges, clearDelta, fieldHasChanged, getChangedFieldKeys, rawSet, getPreviousValue } from '@ormojo/ephraim'
+import { entity, field, toPlainObject, createMemoryDelta as create, isDelta, hasChanges, clearDelta, fieldHasChanged, getChangedFieldKeys, rawSet, getPreviousValue, types, setPreviousValue } from '@ormojo/ephraim'
+
+debugger
 
 test! 'basic', ->
   @entity() class E:
@@ -7,7 +9,7 @@ test! 'basic', ->
   e = create(E)
   expect(e~isDelta!).toBe(true)
   expect(e~hasChanges!).toBe(false)
-  expect(e~getChangedFieldKeys!).toBe(null)
+  expect(e~getChangedFieldKeys!).toEqual([])
   expect(e~fieldHasChanged('f')).toBe(false)
 
   e.f = 1
@@ -22,6 +24,99 @@ test! 'basic', ->
   expect(e.f).toBe(1)
   expect(e~hasChanges!).toBe(false)
   console.log(e)
+
+test! 'basic opaque', ->
+  @entity() class E:
+    @field(types.array) f = []
+    @field(types.date) d
+
+  e = create(E)
+  console.log("opaque, initial", e)
+  expect(e~isDelta!).toBe(true)
+  expect(e~hasChanges!).toBe(false)
+  expect(e~getChangedFieldKeys!).toEqual([])
+  expect(e~fieldHasChanged('f')).toBe(false)
+
+  e.f.push(1)
+  e.d = new Date()
+  console.log("opaque, after field change", e)
+  expect(e.f).toEqual([1])
+  expect(e~getPreviousValue('f')).toEqual([])
+  console.log("opaque, after inquiry", e)
+  expect(e~hasChanges!).toBe(true)
+  expect(e~getChangedFieldKeys!).toEqual(['f', 'd'])
+  expect(e~fieldHasChanged('f')).toBe(true)
+
+  e~clearDelta()
+  console.log("opaque, after clearDelta",e)
+  expect(e.f).toEqual([1])
+  expect(e~hasChanges!).toBe(false)
+
+test! 'opaque resets', ->
+  @entity() class E:
+    @field(types.array) f = []
+
+  e = create(E)
+  console.log("opaque, initial", e)
+  expect(e~isDelta!).toBe(true)
+  expect(e~hasChanges!).toBe(false)
+  expect(e~getChangedFieldKeys!).toEqual([])
+  expect(e~fieldHasChanged('f')).toBe(false)
+
+  e.f.push(1)
+  console.log("opaque, after field change", e)
+  expect(e.f).toEqual([1])
+  expect(e~getPreviousValue('f')).toEqual([])
+  expect(e~hasChanges!).toBe(true)
+  console.log("opaque, after inquiry", e)
+
+  e~setPreviousValue('f', [1])
+  console.log('opaque, after setPrevousValue', e)
+  expect(e.f).toEqual([1])
+  expect(e~hasChanges!).toBe(false)
+
+  e.f.push(2)
+  expect(e.f).toEqual([1, 2])
+  expect(e~hasChanges!).toBe(true)
+  expect(e~getPreviousValue('f')).toEqual([1])
+  e~rawSet('f', [])
+  console.log('opaque, after rawSet', e)
+  expect(e~hasChanges!).toBe(false)
+
+test! 'primitive set previous value', ->
+  @entity() class E:
+    @field(types.integer) i = 1
+    @field(types.array) f = []
+
+  e = create(E)
+  console.log("prim, initial", e)
+  expect(e~isDelta!).toBe(true)
+  expect(e~hasChanges!).toBe(false)
+  expect(e~getChangedFieldKeys!).toEqual([])
+
+  e.f = [2]
+  e~setPreviousValue('i', 5)
+  console.log("prim, with delta, after set", e)
+  expect(e~getChangedFieldKeys!).toEqual(['f'])
+  expect(e.i).toEqual(5)
+
+test! 'opaque set previous value', ->
+  @entity() class E:
+    @field(types.integer) i = 1
+    @field(types.array) f = []
+
+  e = create(E)
+  console.log("opaque, initial", e)
+  expect(e~isDelta!).toBe(true)
+  expect(e~hasChanges!).toBe(false)
+  expect(e~getChangedFieldKeys!).toEqual([])
+
+  e.i = 2
+  e~setPreviousValue('f', [5])
+  console.log("opaque, with delta, after set", e)
+  expect(e~getChangedFieldKeys!).toEqual(['i'])
+  expect(e.f).toEqual([5])
+
 
 test! 'rawSet', ->
   @entity() class E:
@@ -39,7 +134,7 @@ test! 'rawSet', ->
 
   expect(e.g).toBe(undefined)
   e~rawSet('g', 2)
-  console.log(e)
+  console.log('after rawSet', e)
   expect(e.g).toBe(2)
   expect(e~isDelta!).toBe(true)
   expect(e~hasChanges!).toBe(false)

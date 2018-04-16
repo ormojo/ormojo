@@ -1,32 +1,21 @@
-import { PrimitiveType, underlyingTypeSymbol } from '../../types/type'
+import { PrimitiveType, OpaqueType, underlyingTypeSymbol } from '../../types/type'
 import { EntityType } from '../../types/entityType'
 import { declaredFields, dataSymbol, rawSetSymbol } from '../../fields'
-import { deltaSymbol, clearDeltaSymbol, fieldHasChangedSymbol, getChangedFieldKeysSymbol, hasChangesSymbol, getPreviousValueSymbol } from '../../delta'
+import { clearDeltaSymbol, fieldHasChangedSymbol, getChangedFieldKeysSymbol, hasChangesSymbol, getPreviousValueSymbol, setPreviousValueSymbol } from '../../delta'
 
 import { definePrimitiveField } from './definePrimitiveField'
 import { defineEntityField } from './defineEntityField'
 import { getObservableEntityGhostClass } from './observable'
 import { transformType } from '../transformType'
+import { rawSet as deltaRawSet, clearDelta, setPreviousValue, getPreviousValue, getChangedFieldKeys, hasChanges, fieldHasChanged, createCloneCache } from './delta'
 
 rawSet(k, v): void -> this[dataSymbol][k] = v
-clearDelta(): void -> this[deltaSymbol] = undefined
-hasChanges(): boolean -> this[deltaSymbol]~looseNotEq(null)
-getChangedFieldKeys(): Array<string> ->
-  delta = this[deltaSymbol]
-  if delta: Object.keys(delta) else: null
-fieldHasChanged(field): boolean ->
-  delta = this[deltaSymbol]
-  if delta and Object.hasOwnProperty.call(delta, field): return true
-  false
-getPreviousValue(field): any ->
-  delta = this[deltaSymbol]
-  if delta and Object.hasOwnProperty.call(delta, field):
-    delta[field]
-  else:
-    this[field]
 
 class MemoryEntityType extends EntityType:
   definePrimitiveField(key, spec): void ->
+    definePrimitiveField(this.entityPrototype, spec.type, key, spec, false)
+
+  defineOpaqueField(key, spec): void ->
     definePrimitiveField(this.entityPrototype, spec.type, key, spec, false)
 
   fieldOfTypeWasDefined(targetType, key, spec): void ->
@@ -45,23 +34,30 @@ class DeltaMemoryEntityType extends EntityType:
   definePrimitiveField(key, spec): void ->
     definePrimitiveField(this.entityPrototype, spec.type, key, spec, true)
 
+  defineOpaqueField(key, spec): void ->
+    definePrimitiveField(this.entityPrototype, spec.type, key, spec, true)
+
   fieldOfTypeWasDefined(targetType, key, spec): void ->
     defineEntityField(targetType.entityPrototype, spec.type, key, spec, true)
 
   bootstrapFromPrototype(proto): void ->
     super.bootstrapFromPrototype(proto)
-    proto[rawSetSymbol] = rawSet
+    proto[rawSetSymbol] = deltaRawSet
     proto[clearDeltaSymbol] = clearDelta
     proto[fieldHasChangedSymbol] = fieldHasChanged
     proto[getChangedFieldKeysSymbol] = getChangedFieldKeys
     proto[hasChangesSymbol] = hasChanges
     proto[getPreviousValueSymbol] = getPreviousValue
+    proto[setPreviousValueSymbol] = setPreviousValue
 
-  construct() -> new (this.entityConstructor)()
+  construct() ->
+    if Object.keys(this.opaqueFields).length > 0:
+      (new (this.entityConstructor)())~createCloneCache!
+    else:
+      new (this.entityConstructor)()
 
   createObservableGhost(entity) ->
     new (this~getObservableEntityGhostClass!)(entity)
-
 
 export transformEntityType(ET, transformedTypeSymbol, transformedTypeQualifier, isObservable, isDelta) ->
   typeClass = if isDelta: DeltaMemoryEntityType else: MemoryEntityType
@@ -93,7 +89,7 @@ export transformEntityType(ET, transformedTypeSymbol, transformedTypeQualifier, 
   nextFields = {
     ...for key k, val spec in memoryEntityClass~declaredFields():
       nextSpec = Object.assign({}, spec)
-      if not (nextSpec.type instanceof PrimitiveType):
+      if not ((nextSpec.type instanceof PrimitiveType) or (nextSpec.type instanceof OpaqueType)):
         nextSpec.type = transformType(nextSpec.type, isDelta)
       {[k]: nextSpec}
   }

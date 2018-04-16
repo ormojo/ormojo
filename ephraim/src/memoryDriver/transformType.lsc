@@ -1,4 +1,4 @@
-import { PrimitiveType, typeFrom } from '../types/type'
+import { PrimitiveType, OpaqueType, typeFrom } from '../types/type'
 import { EntityType } from '../types/entityType'
 import { ListType } from '../types/listType'
 
@@ -25,8 +25,8 @@ export transformType(T, isDelta) ->
   [transformedTypeQualifier, transformedTypeSymbol] = symbolForTransformProperties(true, isDelta)
   if T[transformedTypeSymbol]: return T[transformedTypeSymbol]
 
-  if T instanceof PrimitiveType:
-    throw new Error("Cannot convert primitive types")
+  if (T instanceof PrimitiveType) or (T instanceof OpaqueType):
+    throw new Error("Cannot convert primitive or opaque types")
   elif T instanceof EntityType:
     transformEntityType(T, transformedTypeSymbol, transformedTypeQualifier, true, isDelta)
   elif T instanceof ListType:

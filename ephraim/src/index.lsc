@@ -9,7 +9,7 @@ export { typeOf } from './types/typeOf'
 export {
   Type, PrimitiveType, OpaqueType, ComplexType,
   typeFrom, isType, setType, isa, isKindOf, underlyingTypeSymbol
-  isPrimitiveType, underlyingTypeOfType
+  isPrimitiveType, underlyingTypeOfType, isOpaqueType
 } from './types/type'
 
 export {
@@ -31,10 +31,11 @@ export {
 export {
   declaredFields, declaredFieldKeys, flexFieldKeys, fieldKeys, forEachField
   dataSymbol, hasDeclaredField, rawSet, primitiveFields, primitiveFieldKeys
+  opaqueFields, opaqueFieldKeys
 } from './fields'
 
 export {
-  deltaSymbol, isDelta, clearDelta, fieldHasChanged, getChangedFieldKeys, hasChanges, forEachChangedField, getPreviousValue
+  deltaSymbol, isDelta, clearDelta, fieldHasChanged, getChangedFieldKeys, hasChanges, forEachChangedField, getPreviousValue, setPreviousValue
 } from './delta'
 
 export {

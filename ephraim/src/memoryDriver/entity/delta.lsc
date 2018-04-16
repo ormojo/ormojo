@@ -1,0 +1,176 @@
+import { dataSymbol, flexFieldKeys, declaredFields, opaqueFields } from '../../fields'
+import { deltaSymbol } from '../../delta'
+import { typeCheckAssignment } from '../../util'
+import { observedFieldsSymbol } from '../../observe'
+import { any as _Any } from '../../types/primitiveTypes'
+import { isOpaqueType } from '../../types/type'
+
+{hasOwnProperty} = Object
+
+cloneCache = Symbol.for("ephraim.cloneCache")
+
+export createCloneCache(x) ->
+  x[cloneCache] = Object.create(null)
+  x
+
+setDeltaValue(entity, key, val, setCache, cacheValue): void ->
+  let delta = entity[deltaSymbol]
+  if not delta: entity[deltaSymbol] = now delta = Object.create(null)
+  delta[key] = val
+  if setCache: entity[cloneCache][key] = cacheValue
+
+// On assigning an opaque field:
+//    Always set delta equal to cloneCache and cloneCache to undefined.
+export createDeltaFieldSetter(type, key) ->
+  shouldClearCache = type~isOpaqueType!
+  (val): void ->
+    let prevVal = this[dataSymbol][key]
+    if prevVal == val: return
+    if type != _Any: typeCheckAssignment(type, key, val)
+    this[dataSymbol][key] = val
+
+    this~setDeltaValue(key, prevVal, shouldClearCache, undefined)
+
+    observedFields = this[observedFieldsSymbol]
+    if observedFields:
+      observedFields[key]?.next(this)
+      observedFields._all_?.next({entity: this, key})
+
+// On rawSetting an opaque field:
+//    Check equality. If unequal, set and clone.
+rawSetOpaqueField(entity, T, k, v): void ->
+  data = entity[dataSymbol]
+  if entity[deltaSymbol]: delete entity[deltaSymbol][k]
+  if T.eq(data[k], v): return
+  data[k] = v
+  entity[cloneCache][k] = T.clone(v)
+
+export rawSet(k, v): void ->
+  F = (this~opaqueFields!)[k]
+  if F:
+    rawSetOpaqueField(this, F.type, k, v)
+  else:
+    this[dataSymbol][k] = v
+
+setPreviousValueForOpaqueField(entity, T, k, v) ->
+  delta = entity[deltaSymbol]
+  if delta and hasOwnProperty.call(delta, k):
+    if T.eq(entity[k], v):
+      delete delta[k]
+      entity[cloneCache][k] = T.clone(entity[k])
+    else:
+      setDeltaValue(entity, k, v, true, undefined)
+  else:
+    if not T.eq(entity[k], v):
+      entity[dataSymbol][k] = v
+      entity[cloneCache][k] = T.clone(v)
+
+export setPreviousValue(k, v): void ->
+  F = (this~opaqueFields!)[k]
+  if F:
+    setPreviousValueForOpaqueField(this, F.type, k, v)
+  else:
+    delta = this[deltaSymbol]
+    // If there were any changes...
+    if delta and hasOwnProperty.call(delta, k):
+      // Perhaps we were undoing a prior change...
+      if delta[k] == v:
+        delete this[deltaSymbol][k]
+      // Otherwise we may be causing a change.
+      else:
+        setDeltaValue(this, k, v)
+    // If there weren't any changes, just modify in place.
+    else:
+      this[dataSymbol][k] = v
+
+// On inquiry about whether an opaque field has changed:
+//    Check deltaSymbol; if present, short circut return true
+//    If absent:
+//      If field is primitive: return false
+//      If field is opaque:
+//        Run eq() check against cache
+//        If true, return false.
+//        If false, set deltaSymbol=previousValue, delete cloneCache, return true
+export getPreviousValue(field): any ->
+  // Short circuit: if we have a delta, we know the field was changed
+  delta = this[deltaSymbol]
+  if delta and hasOwnProperty.call(delta, field):
+    delta[field]
+  else:
+    // If field is opaque...
+    F = (this~opaqueFields!)[field]
+    if F:
+      cur = this[field]
+      cached = this[cloneCache][field]
+      // Run equality check against the cache
+      if F.type.eq(cur, cached):
+        cur
+      else:
+        // If unequal, mark as delta for future use and clear cache
+        setDeltaValue(this, field, cached, true)
+        cached
+    // For nonopaque fields, just return current value
+    else:
+      this[field]
+
+getChangedDeclaredFieldKeys(entity): Array<string> ->
+  delta = entity[deltaSymbol] or Object.create(null)
+  [...for key k, val spec in entity~declaredFields!:
+    if hasOwnProperty.call(delta, k):
+      [k]
+    else:
+      T = spec.type
+      if T~isOpaqueType!:
+        // Compare current with cloned cache
+        cached = entity[cloneCache][k]
+        if not T.eq(entity[k], cached):
+          // If distinct, mark as such and store key
+          setDeltaValue(entity, k, cached, true)
+          [k]
+  ]
+
+export getChangedFieldKeys(includeFlex): Array<string> ->
+  result = this~getChangedDeclaredFieldKeys!
+  if includeFlex: result.push(...this~flexFieldKeys!)
+  result
+
+// On flushing delta:
+//    For each opaque field, if it was delta'd, clone it to the cache
+export clearDelta(): void ->
+  delta = this[deltaSymbol]
+  if not delta: return
+  cache = this[cloneCache]
+
+  for key k, val {type: T} in this~opaqueFields!:
+    curVal = this[k]
+    if delta[k] or (not T.eq(curVal, cache[k])):
+      cache[k] = T.clone(curVal)
+
+  this[deltaSymbol] = undefined
+
+export hasChanges(): boolean ->
+  // Early out: if there is any delta record, OK
+  delta = this[deltaSymbol]
+  if delta and (Object.keys(delta).length > 0): return true
+  // Hard work
+  (this~getChangedDeclaredFieldKeys!).length > 0
+
+export fieldHasChanged(field): boolean ->
+  // Short circuit: if we have a delta, we know the field was changed
+  delta = this[deltaSymbol]
+  if delta and hasOwnProperty.call(delta, field):
+    true
+  else:
+    // If field is opaque...
+    F = (this~opaqueFields!)[field]
+    if F:
+      cached = this[cloneCache][field]
+      // Run equality check against the cache
+      if F.type.eq(this[field], cached):
+        false
+      else:
+        // If unequal, mark as delta for future use and clear cache
+        setDeltaValue(this, field, cached, true)
+        true
+    else:
+      false

@@ -1,32 +1,11 @@
-import { deltaSymbol } from '../../delta'
 import { dataSymbol } from '../../fields'
 import { typeCheckAssignment } from '../../util'
 import { observedFieldsSymbol } from '../../observe'
 import { any } from '../../types/primitiveTypes'
-
-tripleEquals(a,b) -> a == b
+import { createDeltaFieldSetter } from './delta'
 
 createGetterMethod(proto, type, key) ->
     () -> this[dataSymbol]?[key]
-
-createDeltaSetterMethod(proto, type, key) ->
-  eq = type.eq or tripleEquals
-  // TODO: special handling for id
-  // id is nullable but reassigning it fails if not null
-  (val): void ->
-    let prevVal = this[dataSymbol][key]
-    if eq(prevVal, val): return
-    if type != any: typeCheckAssignment(type, key, val)
-    this[dataSymbol][key] = val
-
-    let delta = this[deltaSymbol]
-    if not delta: this[deltaSymbol] = now delta = Object.create(null)
-    delta[key] = prevVal
-
-    observedFields = this[observedFieldsSymbol]
-    if observedFields:
-      observedFields[key]?.next(this)
-      observedFields._all_?.next({entity: this, key})
 
 createNonDeltaSetterMethod(proto, type, key) ->
   // TODO: special handling for id
@@ -43,7 +22,7 @@ createNonDeltaSetterMethod(proto, type, key) ->
 
 createSetterMethod(proto, type, key, isDelta) ->
   if isDelta:
-    createDeltaSetterMethod(proto, type, key)
+    createDeltaFieldSetter(type, key)
   else:
     createNonDeltaSetterMethod(proto, type, key)
 

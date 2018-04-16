@@ -25,6 +25,14 @@ export primitiveFieldKeys(x) ->
   T = typeFrom(x) or typeFrom(x.constructor)
   Object.keys(T.primitiveFields)
 
+export opaqueFields(x) ->
+  T = typeFrom(x) or typeFrom(x.constructor)
+  T.opaqueFields
+
+export opaqueFieldKeys(x) ->
+  T = typeFrom(x) or typeFrom(x.constructor)
+  Object.keys(T.opaqueFields)
+
 // Get keys of flex fields -- undeclared fields not present on the
 // prototype, but present on the object itself.
 export flexFieldKeys(ent) ->

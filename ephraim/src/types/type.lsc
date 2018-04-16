@@ -105,6 +105,9 @@ export consumableType(T) ->
 export isPrimitiveType(T) ->
   T[typeSymbol] instanceof PrimitiveType
 
+export isOpaqueType(T) ->
+  T[typeSymbol] instanceof OpaqueType
+
 export setType(x, T) ->
   x[typeSymbol] = T
 

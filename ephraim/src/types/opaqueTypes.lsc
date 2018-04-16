@@ -1,20 +1,21 @@
-import { OpaqueType, PrimitiveType } from './type'
+import { OpaqueType } from './type'
 import { singleton } from '../singleton'
 import isEqual from 'lodash.isequal'
+import cloneDeep from 'lodash.clonedeep'
 
 
 // TODO: improve this
 export date = singleton("date", ->
-  const date = new PrimitiveType("date")
+  const date = new OpaqueType("date")
   date.validate = (x) -> x~looseEq(null) or (x instanceof Date)
-  date.toJavascriptDate = (x) -> x
-  date.eq = (a, b) -> a.getTime() == b.getTime()
-  date.clone = (x) -> new Date(x.getTime())
+  date.toJavaScriptDate = (x) -> x
+  date.eq = (a, b) -> a?.getTime() == b?.getTime()
+  date.clone = (x) -> if x: new Date(x.getTime())
   date
 )
 
 export object = singleton("object", ->
-  const object = new PrimitiveType("object")
+  const object = new OpaqueType("object")
   object.validate = (x) ->
     x~looseEq(null)
     or (
@@ -22,11 +23,12 @@ export object = singleton("object", ->
       (not Array.isArray(x))
     )
   object.eq = isEqual
+  object.clone = cloneDeep
   object
 )
 
 export array = singleton("array", ->
-  const array = new PrimitiveType("array")
+  const array = new OpaqueType("array")
   array.validate = (x) ->
     x~looseEq(null)
     or (
@@ -34,13 +36,14 @@ export array = singleton("array", ->
       x.length >= 0
     )
   array.eq = isEqual
+  array.clone = cloneDeep
   array
 )
 
 // anything that could be serialized as json, opaque
 // TODO: improve this, should recurse to see if we could jsonify it
 export json = singleton("json", ->
-  const json = new PrimitiveType("json")
+  const json = new OpaqueType("json")
   json.validate = (x) ->
     if x~looseEq(null): return true
     t = typeof x
@@ -52,5 +55,6 @@ export json = singleton("json", ->
       or Array.isArray(x)
     )
   json.eq = isEqual
+  json.clone = cloneDeep
   json
 )
