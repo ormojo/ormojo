@@ -1,0 +1,10 @@
+import { entity, field, types } from '@ormojo/ephraim'
+
+@entity() class Timestamped:
+  @field(types.date) createdAt
+  @field(types.date) updatedAt
+
+@entity() class Tombstoned:
+  @field(types.date) deletedAt
+
+export { Timestamped, Tombstoned }

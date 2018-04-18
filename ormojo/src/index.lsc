@@ -11,3 +11,5 @@ export { save, setBackend, getBackend, destroy, find, findAll } from './util'
 export { SynchronousSource, AsyncSource, SynchronousSink, AsyncSink, SourceEntityAdapter, SinkEntityAdapter, SinkResult } from './store'
 
 export { NotFoundError, DuplicateError, DeserializationError } from './errors'
+
+export { Timestamped, Tombstoned } from './helperTypes'
