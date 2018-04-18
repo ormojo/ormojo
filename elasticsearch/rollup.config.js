@@ -48,9 +48,9 @@ var withFormat = (format) => ({
   input: 'src/index.lsc',
   output: {
     file: format === "cjs" ? `lib/index.js` : `lib/index.${format}.js`,
-    format: format
+    format: format,
+    sourcemap: 'inline'
   },
-  sourcemap: 'inline',
   plugins: getPlugins(),
   external: isExternal
 })

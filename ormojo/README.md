@@ -1,3 +1,3 @@
-# @ormojo/ephraim-memory
+# @ormojo/ormojo
 
-Memory driver for ephraim.
+Common API elements for ormojo drivers
