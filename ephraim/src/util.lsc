@@ -1,5 +1,5 @@
 import { typeOf } from './types/typeOf'
-import { typeFrom, PrimitiveType } from './types/type'
+import { typeFrom, PrimitiveType, OpaqueType } from './types/type'
 import { EntityType } from './types/entityType'
 import { ListType } from './types/listType'
 import { declaredFields, rawSetSymbol } from './fields'
@@ -54,6 +54,8 @@ objectAssignmentState() -> {
       left[k] = v
     elif seen:
       left[k] = seen
+    elif lspec.type instanceof OpaqueType:
+      left[k] = lspec.type.assign(v)
     else:
       if not left[k]: left[k] = lspec.type.construct()
       lspec.type.recurseRight(left[k], v, this)

@@ -1,7 +1,7 @@
 'use @oigroup/lightscript with flippedImports'
 
 import '@ormojo/ephraim': {
-  entity, listOf, types, field, createMemory as create
+  entity, listOf, types, field, createMemory as create, toPlainObject
 }
 
 { string, number } = types
@@ -27,6 +27,12 @@ test! "basic list", ->
   listOfA = create(listOf(A))
 
   listOfA.push(create(A))
+  b = create(A)
+  b.a = "hi"
+  listOfA.push(b)
+
+  expect(listOfA.get(0).a).toBe(undefined)
+  expect(listOfA.get(1).a).toBe("hi")
 
   console.log(listOfA~toPlainObject!)
 
