@@ -58,3 +58,10 @@ export class OneToOneRelationship extends MySQLRelationship:
     if this.masterObjectField: child[this.masterObjectField] = master
     child
 
+  createQuery() ->
+    q = this.backend.createQuery()
+    q._table = this.masterTable
+    q.fieldsClause = this.selectFieldsClause
+    q.fromClause = this.joinClause
+    q.readPattern = this.readPattern
+    q

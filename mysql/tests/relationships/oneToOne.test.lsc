@@ -88,7 +88,7 @@ describe('master child', ->
       child~save()
     .then! ->
       // Relocate master, verify child
-      q = backend.createQuery().setRelationship(rel).byId(tmp)
+      q = rel.createQuery().byId(tmp)
       q.find()
     .then! (result) ->
       expect(result.id).toBe(tmp)
@@ -97,7 +97,7 @@ describe('master child', ->
       expect(result.detail.qty).toBe(33)
 
       // Locate master through a join field
-      q = backend.createQuery().setRelationship(rel).where(Field(Detail, 'qty')~Eq(44))
+      q = rel.createQuery().where(Field(Detail, 'qty')~Eq(44))
       q.find()
     .then! (result) ->
       expect(result.detail.qty).toBe(44)
