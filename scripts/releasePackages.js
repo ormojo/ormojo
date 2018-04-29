@@ -83,12 +83,12 @@ inquirer.prompt([{type: 'confirm', default: false, name: 'go', message: 'Proceed
   // allow user intervention on version numbers for each package
   scopedRun(packageList, `publish --skip-npm --skip-git`)
 
-  // read version numbers and push git tags
+  // read version numbers and stage changes
   packages.forEach(package => {
     package.version = scopedExec([package.name], 'cat package.json | sed -nE "s/.*\\"version\\": ?\\"(.*)\\".*/\\1/p"').trim()
     //scoped([package.name], `exec -- git commit -am ${package.name}@${package.version}`)
     scopedExec([package.name], `git add -u`)
-    scopedExec([package.name], `git tag ${package.name}@${package.version} -m ${package.name}@${package.version}`)
+    // scopedExec([package.name], `git tag ${package.name}@${package.version} -m ${package.name}@${package.version}`)
   })
 
   //////////////////////// Publish and push tags
@@ -105,6 +105,11 @@ inquirer.prompt([{type: 'confirm', default: false, name: 'go', message: 'Proceed
     commitArgs.push('-m', `* ${info.name} v${info.version}`)
   })
   runArgs('git', commitArgs)
+
+  ///////////////////////// Tag packages with release information
+  packages.forEach(package => {
+    scopedExec([package.name], `git tag ${package.name}@${package.version} -m ${package.name}@${package.version}`)
+  })
 
   run(`git push`)
   run(`git push --tags`)
