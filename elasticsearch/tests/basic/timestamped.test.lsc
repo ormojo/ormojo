@@ -1,0 +1,60 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+import { save, destroy, Timestamped } from '@ormojo/ormojo'
+import { toPlainObject, entity, field, types } from '@ormojo/ephraim'
+import { createBackend, es_client } from '../backend'
+
+@entity({inherits: [Timestamped]}) class Widget:
+  @field(types.string) id
+  @field(types.string) name = 'nameless'
+  @field(types.integer) qty = 2
+
+let backend = null
+beforeAll! ->
+  now backend = createBackend()
+  backend.bind(Widget, {
+    index: 'widget_timestamped'
+    type: 'widget_timestamped'
+  })
+  mig = backend.createMigration()
+  mig.prepare().then! ->
+    mig.execute()
+
+afterAll! ->
+  es_client.indices.delete({
+    index: [`widget_timestamped_ormojo*`, `widget_timestamped`]
+    ignore: [404]
+  })
+
+afterAll! ->
+  backend.shutdown!
+
+describe('Timestamps', ->
+  it('should timestamp', ->
+    let id, ts1, ts2
+    let nowish = new Date()
+    backend.create(Widget, {name: 'name1', qty: 1})
+    .then((widg) ->
+      expect(widg.name).toBe('name1')
+      expect(widg.qty).toBe(1)
+      console.log("Data on creation", widg~toPlainObject!)
+      expect((widg.createdAt - nowish) < 10000)
+      now ts1 = widg.updatedAt
+      backend.findById(Widget, widg.id)
+    ).then((widg) ->
+      expect(widg.name).toBe('name1')
+      widg.name = 'name2'
+      widg~save()
+    ).then((widg) ->
+      console.log("Data on update", widg~toPlainObject!)
+      expect(widg.name).toBe('name2')
+      now ts2 = widg.updatedAt
+      expect(ts1 < ts2).toBe(true)
+      now id = widg.id
+      widg~destroy()
+    ).then(->
+      backend.findById(Widget, id)
+    ).then((x) ->
+      expect(x).toBe(undefined)
+    )
+  )
+)

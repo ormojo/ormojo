@@ -2,6 +2,7 @@
 import { getPreviousValue, typeOf, setPreviousValue, underlyingTypeOfType, primitiveFields, opaqueFields } from '@ormojo/ephraim'
 import { VersionConflictError } from './errors'
 
+// eslint-disable-next-line no-unused-vars
 defaultIsConflictFixable(newVersion, proposedChange) ->
   true
 

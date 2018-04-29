@@ -35,6 +35,7 @@ export class ESBackend extends Backend:
     trueOpts.indexPrefix = this.indexPrefix
     trueOpts.analyzer = trueOpts.analyzer or T.entitySpec.analyzer
     trueOpts.filter = trueOpts.filter or T.entitySpec.filter
+    trueOpts.fields = trueOpts.fields or {}
 
     this.indices.addEntityType(T, trueOpts)
 

@@ -1,5 +1,5 @@
 import { esTypeMap } from './esTypeMap'
-import { declaredFields, typeFrom } from '@ormojo/ephraim'
+import { declaredFields } from '@ormojo/ephraim'
 
 // Represents an index in Elasticsearch.
 export class ESIndex:
@@ -20,12 +20,13 @@ export class ESIndex:
     // Build mapping
     m = { properties: {} }
     properties = m.properties
-    fields = opts.fields or {}
+    fields = opts.fields
 
     // Individual field mappings
     for key k, val spec in T~declaredFields():
       if k != 'id':
-        mapping = fields[k]?.mapping or spec.mapping or {}
+        fieldBinding = fields[k] or {}
+        mapping = fieldBinding.mapping or {}
         // Merge missing keys from typemap defaults
         typeMap = esTypeMap(spec.type)
         if typeMap:

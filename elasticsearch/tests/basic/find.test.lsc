@@ -53,6 +53,7 @@ describe('find', ->
     .then! (results) ->
       expect(results.getResultCount()).toBe(3)
       expect(results.getResults()[0].qty).toBe(0)
+      expect(results.getResults()[2].qty).toBe(2)
       // pagination, next page
       // XXX: better api for this.
       q = backend.createQuery().resumeFrom(results.getCursor())
@@ -60,5 +61,6 @@ describe('find', ->
     .then! (results) ->
       expect(results.getResultCount()).toBe(3)
       expect(results.getResults()[0].qty).toBe(3)
+      expect(results.getResults()[2].qty).toBe(5)
   )
 )

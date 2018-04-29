@@ -1,6 +1,5 @@
-import { toPlainObject } from '@ormojo/ephraim'
 import { AsyncSink, SinkResult, NotFoundError, DuplicateError } from '@ormojo/ormojo'
-import { hydrateInstance } from './instances'
+import { hydrateInstance, getBulkDataForInstance } from './instances'
 import { VersionConflictError } from './errors'
 import { fixVersionConflicts } from './fixVersionConflicts'
 
@@ -124,11 +123,6 @@ getBulkDeleteOpForInstance(instance) ->
     }
   }
 
-getBulkDataForInstance(instance) ->
-  ob = instance~toPlainObject()
-  delete ob.id // use Elasticsearch virtual id field
-  ob
-
 bulkOperation(es, log, body, opts) ->
   rq = { body }
   if opts?.refresh: rq.refresh = opts.refresh
@@ -163,7 +157,10 @@ crupsert(backend, log, data, lambda1, lambda2, opts) -/>
       hydrateInstance(data[i], unwrappedItem)
 
   if opts?.fixVersionConflicts and result._isVersionConflict():
-    now opts = Object.assign({}, opts, { _fixRecursion: (opts._fixRecursion or 0) + 1})
+    now opts = Object.assign({}, opts, {
+      _fixRecursion: (opts._fixRecursion or 0) + 1
+      noTimestamp: true
+    })
     if opts._fixRecursion <= (opts.maxFixRecursion or 1):
       <- fixVersionConflicts(backend, data, result, opts, opts?.isConflictFixable, opts?.fixConflict)
 
@@ -184,7 +181,7 @@ export class ESSink extends AsyncSink:
 
   update(data, opts) ->
     crupsert(this.backend, this.log, data, getBulkUpdateOpForInstance,
-      (datum) -> { doc: getBulkDataForInstance(datum) }
+      (datum, opts) -> { doc: getBulkDataForInstance(datum, opts) }
       opts
     )
 

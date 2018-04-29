@@ -1,0 +1,12 @@
+import es_client from './es_client'
+import { ESBackend } from '..'
+
+export { es_client }
+
+export createBackend() ->
+  logger = console.log.bind(console)
+  backend = new ESBackend(es_client, {
+    log: logger
+  })
+
+  backend
