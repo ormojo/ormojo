@@ -119,4 +119,9 @@ describe('CRUD', ->
       expect(x).toBe(undefined)
     )
   )
+
+  it! 'should create/reuse', -/>
+    widg <- backend.create(Widget, {})
+    widg.name = 'renamed'
+    <- widg~save!
 )

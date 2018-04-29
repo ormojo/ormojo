@@ -1,7 +1,7 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
 
-import { forEachField, forEachChangedField, rawSet, flushDelta } from '@ormojo/ephraim'
-import { AsyncSink, SinkResult } from '@ormojo/ormojo'
+import { forEachField, forEachChangedField, rawSet, clearDelta, isa } from '@ormojo/ephraim'
+import { AsyncSink, SinkResult, Timestamped } from '@ormojo/ormojo'
 import { escapeValue as q, reflect } from './util'
 import { MySQLTable } from './metadata/table'
 
@@ -24,10 +24,16 @@ class MySQLSinkResult extends SinkResult:
   firstError() -> this._err
   hasError() -> if this._err: true else: false
 
+handleTimestamped(instance) ->
+  if instance~isa(Timestamped):
+    if not instance.createdAt: instance.createdAt = new Date()
+    instance.updatedAt = new Date()
+
 getInsertQueryForInstance(instance, tbl: MySQLTable) ->
   columnForField = tbl.columnForField
   colNames = []
   colVals = []
+  handleTimestamped(instance)
   instance~forEachField! (k, v): void ->
     if v != undefined:
       col = columnForField[k]
@@ -41,6 +47,7 @@ getUpdateQueryForInstance(instance, tbl: MySQLTable) ->
   // Formulate SET clause
   columnForField = tbl.columnForField
   subclauses = []
+  handleTimestamped(instance)
   instance~forEachChangedField! (k, v): void ->
     if v == undefined: now v = null
     col = columnForField[k]
@@ -54,6 +61,7 @@ getUpsertQueryForInstance(instance, tbl: MySQLTable) ->
   colNames = []
   colVals = []
   subclauses = []
+  handleTimestamped(instance)
   instance~forEachField! (k, v): void ->
     if v != undefined:
       col = columnForField[k]
@@ -86,6 +94,15 @@ shouldThrowFirstError(data, opts) ->
   else:
     false
 
+updateInstanceFromQueryResult(inst, rst) ->
+  // For auto ID generation, pull ID back into ephraim entity
+  // TODO: verify if table is an autoincrement table before doing this
+  iid = rst[0].insertId
+  if iid > 0: rawSet(inst, 'id', iid)
+  // Flush delta
+  inst~clearDelta!
+  if inst._isNewRecord: inst._isNewRecord = undefined
+
 query(backend, builder, data, opts) ->
   Promise.all([...for elem datum in data:
     [backend.rawQuery(builder(datum, backend._getTableForInstance(datum)))~reflect!]
@@ -94,12 +111,7 @@ query(backend, builder, data, opts) ->
     result = new MySQLSinkResult()
     for idx i, elem r in results:
       if r.status == 'resolved':
-        // For auto ID generation, pull ID back into ephraim entity
-        // TODO: verify if table is an autoincrement table before doing this
-        iid = r.value[0].insertId
-        if iid > 0: rawSet(data[i], 'id', iid)
-        // Flush delta changes
-        data[i]~flushDelta!
+        updateInstanceFromQueryResult(data[i], r.value)
         result._pushSuccess(r.value)
       else:
         result._pushFailure(r.value)

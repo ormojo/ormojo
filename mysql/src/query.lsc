@@ -49,13 +49,6 @@ export class MySQLQuery extends Query:
     this.readPattern = tbl.readPattern
     this
 
-  setRelationship(R) ->
-    this._table = R.masterTable
-    this.fieldsClause = R.selectFieldsClause
-    this.fromClause = R.joinClause
-    this.readPattern = R.readPattern
-    this
-
   setQuery(other) ->
     Object.assign(this, other)
 
@@ -153,5 +146,3 @@ export class MySQLResultSet extends ResultSet:
       this.backend.find(qry)
     else:
       Promise.resolve(new MySQLResultSet(this.backend))
-
-
