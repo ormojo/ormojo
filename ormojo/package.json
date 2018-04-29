@@ -1,12 +1,14 @@
 {
   "name": "@ormojo/ormojo",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "description": "A multi-backend, isomorphic ORM for JavaScript.",
   "main": "lib/index.js",
   "module": "lib/index.es.js",
   "jsnext:main": "lib/index.es.js",
-  "files": ["lib"],
+  "files": [
+    "lib"
+  ],
   "scripts": {
     "clean": "rimraf lib coverage .nyc_output",
     "build": "rollup -c",
@@ -44,6 +46,6 @@
     "testRegex": "(\\.|/)test\\.lsc$"
   },
   "dependencies": {
-    "@ormojo/ephraim": "^0.1.0"
+    "@ormojo/ephraim": "^0.1.1"
   }
 }
