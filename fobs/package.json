@@ -1,6 +1,6 @@
 {
   "name": "@ormojo/fobs",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "license": "MIT",
   "description": "Fast, minimal, functional ES7 Observables.",
   "main": "lib/index.js",

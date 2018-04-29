@@ -46,6 +46,7 @@ const packages = packageList.map(packageName => {
   const gitBranch = scopedExec([packageName], 'git rev-parse --abbrev-ref HEAD').trim()
   return {
     name: packageName,
+    absolutePath: abs,
     path: path.relative(path.join(__dirname, '..'), abs),
     gitStatus: gitStatus,
     gitBranch: gitBranch
@@ -75,6 +76,8 @@ inquirer.prompt([{type: 'confirm', default: false, name: 'go', message: 'Proceed
   if (!answers.go) throw new Error("User aborted release")
 
   //scoped(packageList, `run preversion`)
+  scoped(packageList, `run --parallel clean`)
+  scoped(packageList, `run --parallel build`)
 
   //////////////////////// Version bump
   // allow user intervention on version numbers for each package
@@ -84,23 +87,27 @@ inquirer.prompt([{type: 'confirm', default: false, name: 'go', message: 'Proceed
   packages.forEach(package => {
     package.version = scopedExec([package.name], 'cat package.json | sed -nE "s/.*\\"version\\": ?\\"(.*)\\".*/\\1/p"').trim()
     //scoped([package.name], `exec -- git commit -am ${package.name}@${package.version}`)
-    //scoped([package.name], `exec -- git tag ${package.name}@${package.version} -m ${package.name}@${package.version}`)
+    scopedExec([package.name], `git add -u`)
+    scopedExec([package.name], `git tag ${package.name}@${package.version} -m ${package.name}@${package.version}`)
   })
 
   //////////////////////// Publish and push tags
-  scoped(packageList, `exec -- npm publish`)
+  packages.forEach(package => {
+    run(`npm publish`, { cwd: package.absolutePath })
+  })
   //scoped(packageList, `exec -- git push && git push --tags`)
 
   //////////////////////// Push monorepo updates
   //run(`git add ${packageDirs.join(' ')}`)
 
-  commitArgs = ['commit', '-m', 'Publish', '-m', 'Publish to NPM:']
+  commitArgs = ['commit', '-m', '[publish]', '-m', 'Publish to NPM:']
   packages.forEach(info => {
     commitArgs.push('-m', `* ${info.name} v${info.version}`)
   })
   runArgs('git', commitArgs)
 
   run(`git push`)
+  run(`git push --tags`)
 } )
 .catch(err => {
   console.error(err)
