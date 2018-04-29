@@ -7,7 +7,8 @@
     "elasticsearch",
     "mysql",
     "ephraim",
-    "fobs"
+    "fobs",
+    "tapestry"
   ],
   "version": "independent"
 }

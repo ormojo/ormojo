@@ -1,0 +1,74 @@
+import { MySQLBackend } from '@ormojo/mysql'
+import { ESBackend } from '@ormojo/elasticsearch'
+mysql2 = require('mysql2/promise')
+import elasticsearch from 'elasticsearch'
+import { entity, field, types, toPlainObject } from '@ormojo/ephraim'
+import { save } from '@ormojo/ormojo'
+import { Tapestry, IdFetch } from '..'
+
+esclient = new elasticsearch.Client({
+  host: 'http://localhost:9200'
+  apiVersion: '5.4'
+})
+
+createSqlBackend() ->
+  new MySQLBackend(mysql2, {
+    host: 'localhost'
+    user: 'drivertest'
+    password: 'drivertest'
+    database: 'drivertest'
+    pool: true
+    log: console.log.bind(console)
+  })
+
+createESBackend() ->
+  logger = console.log.bind(console)
+  new ESBackend(esclient, {
+    log: logger
+  })
+
+sql = createSqlBackend!
+nosql = createESBackend!
+
+@entity() class Nosql:
+  @field(types.string) id
+  @field(types.string) datum
+
+@entity() class Sql:
+  @field(types.integer) id
+  @field(types.string) childId
+  @field(Nosql) child
+
+afterAll! -/>
+  <- [sql.shutdown!, nosql.shutdown!]
+
+test! 'tapestry', -/>
+  // Create tables
+  sql.bind(Sql, { table: 'test_tapestry', fields: { id: { autoIncrement: true } } })
+  nosql.bind(Nosql, { index: 'test_tapestry', type: 'test_tapestry' })
+  sqlMig = sql.createMigration!
+  noSqlMig = nosql.createMigration!
+  <- [sqlMig.prepare!, noSqlMig.prepare!]
+  <- [sqlMig.execute!, noSqlMig.execute!]
+
+  // Create relationship
+  rel = new Tapestry(sql, Sql)
+  rel.addFetch(new IdFetch(nosql, Nosql, (obj) -> obj.childId, 'child'))
+
+  // Create objects
+  [parent, child] <- [
+    sql.create(Sql, {})
+    nosql.create(Nosql, {datum: 'i am sam'})
+  ]
+
+  // Associate parent to child
+  parent.childId = child.id
+  <- parent~save!
+
+  // Fetch parent and child simultaneously via relationship
+  debugger
+  q = rel.createQuery().byId(parent.id)
+  obj <- rel.find(q)
+  firstResult = obj.getResults()[0]
+  console.log(firstResult~toPlainObject!)
+  expect(firstResult.child.datum).toBe('i am sam')
