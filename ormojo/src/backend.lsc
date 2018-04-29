@@ -3,6 +3,14 @@ import { Query, ResultSet } from './query'
 
 // Backend
 export class Backend {
+
+  //
+  // Perform cleanup work associated with terminating the application
+  // for this backend.
+  //
+  shutdown(): Promise<undefined> ->
+    Promise.resolve()
+
   //
   // Bind an Ephraim entity type to this backend.
   //
