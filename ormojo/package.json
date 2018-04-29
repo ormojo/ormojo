@@ -1,11 +1,12 @@
 {
   "name": "@ormojo/ormojo",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "license": "MIT",
   "description": "A multi-backend, isomorphic ORM for JavaScript.",
   "main": "lib/index.js",
   "module": "lib/index.es.js",
   "jsnext:main": "lib/index.es.js",
+  "files": ["lib"],
   "scripts": {
     "clean": "rimraf lib coverage .nyc_output",
     "build": "rollup -c",
@@ -20,8 +21,8 @@
     "@oigroup/babel-preset-lightscript": "^3.0.0",
     "@oigroup/lightscript-eslint": "^3.0.0",
     "babel-cli": "^6.26.0",
-    "babel-plugin-istanbul": "^4.1.5",
     "babel-plugin-external-helpers": "^6.22.0",
+    "babel-plugin-istanbul": "^4.1.5",
     "cross-env": "^5.0.5",
     "eslint": "~4.8.0",
     "jest": "^21.2.1",
@@ -43,6 +44,6 @@
     "testRegex": "(\\.|/)test\\.lsc$"
   },
   "dependencies": {
-    "@ormojo/ephraim": "^0.0.0"
+    "@ormojo/ephraim": "^0.1.0"
   }
 }
