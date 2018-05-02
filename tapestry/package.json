@@ -1,6 +1,6 @@
 {
   "name": "@ormojo/tapestry",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "license": "MIT",
   "description": "Tools for describing cross-backend relationships in ormojo.",
   "main": "lib/index.js",
@@ -22,8 +22,8 @@
   "devDependencies": {
     "@oigroup/babel-preset-lightscript": "^3.0.0",
     "@oigroup/lightscript-eslint": "^3.0.0",
-    "@ormojo/elasticsearch": "^0.1.4",
-    "@ormojo/mysql": "^0.1.4",
+    "@ormojo/elasticsearch": "^0.1.5",
+    "@ormojo/mysql": "^0.1.5",
     "babel-cli": "^6.26.0",
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-plugin-istanbul": "^4.1.5",
@@ -48,7 +48,7 @@
     "testRegex": "(\\.|/)test\\.lsc$"
   },
   "dependencies": {
-    "@ormojo/ephraim": "^0.1.4",
-    "@ormojo/ormojo": "^0.1.4"
+    "@ormojo/ephraim": "^0.1.5",
+    "@ormojo/ormojo": "^0.1.5"
   }
 }

@@ -41,7 +41,7 @@ const packages = packageList.map(packageName => {
   // Absolute path
   const abs = scopedExec([packageName], 'pwd').trim()
   // Prior version
-  package.priorVersion = scopedExec([packageName], 'cat package.json | sed -nE "s/.*\\"version\\": ?\\"(.*)\\".*/\\1/p"').trim()
+  const priorVersion = scopedExec([packageName], 'cat package.json | sed -nE "s/.*\\"version\\": ?\\"(.*)\\".*/\\1/p"').trim()
   // // git status
   // const gitStatus = scopedExec([packageName], 'git status --porcelain').trim()
   // // git branch
@@ -49,6 +49,7 @@ const packages = packageList.map(packageName => {
   return {
     name: packageName,
     absolutePath: abs,
+    priorVersion: priorVersion,
     path: path.relative(path.join(__dirname, '..'), abs)
   }
 })

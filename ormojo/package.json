@@ -1,6 +1,6 @@
 {
   "name": "@ormojo/ormojo",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "license": "MIT",
   "description": "A multi-backend, isomorphic ORM for JavaScript.",
   "main": "lib/index.js",
@@ -46,6 +46,6 @@
     "testRegex": "(\\.|/)test\\.lsc$"
   },
   "dependencies": {
-    "@ormojo/ephraim": "^0.1.4"
+    "@ormojo/ephraim": "^0.1.5"
   }
 }
