@@ -33,6 +33,9 @@ export class MySQLMigration extends Migration:
       this.ddl.push(tbl._toCreateDDL!)
     Promise.resolve(this)
 
+  getMigrationPlan() ->
+    { sql: this.ddl }
+
   execute() ->
     backend = this.backend
     ddl = this.ddl
@@ -50,4 +53,3 @@ export class MySQLMigration extends Migration:
   _enumerateExistingTables(): Promise<any> ->
     this.existingTables = new MySQLTables(this.backend, this.database)
     this.existingTables._enumerateTables()
-
