@@ -69,7 +69,7 @@ export entity(spec) ->
     bootstrapPrototype(proto, EntityType)
     T = typeFrom(proto.constructor)
     Object.assign(T.entitySpec, spec)
-    T.freezeNativeProperties()
+    T.freezeNativeProperties(constructor)
     if inherits:
       T.extendsAprototypically([
         ...for elem e in inherits: [typeFrom(e)]
@@ -77,6 +77,11 @@ export entity(spec) ->
 
     throwOnlyConstructor = () ->
       throw new Error("cannot construct entity without a driver")
+
+    // Attempt to move static methods to the subconstructor
+    for elem k in Object.getOwnPropertyNames(constructor):
+      if (k != 'name') and (k != 'prototype') and (k != 'length'):
+        throwOnlyConstructor[k] = constructor[k]
 
     T.setEntityConstructor(throwOnlyConstructor)
 
