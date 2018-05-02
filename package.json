@@ -4,7 +4,8 @@
   "description": "Lerna mono-repo for ormojo and related packages",
   "scripts": {
     "lerna": "lerna",
-    "bootstrap": "lerna clean --yes && lerna bootstrap"
+    "bootstrap": "lerna clean --yes && lerna bootstrap",
+    "publish": "node scripts/releasePackages.js all"
   },
   "repository": {
     "type": "git",
