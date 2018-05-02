@@ -40,16 +40,16 @@ console.log("Releasing:", packageList)
 const packages = packageList.map(packageName => {
   // Absolute path
   const abs = scopedExec([packageName], 'pwd').trim()
-  // git status
-  const gitStatus = scopedExec([packageName], 'git status --porcelain').trim()
-  // git branch
-  const gitBranch = scopedExec([packageName], 'git rev-parse --abbrev-ref HEAD').trim()
+  // Prior version
+  package.priorVersion = scopedExec([packageName], 'cat package.json | sed -nE "s/.*\\"version\\": ?\\"(.*)\\".*/\\1/p"').trim()
+  // // git status
+  // const gitStatus = scopedExec([packageName], 'git status --porcelain').trim()
+  // // git branch
+  // const gitBranch = scopedExec([packageName], 'git rev-parse --abbrev-ref HEAD').trim()
   return {
     name: packageName,
     absolutePath: abs,
-    path: path.relative(path.join(__dirname, '..'), abs),
-    gitStatus: gitStatus,
-    gitBranch: gitBranch
+    path: path.relative(path.join(__dirname, '..'), abs)
   }
 })
 
@@ -61,14 +61,8 @@ packages.forEach(package => {
   console.log("----------------------------------")
   console.log("Package: ", package.name)
   console.log("Path: ", package.path)
-  console.log("Branch: ", package.gitBranch)
+  console.log("Current version: ", package.priorVersion)
   console.log("----------------------------------")
-  if (package.gitStatus.length > 0) {
-    console.error(`Package ${package.name} has a dirty repository.`)
-  }
-  if (package.gitBranch === "HEAD") {
-    console.error(`Package ${package.name} has a detached HEAD.`)
-  }
 });
 
 inquirer.prompt([{type: 'confirm', default: false, name: 'go', message: 'Proceed?'}])
@@ -93,7 +87,9 @@ inquirer.prompt([{type: 'confirm', default: false, name: 'go', message: 'Proceed
 
   //////////////////////// Publish and push tags
   packages.forEach(package => {
-    run(`npm publish`, { cwd: package.absolutePath })
+    if(package.version !== package.priorVersion) {
+      run(`npm publish`, { cwd: package.absolutePath })
+    }
   })
   //scoped(packageList, `exec -- git push && git push --tags`)
 
