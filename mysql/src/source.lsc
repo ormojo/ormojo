@@ -13,7 +13,8 @@ _deserializeRow(backend, row, readPattern) ->
   let result = undefined
   let currentEntity = undefined
   createEntity(backend, T) ->
-    instance = T~create!~setBackend(backend)
+    // Elide initialization when deserializing from backend
+    instance = T~create(true)~setBackend(backend)
     if result == undefined: now result = instance
     now currentEntity = instance
     instance
