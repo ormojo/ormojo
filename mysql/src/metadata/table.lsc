@@ -8,10 +8,10 @@ import { MySQLColumn } from './column'
 import { MySQLForeignKey } from './foreignKey'
 import { MySQLIndex } from './indices'
 
-_createColumn(table, colName, fieldKey, colType) ->
+_createColumn(table, colName, fieldKey, fieldType, colType) ->
   column = new MySQLColumn(table.backend, table.database, table.name, colName)
   table.addColumn(column)
-  column.ephraimField = fieldKey
+  column.setEphraimField(fieldKey, fieldType)
   column.nullable = true
   column.setType(colType)
   column
@@ -139,7 +139,7 @@ export class MySQLTable {
       colType = thisFieldOpts.type or sqlTypeMap(thisFieldSpec.type)
       if not colType: continue
       // Create the column representation
-      column = _createColumn(this, colName, fieldKey, colType)
+      column = _createColumn(this, colName, fieldKey, thisFieldSpec.type, colType)
       // Establish column demographics
       if fieldKey == 'id' or thisFieldOpts.primaryKey:
         if this.pkColumnFqcn:
@@ -162,7 +162,7 @@ export class MySQLTable {
         column.default = thisFieldSpec.defaultValue
       // Build serialization structures
       columnSequence.push(column.fqcn)
-      readPattern.push(['read', fieldKey])
+      readPattern.push(column.readPattern)
       columnForField[fieldKey] = column
 
     // Allow flex fields
@@ -171,11 +171,11 @@ export class MySQLTable {
         colName = thisFieldOpts.column or fieldKey
         colType = thisFieldOpts.type
         if not colType: continue
-        column = _createColumn(this, colName, fieldKey, colType)
+        column = _createColumn(this, colName, fieldKey, null, colType)
         if thisFieldOpts.default != undefined:
           column.default = thisFieldOpts.default
         columnSequence.push(column.fqcn)
-        readPattern.push(['read', fieldKey])
+        readPattern.push(column.readPattern)
         columnForField[fieldKey] = column
 
     // Build extra data

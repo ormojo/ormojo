@@ -1,0 +1,54 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+import { save, destroy } from '@ormojo/ormojo'
+import { toPlainObject, entity, field, types } from '@ormojo/ephraim'
+import { createBackend } from '../backend'
+
+@entity() class Widget:
+  @field(types.integer) id
+  @field(types.json) extra
+
+let backend = null
+beforeAll! ->
+  now backend = createBackend()
+  backend.bind(Widget, {
+    table: 'Widget_json'
+    fields: {
+      "id": { autoIncrement: true }
+    }
+  })
+  mig = backend.createMigration()
+  mig.prepare().then! ->
+    mig.execute()
+  .then! ->
+    backend.rawQuery('DELETE FROM Widget_json')
+
+// afterAll! ->
+//   backend.tables._dropAllTables()
+//   .then! -> backend.shutdown!
+//   .catch! (err) -> console.error(err)
+
+afterAll! ->
+  backend.shutdown!
+
+describe('JSON', ->
+  it('should create, save, find by id', ->
+    awidget = backend.create(Widget)
+    awidget.extra = [1, "two", { three: 4} ]
+    debugger
+    backend.save(awidget)
+    .then! (widg) ->
+      console.log(widg~toPlainObject!)
+      debugger
+      backend.findById(Widget, widg.id)
+    .then! (widg) ->
+      console.log(widg~toPlainObject!)
+      expect(widg~toPlainObject!).toEqual(awidget~toPlainObject!)
+      widg.extra = { noveau: 1 }
+      widg~save!
+    .then! (widg) ->
+      console.log(widg~toPlainObject!)
+      backend.findById(Widget, widg.id)
+    .then! (widg) ->
+      expect(widg.extra).toEqual({ noveau: 1})
+  )
+)

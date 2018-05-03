@@ -27,6 +27,10 @@ _deserializeRow(backend, row, readPattern) ->
         if Array.isArray(result): result.push(entity) else: now result = [entity]
       | "read":
         rawSet(currentEntity, entry[1], nextColumn!)
+      | "readJson":
+        let val = nextColumn!
+        if val: now val = JSON.parse(val)
+        rawSet(currentEntity, entry[1], val)
       | "create":
         createEntity(backend, entry[1])
       | "createChild":

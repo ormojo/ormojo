@@ -1,4 +1,5 @@
 import { quoteIdentifier, escapeValue } from '../util'
+import { types } from '@ormojo/ephraim'
 
 sameCharset(lhs, rhs) ->
   (lhs~looseEq(null)) or (rhs~looseEq(null)) or (lhs == rhs)
@@ -35,6 +36,13 @@ export class MySQLColumn:
     ): this.isStringType = true
     else: this.isStringType = false
     this
+
+  setEphraimField(fieldKey, fieldType) ->
+    this.ephraimField = fieldKey
+    if fieldType == types.json:
+      this.readPattern = ['readJson', fieldKey]
+    else:
+      this.readPattern = ['read', fieldKey]
 
   hasSameDefinition(other: MySQLColumn): boolean ->
     (Boolean(this.nullable) == Boolean(other.nullable)) and

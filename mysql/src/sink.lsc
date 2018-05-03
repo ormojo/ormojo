@@ -1,6 +1,6 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
 
-import { forEachField, forEachChangedField, rawSet, clearDelta, isa } from '@ormojo/ephraim'
+import { forEachField, forEachChangedField, rawSet, clearDelta, isa, PrimitiveType, OpaqueType } from '@ormojo/ephraim'
 import { AsyncSink, SinkResult, Timestamped } from '@ormojo/ormojo'
 import { escapeValue as q, reflect } from './util'
 import { MySQLTable } from './metadata/table'
@@ -29,17 +29,27 @@ handleTimestamped(instance) ->
     if not instance.createdAt: instance.createdAt = new Date()
     instance.updatedAt = new Date()
 
+// Convert value into SQL assignment
+toSqlValue(val, T) ->
+  if (not T) or (T instanceof PrimitiveType):
+    q(val)
+  elif T instanceof OpaqueType:
+    q(T.stringify(val))
+  else:
+    // XXX: probably won't work
+    q(val)
+
 getInsertQueryForInstance(instance, tbl: MySQLTable) ->
   columnForField = tbl.columnForField
   colNames = []
   colVals = []
   handleTimestamped(instance)
-  instance~forEachField! (k, v): void ->
+  instance~forEachField! (k, v, T): void ->
     if v != undefined:
       col = columnForField[k]
       if col:
         colNames.push(col.quotedName)
-        colVals.push(q(v))
+        colVals.push(toSqlValue(v, T?.type))
 
   `INSERT INTO ${tbl.quotedName} (${colNames.join(',')}) VALUES (${colVals.join(',')})`
 
@@ -48,11 +58,11 @@ getUpdateQueryForInstance(instance, tbl: MySQLTable) ->
   columnForField = tbl.columnForField
   subclauses = []
   handleTimestamped(instance)
-  instance~forEachChangedField! (k, v): void ->
+  instance~forEachChangedField! (k, v, T): void ->
     if v == undefined: now v = null
     col = columnForField[k]
     if col:
-      subclauses.push(`${col.quotedName}=${q(v)}`)
+      subclauses.push(`${col.quotedName}=${toSqlValue(v, T?.type)}`)
 
   `UPDATE ${tbl.quotedName} SET ${subclauses.join(',')} WHERE ${tbl.pkColumnFqcn}=${q(instance[tbl.pkFieldKey])}`
 
@@ -62,12 +72,12 @@ getUpsertQueryForInstance(instance, tbl: MySQLTable) ->
   colVals = []
   subclauses = []
   handleTimestamped(instance)
-  instance~forEachField! (k, v): void ->
+  instance~forEachField! (k, v, T): void ->
     if v != undefined:
       col = columnForField[k]
       if col:
         colNames.push(col.quotedName)
-        quotedValue = q(v)
+        quotedValue = toSqlValue(v, T?.type)
         colVals.push(quotedValue)
         subclauses.push(`${col.quotedName}=${quotedValue}`)
 
@@ -125,7 +135,7 @@ deleteQuery(backend, data, opts) ->
   ])
   .then! (results) ->
     result = new MySQLSinkResult()
-    for idx i, elem r in results:
+    for elem r in results:
       if r.status == 'resolved':
         result._pushSuccess(r.value)
       else:

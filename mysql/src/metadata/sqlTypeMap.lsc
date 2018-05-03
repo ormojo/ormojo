@@ -13,5 +13,7 @@ export sqlTypeMap(orType) ->
     'DOUBLE'
   else if orType == types.date:
     'DATETIME'
+  else if orType == types.json:
+    'TEXT'
   else:
     undefined
