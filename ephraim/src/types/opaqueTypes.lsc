@@ -3,14 +3,13 @@ import { singleton } from '../singleton'
 import isEqual from 'lodash.isequal'
 import cloneDeep from 'lodash.clonedeep'
 
-
-// TODO: improve this
 export date = singleton("date", ->
   const date = new OpaqueType("date")
   date.validate = (x) -> x~looseEq(null) or (x instanceof Date)
   date.toJavaScriptDate = (x) -> x
   date.eq = (a, b) -> a?.getTime() == b?.getTime()
   date.clone = (x) -> if x: new Date(x.getTime())
+  date.stringify = (x) -> if x: x.toISOString() else: null
   date.assign = (x) ->
     if x instanceof Date:
       new Date(x.getTime())
@@ -30,6 +29,7 @@ export object = singleton("object", ->
   object.eq = isEqual
   object.clone = cloneDeep
   object.assign = cloneDeep
+  object.stringify = (x) -> if x~looseNotEq(null): JSON.stringify(x) else: x
   object
 )
 
@@ -44,6 +44,7 @@ export array = singleton("array", ->
   array.eq = isEqual
   array.clone = cloneDeep
   array.assign = cloneDeep
+  array.stringify = (x) -> if x~looseNotEq(null): JSON.stringify(x) else: x
   array
 )
 
@@ -64,5 +65,6 @@ export json = singleton("json", ->
   json.eq = isEqual
   json.clone = cloneDeep
   json.assign = cloneDeep
+  json.stringify = (x) -> if x~looseNotEq(null): JSON.stringify(x) else: x
   json
 )
