@@ -32,6 +32,9 @@ _deserializeRow(backend, row, readPattern) ->
         let val = nextColumn!
         if val: now val = JSON.parse(val)
         rawSet(currentEntity, entry[1], val)
+      | "readBool":
+        val = if nextColumn! == 0: false else: true
+        rawSet(currentEntity, entry[1], val)
       | "create":
         createEntity(backend, entry[1])
       | "createChild":

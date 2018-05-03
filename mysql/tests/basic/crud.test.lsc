@@ -7,6 +7,8 @@ import { createBackend } from '../backend'
   @field(types.integer) id
   @field(types.string) name = 'nameless'
   @field(types.integer) qty = 2
+  @field(types.boolean) falseness = false
+  @field(types.boolean) truthiness = true
 
 let backend = null
 beforeAll! ->

@@ -157,9 +157,9 @@ export class MySQLTable {
           // read the ID from the database
           this.hasAutoIncrementId = true
       if thisFieldOpts.default != undefined:
-        column.default = thisFieldOpts.default
+        column.setDefault(thisFieldOpts.default)
       elif thisFieldSpec.defaultValue != undefined:
-        column.default = thisFieldSpec.defaultValue
+        column.setDefault(thisFieldSpec.defaultValue)
       // Build serialization structures
       columnSequence.push(column.fqcn)
       readPattern.push(column.readPattern)
@@ -173,7 +173,7 @@ export class MySQLTable {
         if not colType: continue
         column = _createColumn(this, colName, fieldKey, null, colType)
         if thisFieldOpts.default != undefined:
-          column.default = thisFieldOpts.default
+          column.setDefault(thisFieldOpts.default)
         columnSequence.push(column.fqcn)
         readPattern.push(column.readPattern)
         columnForField[fieldKey] = column

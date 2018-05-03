@@ -45,10 +45,18 @@ export class MySQLColumn:
     else: this.isStringType = false
     this
 
+  setDefault(def) ->
+    if(this.type == "boolean" or this.type == "BOOLEAN"):
+      this.default = if def: 1 else: 0
+    else:
+      this.default = def
+
   setEphraimField(fieldKey, fieldType) ->
     this.ephraimField = fieldKey
     if fieldType == types.json:
       this.readPattern = ['readJson', fieldKey]
+    elif fieldType == types.boolean:
+      this.readPattern = ['readBool', fieldKey]
     else:
       this.readPattern = ['read', fieldKey]
 
@@ -79,7 +87,7 @@ export class MySQLColumn:
 
   _toDDL(): string ->
     nullability = if this.nullable: 'NULL' else: 'NOT NULL'
-    def = if this.default: `DEFAULT ${escapeValue(this.default)}` else: ''
+    def = if this.default != undefined: `DEFAULT ${escapeValue(this.default)}` else: ''
     incr = if this.autoIncrement: 'AUTO_INCREMENT' else: ''
     key = match this.keyType:
       | 'PRI': 'PRIMARY KEY'

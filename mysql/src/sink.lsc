@@ -1,6 +1,6 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
 
-import { forEachField, forEachChangedField, rawSet, clearDelta, isa, PrimitiveType, OpaqueType } from '@ormojo/ephraim'
+import { forEachField, forEachChangedField, rawSet, clearDelta, isa, PrimitiveType, OpaqueType, types } from '@ormojo/ephraim'
 import { AsyncSink, SinkResult, Timestamped } from '@ormojo/ormojo'
 import { escapeValue as q, reflect } from './util'
 import { MySQLTable } from './metadata/table'
@@ -31,7 +31,11 @@ handleTimestamped(instance) ->
 
 // Convert value into SQL assignment
 toSqlValue(val, T) ->
-  if (not T) or (T instanceof PrimitiveType):
+  if (not T):
+    q(val)
+  elif (T == types.boolean):
+    q(if val: 1 else: 0)
+  elif (T instanceof PrimitiveType):
     q(val)
   elif T instanceof OpaqueType:
     q(T.stringify(val))
