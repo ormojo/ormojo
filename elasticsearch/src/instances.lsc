@@ -1,8 +1,8 @@
 import { createMemoryDelta as create, assignPlainObject, clearDelta, toPlainObject, isa } from '@ormojo/ephraim'
 import { setBackend, Timestamped } from '@ormojo/ormojo'
 
-export _create(type, backend) ->
-  create(type)~setBackend(backend)
+export _create(type, backend, skipInit) ->
+  create(type, skipInit)~setBackend(backend)
 
 export _createNew(type, backend) ->
   instance = create(type)~setBackend(backend)
@@ -56,7 +56,7 @@ resolveType(typeMap, defaultType, errorOnMissingType, datum) ->
 export hydrate(esResult, backend, typeMap, defaultType, errorOnMissingType) ->
   T = resolveType(typeMap, defaultType, errorOnMissingType, esResult)
   if T:
-    hydrateInstance(_create(T, backend), esResult)
+    hydrateInstance(_create(T, backend, true), esResult)
   else:
     undefined
 
