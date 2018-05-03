@@ -90,6 +90,7 @@ inquirer.prompt([{type: 'confirm', default: false, name: 'go', message: 'Proceed
   packages.forEach(package => {
     if(package.version !== package.priorVersion) {
       run(`npm publish`, { cwd: package.absolutePath })
+      scopedExec([package.name], `git tag ${package.name}@${package.version} -m ${package.name}@${package.version}`)
     }
   })
   //scoped(packageList, `exec -- git push && git push --tags`)
@@ -102,11 +103,6 @@ inquirer.prompt([{type: 'confirm', default: false, name: 'go', message: 'Proceed
     commitArgs.push('-m', `* ${info.name} v${info.version}`)
   })
   runArgs('git', commitArgs)
-
-  ///////////////////////// Tag packages with release information
-  packages.forEach(package => {
-    scopedExec([package.name], `git tag ${package.name}@${package.version} -m ${package.name}@${package.version}`)
-  })
 
   run(`git push`)
   run(`git push --tags`)
