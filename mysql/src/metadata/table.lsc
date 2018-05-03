@@ -56,7 +56,7 @@ export class MySQLTable {
           now currentIndex = new MySQLIndex(this)
           currentIndex.name = ixDef.index_name
           this.addIndex(currentIndex)
-          if ixDef.non_unique == 0: ixDef.unique = true
+          if ixDef.non_unique == 0: currentIndex.unique = true
 
         if currentIndex and (currentIndex.name == ixDef.index_name):
           currentIndex.columnNames.push(ixDef.column_name)

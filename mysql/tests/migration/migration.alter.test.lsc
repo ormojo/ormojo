@@ -17,7 +17,8 @@ describe('alter table migration tests: ', ->
   it('add modify drop column', ->
     @entity() class Widget:
       @field(types.string) id
-      @field(types.integer) val1
+      @field(types.boolean) noMigrateBoolean
+      @field(types.integer) willChangeType
       @field(types.integer) willDrop
 
     backend.bind(Widget, { table: 'Widget_alter' })
@@ -28,8 +29,9 @@ describe('alter table migration tests: ', ->
     .then! ->
       @entity() class Widget2:
         @field(types.string) id
-        @field(types.string) val1
-        @field(types.string) val2
+        @field(types.boolean) noMigrateBoolean
+        @field(types.string) willChangeType
+        @field(types.string) willAdd
 
       console.log("Made Widget2")
       backend._clearInternalTableStructure!
@@ -57,6 +59,11 @@ describe('alter table migration tests: ', ->
     .then! ->
       console.log("******** Add/Drop")
       backend._clearInternalTableStructure!
-      backend.bind(Wodget, { table: 'Wodget_alter', indices: [{ columnNames: ['f2'] }] })
+      backend.bind(Wodget, { table: 'Wodget_alter', indices: [{ columnNames: ['f1', 'f2'], unique: true }] })
+      backend.createMigration!.prepare!.then(mig -> mig.execute!)
+    .then! ->
+      console.log("******** NOOP")
+      backend._clearInternalTableStructure!
+      backend.bind(Wodget, { table: 'Wodget_alter', indices: [{ columnNames: ['f1', 'f2'], unique: true }] })
       backend.createMigration!.prepare!.then(mig -> mig.execute!)
 )
