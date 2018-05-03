@@ -23,10 +23,13 @@ test! 'static', ->
 test! 'init', ->
   @entity() class E:
     @field() f = 1
+    @field() g = -> "functional initializer"
 
   debugger
   e = create(E)
+  console.log("init", e~toPlainObject!)
   expect(e.f).toBe(1)
+  expect(e.g).toBe("functional initializer")
 
 test! 'subentity', ->
   @entity() class E:

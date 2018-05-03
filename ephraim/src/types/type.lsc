@@ -57,7 +57,11 @@ export PrimitiveType = singleton("PrimitiveType", ->
       throw new Error("primitive types cannot be observed")
 
     initialize(entity, spec, creator, initializer) ->
-      initializer.call(entity)
+      rst = initializer.call(entity)
+      if typeof(rst) == 'function':
+        rst.call(entity)
+      else:
+        rst
 )
 
 export OpaqueType = singleton("OpaqueType", ->
@@ -69,7 +73,11 @@ export OpaqueType = singleton("OpaqueType", ->
       throw new Error("primitive types cannot be observed")
 
     initialize(entity, spec, creator, initializer) ->
-      initializer.call(entity)
+      rst = initializer.call(entity)
+      if typeof(rst) == 'function':
+        rst.call(entity)
+      else:
+        rst
 )
 
 export ComplexType = singleton("ComplexType", ->
