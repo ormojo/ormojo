@@ -16,6 +16,14 @@ sameKeyType(lhs, rhs) ->
   // Must both be PRI
   lhs == rhs
 
+sameColumnType(lhs, rhs) ->
+  now lhs = lhs.toLowerCase!
+  now rhs = rhs.toLowerCase!
+  if lhs == rhs: return true
+  if lhs == 'boolean' and rhs == 'tinyint(1)': return true
+  if lhs == 'tinyint(1)' and rhs == 'boolean': return true
+  false
+
 export class MySQLColumn:
   constructor(backend, database, tableName, name) ->
     this.backend = backend
@@ -47,7 +55,7 @@ export class MySQLColumn:
   hasSameDefinition(other: MySQLColumn): boolean ->
     (Boolean(this.nullable) == Boolean(other.nullable)) and
     (Boolean(this.autoIncrement) == Boolean(other.autoIncrement)) and
-    (this.type.toLowerCase! == other.type.toLowerCase!) and
+    (sameColumnType(this.type, other.type)) and
     (sameDefault(this.default, other.default)) and
     (sameKeyType(this.keyType, other.keyType)) and
     ((not this.isStringType) or sameCharset(this.charset, other.charset)) and
