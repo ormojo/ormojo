@@ -1,0 +1,39 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+import { save, destroy } from '@ormojo/ormojo'
+import { toPlainObject, entity, field, types } from '@ormojo/ephraim'
+import { createBackend } from '../backend'
+
+@entity() class Widget:
+  @field(types.string) id
+  @field(types.string) nullable
+
+let backend = null
+beforeAll! ->
+  now backend = createBackend()
+  backend.bind(Widget, {
+    table: 'Widget_nullable'
+  })
+  mig = backend.createMigration()
+  mig.prepare().then! ->
+    mig.execute()
+  .then! ->
+    backend.rawQuery('DELETE FROM Widget_nullable')
+
+// afterAll! ->
+//   backend.tables._dropAllTables()
+//   .then! -> backend.shutdown!
+//   .catch! (err) -> console.error(err)
+
+afterAll! ->
+  backend.shutdown!
+
+describe('Nullability', ->
+  it! 'should forbid null ID', -/>
+    let err = null
+    try:
+      <- backend.create(Widget, {})
+    catch theError:
+      console.log(theError)
+      now err = theError
+    expect(err).toBeTruthy()
+)

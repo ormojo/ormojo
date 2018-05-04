@@ -1,0 +1,70 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+import { save, destroy, find, findAll } from '@ormojo/ormojo'
+import { toPlainObject, entity, field, types, setFieldType } from '@ormojo/ephraim'
+import { createBackend } from '../backend'
+import { ManyToManyRelationship, And, Or, Not, Eq, Op, Field } from '../..'
+
+@entity() class Master:
+  @field(types.integer) id
+  @field(types.string) name = 'nameless'
+
+@entity() class Detail:
+  @field(types.integer) id
+  @field(types.string) value = 'valueless'
+  @field(types.string) extra
+
+@entity() class MasterDetailJoin:
+  @field(types.integer) masterId
+  @field(types.integer) detailId
+  @field(types.string) extra
+
+let backend = null
+let rel = null
+
+beforeAll! ->
+  now backend = createBackend()
+  backend.bind(Master, {
+    table: 'MMMaster'
+    fields: {
+      id: { autoIncrement: true }
+    }
+  })
+  backend.bind(Detail, {
+    table: 'MMDetail'
+    fields: {
+      id: { autoIncrement: true }
+      extra: { ignore: true }
+    }
+  })
+  backend.bind(MasterDetailJoin)
+
+  now rel = new ManyToManyRelationship(backend).join(Master, Detail, MasterDetailJoin, 'masterId', 'detailId')
+  rel.extraField('extra', 'extra')
+  rel.createForeignKeyConstraint()
+
+  mig = backend.createMigration()
+  mig.prepare().then! ->
+    mig.execute()
+  .then! ->
+    backend.rawQuery('DELETE FROM MMMaster')
+  .then! ->
+    backend.rawQuery('DELETE FROM MMDetail')
+
+// afterAll! ->
+//   backend.tables._dropAllTables()
+//   .then! -> backend.shutdown!
+//   .catch! (err) -> console.error(err)
+
+afterAll! ->
+  backend.shutdown!
+
+test! 'many-to-many', -/>
+  master <- backend.create(Master, { name: 'one'})
+  detail <- backend.create(Detail, { value: 'detail1'})
+  detail2 <- backend.create(Detail, { value: 'detail2'})
+  <- rel.link(master, detail, { extra: 'first'})
+  <- rel.link(master, detail2, { extra: 'second'})
+  q = rel.createQueryForRightEntities(master)
+  results <- backend.find(q)
+  list = results.getResults()
+  console.log(list)

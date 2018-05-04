@@ -10,7 +10,7 @@ export Op(field, o, val) ->
     col = if typeof(field) == 'function':
       field(query)
     else:
-      query._table?.columnForField[field]?.fqcn
+      query.columnLookup[field]?.fqcn
     if col:
       clause.push(`${col}${o}${q(val)}`)
     else:
@@ -43,7 +43,7 @@ export class MySQLQuery extends Query:
   setType(T) ->
     super.setType(T)
     tbl = this.backend._getTableForType(T)
-    this._table = tbl
+    this.columnLookup = tbl.columnForField
     this.fieldsClause = tbl.selectFieldsClause
     this.fromClause = tbl.quotedName
     this.readPattern = tbl.readPattern
@@ -68,7 +68,7 @@ export class MySQLQuery extends Query:
     this
 
   orderBy(field, qualifier = 'ASC') ->
-    col = this._table?.columnForField[field]?.quotedName
+    col = this.columnLookup[field]?.quotedName
     if not col: throw new Error(`MySQLQuery.orderBy: no column for field '${field}'`)
     this.orderByClause = `ORDER BY ${col} ${qualifier}`
     this
@@ -98,21 +98,24 @@ export class MySQLQuery extends Query:
     this.fromClause
 
   _getWhereClause() ->
-    this.whereClause
+    if this.ids:
+      ids = this.ids
+      col = this.columnLookup['id'].quotedName
+      if ids.length > 1:
+        set = [...for elem id in ids: if id~looseNotEq(null): [q(id)]]
+        if set.length == 0: null else: `${col} IN (${set.join(',')})`
+      else:
+        if ids[0]~looseEq(null): null else: `${col}=${q(ids[0])}`
+    else:
+      this.whereClause
 
   _getSQL() ->
     if this.sql:
       this.sql
-    elif this.ids:
-      ids = this.ids
-      tbl = this._table
-      if ids.length > 1:
-        set = [...for elem id in ids: if id~looseNotEq(null): [q(id)]]
-        if set.length == 0: null else: `SELECT ${this._getFieldsClause()} FROM ${this._getFromClause()} WHERE ${tbl.pkColumnFqcn} IN (${set.join(',')})`
-      else:
-        if ids[0]~looseEq(null): null else: `SELECT ${this._getFieldsClause()} FROM ${this._getFromClause()} WHERE ${tbl.pkColumnFqcn}=${q(ids[0])}`
     else:
-      `SELECT ${this._getFieldsClause()} FROM ${this._getFromClause()} WHERE ${this._getWhereClause()} ${this._getOrderByClause()} ${this._getOffsetClause()}`
+      where = this._getWhereClause()
+      if where == null: return null
+      `SELECT ${this._getFieldsClause()} FROM ${this._getFromClause()} WHERE ${where} ${this._getOrderByClause()} ${this._getOffsetClause()}`
 
 export class MySQLCursor extends Cursor:
   constructor(query) ->

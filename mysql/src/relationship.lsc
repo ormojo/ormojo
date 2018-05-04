@@ -1,10 +1,22 @@
-import { Relationship, setBackend } from '@ormojo/ormojo'
-import { createMemoryDelta as create } from '@ormojo/ephraim'
+import { Relationship, setBackend, save } from '@ormojo/ormojo'
+import { createMemoryDelta as create, assignPlainObject } from '@ormojo/ephraim'
 import { MySQLForeignKey } from './metadata/foreignKey'
+import { escapeValue as quote } from './util'
 
 export class MySQLRelationship extends Relationship:
   constructor(backend) ->
     super(backend)
+
+  _lookupType(typeField, tblField, T): void ->
+    this[typeField]= T
+    this[tblField] = this.backend._getTableForType(T)
+    if not this[tblField]:
+      throw new Error(`Relationship: cannot find table for type '${T.name}'`)
+
+  _lookupColumn(colField, tblField, fieldName): void ->
+    this[colField] = this[tblField].columnForField[fieldName]
+    if not this[colField]:
+      throw new Error(`Relationship: could not map field '${fieldName}' into table '${this[tblField].name}'`)
 
 export class OneToOneRelationship extends MySQLRelationship:
   constructor(backend) ->
@@ -61,8 +73,80 @@ export class OneToOneRelationship extends MySQLRelationship:
 
   createQuery() ->
     q = this.backend.createQuery()
-    q._table = this.masterTable
+    q.columnLookup = this.masterTable.columnForField
     q.fieldsClause = this.selectFieldsClause
     q.fromClause = this.joinClause
     q.readPattern = this.readPattern
     q
+
+export class ManyToManyRelationship extends MySQLRelationship:
+  constructor(backend) ->
+    super(backend)
+    this._extraReadPattern = []
+    this._extraFieldsClause = ''
+
+  join(lhsType, rhsType, joinType, joinFieldLHS, joinFieldRHS) ->
+    this._lookupType('lhsType', 'lhsTable', lhsType)
+    this._lookupColumn('lhsCol', 'lhsTable', 'id')
+    this._lookupType('rhsType', 'rhsTable', rhsType)
+    this._lookupColumn('rhsCol', 'rhsTable', 'id')
+    this._lookupType('joinType', 'joinTable', joinType)
+    this._lookupColumn('joinLhsCol', 'joinTable', joinFieldLHS)
+    this.joinFieldLHS = joinFieldLHS
+    this._lookupColumn('joinRhsCol', 'joinTable', joinFieldRHS)
+    this.joinFieldRHS = joinFieldRHS
+    this
+
+  extraField(rhsField, joinField) ->
+    rp = this.joinTable._readPatternForField(joinField)
+    this._extraReadPattern.push(rp)
+    this._extraFieldsClause = this._extraFieldsClause + `,${this.joinTable.columnForField[joinField].fqcn}`
+    this
+
+  _createRLPattern(): void ->
+    if this._rlFieldsClause: return
+    this._rlFieldsClause = this.rhsTable.selectFieldsClause + this._extraFieldsClause
+    this._rlReadPattern = this.rhsTable.readPattern.concat(this._extraReadPattern)
+    this._rlJoinClause = `${this.joinTable.quotedName} LEFT JOIN ${this.rhsTable.quotedName} ON ${this.joinRhsCol.fqcn}=${this.rhsCol.fqcn}`
+
+  linkById(lid, rid, extra) ->
+    if lid~looseEq(null) or rid~looseEq(null):
+      throw new Error("Relationship.Link: link subjects must have non-null ids")
+    relator = this.backend.create(this.joinType)
+    if extra: relator~assignPlainObject(extra)
+    relator[this.joinFieldLHS] = lid
+    relator[this.joinFieldRHS] = rid
+    relator~save()
+
+  unlinkById(lid, rid) ->
+    if lid~looseEq(null) or rid~looseEq(null):
+      throw new Error("Relationship.Link: link subjects must have non-null ids")
+    this.backend.rawQuery(`DELETE FROM ${this.joinTable.quotedName} WHERE ${this.joinLhsCol.fqcn}=${quote(lid)} AND ${this.joinRhsCol.fqcn}=${quote(rid)}`)
+
+  link(leftEntity, rightEntity, extra) ->
+    this.linkById(leftEntity.id, rightEntity.id, extra)
+
+  unlink(leftEntity, rightEntity) ->
+    this.unlinkById(leftEntity.id, rightEntity.id)
+
+  createQueryForRightEntities(leftEntity) ->
+    this._createRLPattern()
+    q = this.backend.createQuery()
+    q.columnLookup = this.rhsTable.columnForField
+    q.fieldsClause = this._rlFieldsClause
+    q.fromClause = this._rlJoinClause
+    q.readPattern = this._rlReadPattern
+    q.whereClause = `${this.joinLhsCol.fqcn}=${quote(leftEntity.id)}`
+    q
+
+  // Create a foreign key constraint on the join table.
+  createForeignKeyConstraint(onDelete = "CASCADE", onUpdate = "CASCADE") ->
+    idx = new MySQLForeignKey(this.joinTable).setSingleColumn(this.joinLhsCol.name, this.lhsTable.name, this.lhsCol.name)
+    idx.onDelete = onDelete
+    idx.onUpdate = onUpdate
+    this.joinTable.addIndex(idx)
+    idx2 = new MySQLForeignKey(this.joinTable).setSingleColumn(this.joinRhsCol.name, this.rhsTable.name, this.rhsCol.name)
+    idx2.onDelete = onDelete
+    idx2.onUpdate = onUpdate
+    this.joinTable.addIndex(idx2)
+    this

@@ -29,19 +29,22 @@ handleTimestamped(instance) ->
     if not instance.createdAt: instance.createdAt = new Date()
     instance.updatedAt = new Date()
 
+quoteOrNull(val) ->
+  if val~looseEq(null): 'NULL' else: q(val)
+
 // Convert value into SQL assignment
 toSqlValue(val, T) ->
   if (not T):
-    q(val)
+    quoteOrNull(val)
   elif (T == types.boolean):
     q(if val: 1 else: 0)
   elif (T instanceof PrimitiveType):
-    q(val)
+    quoteOrNull(val)
   elif T instanceof OpaqueType:
-    q(T.stringify(val))
+    if val~looseEq(null): 'NULL' else: q(T.stringify(val))
   else:
     // XXX: probably won't work
-    q(val)
+    quoteOrNull(val)
 
 getInsertQueryForInstance(instance, tbl: MySQLTable) ->
   columnForField = tbl.columnForField

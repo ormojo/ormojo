@@ -156,6 +156,8 @@ export class MySQLTable {
           // Flag for auto-increment ID; upon insertion we will automatically
           // read the ID from the database
           this.hasAutoIncrementId = true
+      else:
+        if thisFieldOpts.nullable != undefined: column.nullable = thisFieldOpts.nullable
       if thisFieldOpts.default != undefined:
         column.setDefault(thisFieldOpts.default)
       elif thisFieldSpec.defaultValue != undefined:
@@ -174,6 +176,7 @@ export class MySQLTable {
         column = _createColumn(this, colName, fieldKey, null, colType)
         if thisFieldOpts.default != undefined:
           column.setDefault(thisFieldOpts.default)
+        if thisFieldOpts.nullable != undefined: column.nullable = thisFieldOpts.nullable
         columnSequence.push(column.fqcn)
         readPattern.push(column.readPattern)
         columnForField[fieldKey] = column
@@ -188,5 +191,9 @@ export class MySQLTable {
       idx.unique = indexDefinition.unique
       this.addIndex(idx)
   } // deriveFromType
+
+  _readPatternForField(f) ->
+    this.columnForField[f].readPattern
+
 
 } // MySQLTable
