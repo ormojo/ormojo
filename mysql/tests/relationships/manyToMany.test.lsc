@@ -11,7 +11,7 @@ import { ManyToManyRelationship, And, Or, Not, Eq, Op, Field } from '../..'
 @entity() class Detail:
   @field(types.integer) id
   @field(types.string) value = 'valueless'
-  @field(types.string) extra
+  @field(types.string) extraField
 
 @entity() class MasterDetailJoin:
   @field(types.integer) masterId
@@ -33,13 +33,13 @@ beforeAll! ->
     table: 'MMDetail'
     fields: {
       id: { autoIncrement: true }
-      extra: { ignore: true }
+      extraField: { ignore: true }
     }
   })
   backend.bind(MasterDetailJoin)
 
   now rel = new ManyToManyRelationship(backend).join(Master, Detail, MasterDetailJoin, 'masterId', 'detailId')
-  rel.extraField('extra', 'extra')
+  rel.extraField('extraField', 'extra')
   rel.createForeignKeyConstraint()
 
   mig = backend.createMigration()

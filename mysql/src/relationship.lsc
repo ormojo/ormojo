@@ -98,7 +98,8 @@ export class ManyToManyRelationship extends MySQLRelationship:
     this
 
   extraField(rhsField, joinField) ->
-    rp = this.joinTable._readPatternForField(joinField)
+    rp = this.joinTable._readPatternForField(joinField).slice()
+    rp[1] = rhsField
     this._extraReadPattern.push(rp)
     this._extraFieldsClause = this._extraFieldsClause + `,${this.joinTable.columnForField[joinField].fqcn}`
     this
