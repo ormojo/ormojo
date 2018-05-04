@@ -1,6 +1,6 @@
 {
   "name": "@ormojo/mysql",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "license": "MIT",
   "description": "MySQL driver for ormojo.",
   "main": "lib/index.js",
