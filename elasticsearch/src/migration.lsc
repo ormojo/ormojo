@@ -90,10 +90,16 @@ class MigrationPlan:
       return
 
     this.migrationDiff = deepDiff.diff(this.currentSettings, this.targetSettings)
-    // Elasticsearch annoyingly stringifies numbers. We must do the same.
+
+    // Patch up white noise in migration diff
     for elem difference in this.migrationDiff:
+      // Elasticsearch annoyingly stringifies numbers. We must do the same.
       if difference.kind == 'E' and (JSON.stringify(difference.rhs) == difference.lhs):
         set(this.targetSettings, difference.path, difference.lhs)
+
+      // Elasticsearch omits date formats when returning index data.
+      if difference.kind == 'N' and (difference.path[difference.path.length - 1] == 'format'):
+        set(this.currentSettings, difference.path, difference.rhs)
 
     if isEqual(this.currentSettings, this.targetSettings):
       this.backend.log.trace('elasticsearch: no difference, migration not needed')

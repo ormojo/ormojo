@@ -26,6 +26,7 @@ jest.setTimeout(10000)
   @field(types.string) id
   @field(types.string) name = 'nameless'
   @field(types.integer) qty = 2
+  @field(types.date) timestamp
   @field({
     type: listOf(types.text)
     mapping: (new QueryDsl).q('fields', 'raw', { type: 'keyword'}).body
