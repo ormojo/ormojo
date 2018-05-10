@@ -1,6 +1,6 @@
 {
   "name": "@ormojo/mysql",
-  "version": "0.1.11",
+  "version": "0.2.0",
   "license": "MIT",
   "description": "MySQL driver for ormojo.",
   "main": "lib/index.js",
@@ -47,8 +47,8 @@
     "testRegex": "(\\.|/)test\\.lsc$"
   },
   "dependencies": {
-    "@ormojo/ephraim": "^0.1.8",
-    "@ormojo/ormojo": "^0.1.8",
+    "@ormojo/ephraim": "^0.2.0",
+    "@ormojo/ormojo": "^0.2.0",
     "lodash": "^4.17.5",
     "sqlstring": "^2.3.1"
   }
