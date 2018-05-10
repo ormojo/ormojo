@@ -5,7 +5,9 @@
       {
         "env": {
           "targets": { "node": 8 }
-        }
+        },
+        "additionalPlugins": ["babel-plugin-transform-es2015-classes"],
+        "stdlib": { "lodash": false }
       }
     ]
   ]
