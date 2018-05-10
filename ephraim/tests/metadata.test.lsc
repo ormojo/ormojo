@@ -63,6 +63,7 @@ test! "primitive defaults metadata", ->
   @entity() class E:
     @field(types.string) F = "default"
     @field(types.string) G
+    @field(types.string) H = -> "initializerFunction"
 
   e = create(E)
   fields = e~declaredFields()
@@ -70,6 +71,9 @@ test! "primitive defaults metadata", ->
   console.log(fields['F'], fields['G'])
   expect(fields['F'].defaultValue).toEqual('default')
   expect(fields['G'].defaultValue).toEqual(undefined)
+  expect(fields['H'].defaultValue).toBe(undefined)
+  expect(e.H).toBe('initializerFunction')
+
 
 test! "underlying types", ->
   @entity() class E:

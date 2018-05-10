@@ -50,35 +50,41 @@ class DeltaMemoryEntityType extends EntityType:
     proto[getPreviousValueSymbol] = getPreviousValue
     proto[setPreviousValueSymbol] = setPreviousValue
 
-  construct() ->
-    if Object.keys(this.opaqueFields).length > 0:
-      (new (this.entityConstructor)())~createCloneCache!
-    else:
-      new (this.entityConstructor)()
+  construct() -> new (this.entityConstructor)()
 
   createObservableGhost(entity) ->
     new (this~getObservableEntityGhostClass!)(entity)
 
 export transformEntityType(ET, transformedTypeSymbol, transformedTypeQualifier, isObservable, isDelta) ->
   typeClass = if isDelta: DeltaMemoryEntityType else: MemoryEntityType
+  needsCloneCache = Boolean(isDelta and (Object.keys(ET.opaqueFields).length > 0))
 
   // Create ES2015 constructor for memory entity
   typeName = `${transformedTypeQualifier}(${ET.name})`
   EClass = ET.entityConstructor
-  class MemoryEntityClass extends EClass {}
+
+  MemoryEntityClass(...args) ->
+    obj = Object.create(MemoryEntityClass.prototype)
+    obj[dataSymbol] = Object.create(null)
+    if needsCloneCache: obj~createCloneCache()
+    EClass.apply(obj, args)
+    return obj
+
+  MemoryEntityClass.prototype = Object.create(EClass.prototype, {
+    constructor: {
+      value: MemoryEntityClass
+      enumerable: false
+      writable: true
+      configurable: true
+    }
+  })
+  Object.setPrototypeOf(MemoryEntityClass, EClass)
   Object.defineProperty(MemoryEntityClass, "name", { value: typeName })
 
   // Create ephraim type for memory entity; associate it with prototype
   MT = new typeClass(typeName)
   MT.bootstrapFromPrototype(MemoryEntityClass.prototype)
-
-  // Discard ES2015 constructor in favor of a simpler vanilla JS constructor
-  memoryEntityClass = (): void ->
-    this[dataSymbol] = Object.create(null)
-  // Set constructor name to typename
-  Object.defineProperty(memoryEntityClass, "name", { value: MT.name })
-  memoryEntityClass.prototype = MemoryEntityClass.prototype
-  MT.setEntityConstructor(memoryEntityClass)
+  MT.setEntityConstructor(MemoryEntityClass)
 
   // Cache newly created types to prevent cycles/recursion
   ET[transformedTypeSymbol] = MT
@@ -87,7 +93,7 @@ export transformEntityType(ET, transformedTypeSymbol, transformedTypeQualifier, 
 
   // Update field types; each field type must be memory(previousType)
   nextFields = {
-    ...for key k, val spec in memoryEntityClass~declaredFields():
+    ...for key k, val spec in MemoryEntityClass~declaredFields():
       nextSpec = Object.assign({}, spec)
       if not ((nextSpec.type instanceof PrimitiveType) or (nextSpec.type instanceof OpaqueType)):
         nextSpec.type = transformType(nextSpec.type, isDelta)

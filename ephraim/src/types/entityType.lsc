@@ -64,7 +64,8 @@ export EntityType = singleton("EntityType", ->
     setEntityConstructor(constr): void ->
       // Wire javascript prototype propertly
       proto = this.entityPrototype
-      constr.prototype = proto
+      if constr.prototype != proto:
+        constr.prototype = proto
       proto.constructor = constr
 
       // Wire Ephraim type properly
@@ -82,7 +83,7 @@ export EntityType = singleton("EntityType", ->
       // Native fields override those from extensions
       for key k, val v in otherT.fields:
         if not this.nativeProperties[k]:
-          this.fields[k] = v
+          this.defineField(k, v)
       Object.assign(this.entitySpec, otherT.entitySpec)
 
     extendsPrototypically(otherT): void ->

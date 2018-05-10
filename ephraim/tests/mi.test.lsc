@@ -1,0 +1,16 @@
+import { entity, field, augment, toPlainObject, createMemoryDelta as create, setFieldType, isDelta, types, typeFrom } from '@ormojo/ephraim'
+
+test! 'basic', ->
+  @entity() class E:
+    @field(types.date) d
+
+  @entity({inherits: [E]}) class F:
+    @field() f
+
+  debugger
+  e = create(F)
+  e.f = 1
+
+  expect(e.f).toBe(1)
+  expect(e~isDelta!).toBe(true)
+  expect(typeFrom(F).opaqueFields.d).toBeTruthy()

@@ -31,6 +31,29 @@ test! 'init', ->
   expect(e.f).toBe(1)
   expect(e.g).toBe("functional initializer")
 
+test! 'init via constructor', ->
+  @entity() class E:
+    @field() e
+
+    constructor() ->
+      this.e = 1
+
+  @entity() class F extends E:
+    @field() f
+
+    constructor() ->
+      this.f = 2
+
+    autoBound() => this.f
+
+  debugger
+  e = create(F)
+  console.log("init via constructor", e~toPlainObject!)
+  expect(e.e).toBe(1)
+  expect(e.f).toBe(2)
+  bound = e.autoBound
+  expect(bound()).toBe(2)
+
 test! 'subentity', ->
   @entity() class E:
     @field() e
