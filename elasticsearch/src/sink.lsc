@@ -54,7 +54,7 @@ class ESSinkResult extends SinkResult:
     let result = false
     for elem e in this.results:
       if e instanceof Error:
-        if e instanceof VersionConflictError:
+        if e.name == "VersionConflictError":
           now result = true
         else:
           if not this._err: this._err = e
