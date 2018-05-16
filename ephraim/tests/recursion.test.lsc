@@ -1,5 +1,17 @@
 import { entity, field, toPlainObject, assignPlainObject, types, listOf, createMemory as create, augment } from '@ormojo/ephraim'
 
+test! 'toPlainObject', ->
+  @entity() class E:
+    @field() nonFlex
+    @field(types.date) d
+
+  e = create(E)
+  e.nonFlex = 1
+  e.d = new Date()
+  e.flex = 2
+  e._private = 3
+  console.log(e~toPlainObject({includeTypeStamp: true}))
+
 test! "basic assign", ->
   @entity() class E:
     @field(types.string) str
@@ -87,6 +99,3 @@ test! 'circular assign list', ->
   loe2~assignPlainObject(plain)
   console.log(loe2~toPlainObject!)
   expect(loe2.get(1)).toBe(loe2.get(2))
-
-
-

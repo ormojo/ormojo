@@ -152,4 +152,7 @@ export EntityType = singleton("EntityType", ->
         else:
           state.visitUnknownField(left, right, k, v, seen)
       )
+
+    getTypeStamp(): string ->
+      this.name
 )

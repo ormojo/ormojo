@@ -10,32 +10,34 @@ export typeCheckAssignment(T, key, val) ->
   if not T.validate(val):
     throw new Error(`Value assigned to '${key}' must be of type '${T.name}', was of type '${typeOf(val).name}'`)
 
-objectConversionState() -> {
-  seen(x) -> this.map?.get(x)
-  remember(x, val): void ->
-    if not this.map: this.map = new Map()
-    this.map.set(x, val)
-  create(T) ->
-    // TODO: arrays, maps
-    if T instanceof EntityType: {}
-    elif T instanceof ListType: []
-    else: true
-  visitField(obj, k, v, spec): void ->
-    if spec:
-      obj[k] = spec.type.recurseLeft(v, this)
-    else:
-      obj[k] = v
-  visitListEntry(obj, i, v, type): void ->
-    if type:
-      obj[i] = type.recurseLeft(v, this)
-    else:
-      obj[i] = v
-}
+objectConversionState(opts) ->
+  includeTypeStamp = opts?.includeTypeStamp
+  {
+    seen(x) -> this.map?.get(x)
+    remember(x, val): void ->
+      if not this.map: this.map = new Map()
+      this.map.set(x, val)
+    create(T) ->
+      // TODO: arrays, maps
+      if T instanceof EntityType: {...if includeTypeStamp: {_entity: T.getTypeStamp()}}
+      elif T instanceof ListType: []
+      else: true
+    visitField(obj, k, v, spec): void ->
+      if spec:
+        obj[k] = spec.type.recurseLeft(v, this)
+      else:
+        obj[k] = v
+    visitListEntry(obj, i, v, type): void ->
+      if type:
+        obj[i] = type.recurseLeft(v, this)
+      else:
+        obj[i] = v
+  }
 
 // Convert to plain object
-export toPlainObject(x) ->
+export toPlainObject(x, opts) ->
   T = typeFrom(typeOf(x))
-  state = objectConversionState()
+  state = objectConversionState(opts)
   T.recurseLeft(x, state)
 
 // Assign plain object

@@ -30,6 +30,9 @@ class MemoryEntityType extends EntityType:
   createObservableGhost(entity) ->
     new (this~getObservableEntityGhostClass!)(entity)
 
+  getTypeStamp(): string ->
+    this[underlyingTypeSymbol].getTypeStamp()
+
 class DeltaMemoryEntityType extends EntityType:
   definePrimitiveField(key, spec): void ->
     definePrimitiveField(this.entityPrototype, spec.type, key, spec, true)
@@ -54,6 +57,9 @@ class DeltaMemoryEntityType extends EntityType:
 
   createObservableGhost(entity) ->
     new (this~getObservableEntityGhostClass!)(entity)
+
+  getTypeStamp(): string ->
+    this[underlyingTypeSymbol].getTypeStamp()
 
 export transformEntityType(ET, transformedTypeSymbol, transformedTypeQualifier, isObservable, isDelta) ->
   typeClass = if isDelta: DeltaMemoryEntityType else: MemoryEntityType
