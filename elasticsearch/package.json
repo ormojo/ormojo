@@ -1,6 +1,6 @@
 {
   "name": "@ormojo/elasticsearch",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "license": "MIT",
   "description": "Elasticsearch driver for ormojo.",
   "main": "lib/index.js",
@@ -48,8 +48,8 @@
     "testRegex": "(\\.|/)test\\.lsc$"
   },
   "dependencies": {
-    "@ormojo/ephraim": "^0.2.0",
-    "@ormojo/ormojo": "^0.2.0",
+    "@ormojo/ephraim": "^0.2.1",
+    "@ormojo/ormojo": "^0.2.1",
     "deep-diff": "^0.3.8",
     "lodash": "^4.17.5"
   }
