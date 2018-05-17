@@ -43,7 +43,7 @@ export {
 } from './observe'
 
 export {
-  typeCheckAssignment, toPlainObject, assignPlainObject
+  typeCheckAssignment, toPlainObject, assignPlainObject, hydratePlainObject
 } from './util'
 
 export {

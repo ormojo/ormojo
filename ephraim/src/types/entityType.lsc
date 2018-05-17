@@ -136,7 +136,7 @@ export EntityType = singleton("EntityType", ->
     recurseLeft(left, state) ->
       memo = state.seen(left)
       if memo: return memo
-      obj = state.create(this)
+      obj = state.create(this, left)
       state.remember(left, obj)
       left~forEachField! (k, v, spec): void ->
         if v != undefined: state.visitField(obj, k, v, spec)

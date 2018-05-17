@@ -1,4 +1,4 @@
-import { entity, field, toPlainObject, assignPlainObject, types, listOf, createMemory as create, augment } from '@ormojo/ephraim'
+import { entity, field, toPlainObject, assignPlainObject, types, listOf, createMemory as create, augment, hydratePlainObject } from '@ormojo/ephraim'
 
 test! 'toPlainObject', ->
   @entity() class E:
@@ -99,3 +99,35 @@ test! 'circular assign list', ->
   loe2~assignPlainObject(plain)
   console.log(loe2~toPlainObject!)
   expect(loe2.get(1)).toBe(loe2.get(2))
+
+test! 'entity type unpickling', (): void ->
+  @entity() class Base:
+    @field() b
+
+  @entity() class Child1 extends Base:
+    @field() c1
+
+  @entity() class Child2 extends Base:
+    @field() c2
+
+  @entity() class Container:
+    @field(Base) x1
+    @field(Base) x2
+
+  c = create(Container)
+  c.x1 = create(Child1)
+  c.x2 = create(Child2)
+
+  obj = c~toPlainObject({ includeTypeStamp: true })
+  console.log(obj)
+
+  c2 = obj~hydratePlainObject({
+    typeMap(name) ->
+      match name:
+        | "Container": create(Container)
+        | "Child1": create(Child1)
+        | "Child2": create(Child2)
+  })
+
+  console.log(c2)
+  expect(c2~toPlainObject({ includeTypeStamp: true })).toEqual(obj)

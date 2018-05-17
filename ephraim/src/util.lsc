@@ -2,7 +2,7 @@ import { typeOf } from './types/typeOf'
 import { typeFrom, PrimitiveType, OpaqueType } from './types/type'
 import { EntityType } from './types/entityType'
 import { ListType } from './types/listType'
-import { declaredFields, rawSetSymbol } from './fields'
+import { declaredFields, rawSetSymbol, rawSet } from './fields'
 
 // Typecheck an assignment of val to a key of type T, throwing a standard
 // error message if the typecheck fails.
@@ -17,9 +17,9 @@ objectConversionState(opts) ->
     remember(x, val): void ->
       if not this.map: this.map = new Map()
       this.map.set(x, val)
-    create(T) ->
+    create(T, ent) ->
       // TODO: arrays, maps
-      if T instanceof EntityType: {...if includeTypeStamp: {_entity: T.getTypeStamp()}}
+      if T instanceof EntityType: {...if includeTypeStamp: {_entity: typeFrom(typeOf(ent)).getTypeStamp()}}
       elif T instanceof ListType: []
       else: true
     visitField(obj, k, v, spec): void ->
@@ -40,47 +40,71 @@ export toPlainObject(x, opts) ->
   state = objectConversionState(opts)
   T.recurseLeft(x, state)
 
+// Unpickle the type of entity we should be creating, honoring the `_entity`
+// field
+unpickle(plainObject, typeMap, defaultType) ->
+  if typeMap and plainObject._entity:
+    typeMap(plainObject._entity) or defaultType?.construct()
+  else:
+    defaultType?.construct()
+
 // Assign plain object
-objectAssignmentState() -> {
-  seen(x) -> this.map?.get(x)
-  remember(x, val): void ->
-    if not this.map: this.map = new Map()
-    this.map.set(x, val)
-  create() -> true
-  iterate(x, f): void ->
-    if typeof(x) != "object":
-      throw new Error("assignPlainObject: attempt to iterate non-object. This usually means you are assigning an incompatible structure.")
-    for key k, val v in x: f(k, v)
-  visitCorrespondingField(left, lspec, right, k, v, seen): void ->
-    if lspec.type instanceof PrimitiveType:
-      left[k] = v
-    elif seen:
-      left[k] = seen
-    elif lspec.type instanceof OpaqueType:
-      left[k] = lspec.type.assign(v)
-    else:
-      if not left[k]: left[k] = lspec.type.construct()
-      lspec.type.recurseRight(left[k], v, this)
-  visitUnknownField(left, right, k, v, seen): void ->
-    left[k] = if seen: seen else: v
-  visitListEntry(list, listET, ary, i, v, seen): void ->
-    if listET instanceof PrimitiveType:
-      list.set(i, v)
-    elif seen:
-      list.set(i, seen)
-    else:
-      let elt = list.get(i)
-      if not elt:
-        now elt = listET.construct()
-        list.set(i, elt)
-      listET.recurseRight(elt, v, this)
+objectAssignmentState(opts) ->
+  typeMap = opts?.typeMap
+  set = if opts?.useRawSet:
+    rawSet
+  else:
+    (o, k, v): void -> o[k] = v
+  {
+    seen(x) -> this.map?.get(x)
+    remember(x, val): void ->
+      if not this.map: this.map = new Map()
+      this.map.set(x, val)
+    create() -> true
+    iterate(x, f): void ->
+      if typeof(x) != "object":
+        throw new Error("assignPlainObject: attempt to iterate non-object. This usually means you are assigning an incompatible structure.")
+      for key k, val v in x: f(k, v)
+    visitCorrespondingField(left, lspec, right, k, v, seen): void ->
+      if lspec.type instanceof PrimitiveType:
+        set(left, k, v)
+      elif seen:
+        set(left, k, seen)
+      elif lspec.type instanceof OpaqueType:
+        set(left, k, lspec.type.assign(v))
+      else:
+        if not left[k]:
+          set(left, k, unpickle(v, typeMap, lspec.type))
+        typeFrom(typeOf(left[k])).recurseRight(left[k], v, this)
+    visitUnknownField(left, right, k, v, seen): void ->
+      set(left, k, if seen: seen else: v)
+    visitListEntry(list, listET, ary, i, v, seen): void ->
+      if listET instanceof PrimitiveType:
+        list.set(i, v)
+      elif seen:
+        list.set(i, seen)
+      elif listET instanceof OpaqueType:
+        list.set(i, listET.assign(v))
+      else:
+        let elt = list.get(i)
+        if not elt:
+          now elt = unpickle(v, typeMap, listET)
+          list.set(i, elt)
+        typeFrom(typeOf(elt)).recurseRight(elt, v, this)
+  }
 
-}
-
-export assignPlainObject(x, y): void ->
+export assignPlainObject(x, y, opts): void ->
   T = typeFrom(typeOf(x))
-  state = objectAssignmentState()
+  state = objectAssignmentState(opts)
   T.recurseRight(x, y, state)
+
+export hydratePlainObject(obj, opts) ->
+  now opts = Object.assign(opts, { useRawSet: true })
+  ent = unpickle(obj, opts.typeMap)
+  if not ent: throw new Error(`hydratePlainObject: could not resolve type`)
+  state = objectAssignmentState(opts)
+  typeFrom(typeOf(ent)).recurseRight(ent, obj, state)
+  ent
 
 export initialize(ent, creator): void ->
   for key k, val spec in ent~declaredFields():
