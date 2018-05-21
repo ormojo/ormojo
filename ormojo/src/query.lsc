@@ -116,7 +116,7 @@ export class ResultSet {
   //
   // @abstract
   // @return [Cursor] A cursor that can be used to get the next ResultSet. An undefined return indicates no further results are available.
-  getCursor() -> undefined
+  getCursor() -> this.cursor
 
   ////// istanbul ignore next //////
 
