@@ -47,8 +47,8 @@ export class MemoryList:
 
   // Insert/delet entries at arbitrary point
   splice(i, n, ...entries): void ->
-    if entries.length == 0: return
-    typeCheck(this.elementType, ...entries)
+    if entries.length > 0:
+      typeCheck(this.elementType, ...entries)
     deletions = this.__data.splice(i, n, ...entries)
     this[observableGhostSymbol]?.next({
       list: this
@@ -91,4 +91,16 @@ export class MemoryList:
   // Assign array of vals
   assign(array) ->
     // TODO: typecheck?
+    prevArray = this.__data
     this.__data = array
+    this[observableGhostSymbol]?.next({
+      list: this
+      type: "splice"
+      index: 0
+      deletions: prevArray
+      insertions: array
+    })
+
+  // Get array backing the list
+  getArray() ->
+    this.__data

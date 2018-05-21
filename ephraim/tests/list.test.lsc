@@ -42,3 +42,12 @@ test! "list field init", ->
 
   e = create(E)
   expect(e.strs.length).toBe(0)
+
+test! "list splice empty", ->
+  listOfString = create(listOf(types.string))
+  listOfString.push('A', 'B', 'C')
+  console.log(listOfString.getArray())
+  expect(listOfString.getArray()).toEqual(['A', 'B', 'C'])
+  listOfString.splice(0, listOfString.length)
+  console.log(listOfString.getArray())
+  expect(listOfString.getArray()).toEqual([])
