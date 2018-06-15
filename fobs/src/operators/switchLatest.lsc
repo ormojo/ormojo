@@ -28,13 +28,14 @@ export switchLatest(priorObservable) ->
         // Unsubscribe from the previous observable emitted...
         unsubscribeInner()
         // ...and subscribe to the next one
-        now innerSubscription = innerObservable.subscribe({
+        if isStopped: return
+        now innerSubscription = innerObservable?.subscribe({
           next(value): void ->
             if not isStopped: observer.next?(value)
 
           error
 
-          complete() ->
+          complete(): void ->
             unsubscribeInner()
             if hasCompleted:
               now isStopped = true
@@ -44,7 +45,7 @@ export switchLatest(priorObservable) ->
 
       error
 
-      complete() ->
+      complete(): void ->
         now hasCompleted = true
         if not innerSubscription:
           now isStopped = true

@@ -26,6 +26,33 @@ describe! 'switch', ->
     subj3.next(3)
     subj3.complete()
 
+  it! 'should work with nullable observables', ->
+    subj1 = createSubject()
+    subj2 = createSubject()
+    subj3 = createSubject()
+    outer = createSubject()
+
+    switched = switchLatest(outer)
+
+    test(switched, console.log.bind(console), [
+      (x) -> x == 1
+      (x) -> x == 2
+      (x) -> x == 3
+      'complete'
+      'failure'
+    ])
+
+    outer.next(subj1)
+    subj1.next(1)
+    outer.next(null)
+    outer.next(subj2)
+    subj2.next(2)
+    outer.next(null)
+    outer.next(subj3)
+    outer.complete()
+    subj3.next(3)
+    subj3.complete()
+
   it! 'should work with BehaviorSubject', ->
     subj1 = createBehaviorSubject()
     subj1.next(1)
