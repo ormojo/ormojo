@@ -1,0 +1,12 @@
+import { createConstant, test as testObs } from '..'
+
+test! 'createConstant', ->
+  subj = createConstant(1)
+
+  testObs(subj, console.log.bind(console), [
+    (x) -> x == 1
+    'complete'
+    'failure'
+  ])
+
+  undefined

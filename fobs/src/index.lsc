@@ -3,6 +3,7 @@ export * from './util'
 export { createBehaviorSubject } from './constructors/createBehaviorSubject'
 export { createSubject } from './constructors/createSubject'
 export { toBehaviorSubject } from './constructors/toBehaviorSubject'
+export { createConstant } from './constructors/createConstant'
 
 export { changed } from './operators/changed'
 export { combineLatest } from './operators/combineLatest'

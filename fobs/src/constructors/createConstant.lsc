@@ -1,0 +1,19 @@
+// A minimalistic version of rxjs's Subject, conforming to the ES Observables spec and implemented using
+// closures.
+//
+// Supports an optional onObserversChanged(observers, observerAdded, observerRemoved) method, to be
+// called when the observer list changes.
+import { defineObservable, subscribeObserverAdapter, createSubscription } from '../util'
+
+export createConstant(val) ->
+  observable = {
+    subscribe: subscribeObserverAdapter! (observer) ->
+      sub = createSubscription(observer, -> return)
+      observer.start?(sub)
+      observer.next?(val)
+      observer.complete?()
+      sub
+  }
+
+  // Attach observable symbol, etc
+  defineObservable(observable)
