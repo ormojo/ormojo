@@ -15,6 +15,11 @@ export createBehaviorSubject(opts) ->
   if opts and ("initialValue" in opts):
     now presentValue = opts.initialValue
 
+  // Do we emit before anyone has called `next` on us?
+  let emitBeforeNext = true
+  if opts and ("emitBeforeNext" in opts):
+    now emitBeforeNext = opts.emitBeforeNext
+
   // Create the subject
   observable = createSubject(opts)
   subjectNext = observable.next
@@ -41,7 +46,8 @@ export createBehaviorSubject(opts) ->
     now nexted = false
     sub = subjectSubscribe.call(this, observer)
     // ...and elide double next if it was called.
-    if (not sub.closed) and (not nexted): observer.next?(presentValue)
+    if (not sub.closed) and (not nexted) and (emitBeforeNext or (presentValue != undefined)):
+      observer.next?(presentValue)
     sub
 
   // Add getter for current value
