@@ -7,10 +7,8 @@ import { map } from './map'
 strictEqual(a,b) -> a == b
 
 export changed(priorObservable, equalityTest = strictEqual) ->
-  map(
-    filter(
-      memoize(priorObservable, 1)
+  memoize(priorObservable, 1)
+    ~filter(
       (memory) -> (memory.length == 1) or (not equalityTest(memory[0], memory[1]))
     )
-    (memory) -> memory[0]
-  )
+    ~map((memory) -> memory[0])
