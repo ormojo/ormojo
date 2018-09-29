@@ -1,6 +1,6 @@
 {
   "name": "@ormojo/ephraim",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "license": "MIT",
   "description": "A JavaScript entity framework.",
   "main": "lib/index.js",
@@ -46,7 +46,7 @@
     "testRegex": "(\\.|/)test\\.lsc$"
   },
   "dependencies": {
-    "@ormojo/fobs": "^1.0.5",
+    "@ormojo/fobs": "^1.0.6",
     "lodash.clonedeep": "^4.5.0",
     "lodash.isequal": "^4.5.0"
   }
