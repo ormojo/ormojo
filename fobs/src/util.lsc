@@ -137,6 +137,9 @@ export test(observable, always, expectations) ->
 
   nextSubscr = {
     unsubscribe: ->
-      if currentIndex < expectations.length: throw new Error("Leftover expectations")
       subscr.unsubscribe()
+      if currentIndex < expectations.length:
+        if expectations[currentIndex] != 'failure':
+          throw new Error("Leftover expectations: index " + currentIndex + ":" +  expectations.slice(currentIndex))
+
   }
