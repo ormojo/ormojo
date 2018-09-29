@@ -1,0 +1,13 @@
+// Convert a Promise into an Observable that emits when the promise resolves, then completes.
+import { createBehaviorSubject } from './createBehaviorSubject'
+
+export fromPromise(promise) ->
+  subject = createBehaviorSubject({ emitBeforeNext: false })
+  promise.then(
+    (x) ->
+      subject.next(x)
+      subject.complete()
+    (err) ->
+      subject.error(err)
+  )
+  subject

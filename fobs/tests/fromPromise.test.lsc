@@ -1,0 +1,31 @@
+import { fromPromise, test } from '..'
+
+describe! 'fromPromise', ->
+  it! 'works', ->
+    let resolve, reject
+    pr = new Promise! (re, rej) ->
+      now resolve = re
+      now reject = rej
+
+    sub = test(fromPromise(pr), console.log.bind(console), [
+      (x) -> x == 1
+      'complete'
+      'failure'
+    ])
+
+    resolve(1)
+    pr.then! -> sub.unsubscribe(), -> return
+
+  it! 'works on reject', ->
+    let resolve, reject
+    pr = new Promise! (re, rej) ->
+      now resolve = re
+      now reject = rej
+
+    sub = test(fromPromise(pr), console.log.bind(console), [
+      'error'
+      'failure'
+    ])
+
+    reject(new Error())
+    pr.then! -> sub.unsubscribe(), -> return
