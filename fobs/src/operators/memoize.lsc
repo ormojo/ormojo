@@ -1,16 +1,10 @@
-import { subscribeObserverAdapter, defineObservable, transformNext } from '../util'
+import { map } from './map'
 
 export memoize(priorObservable, n = 1) ->
-  subscribe = subscribeObserverAdapter((observer) ->
-    memory = []
-    priorObservable.subscribe(
-      transformNext(observer, (x): void ->
-        memory.unshift(x)
-        observerWillSee = memory.slice()
-        if memory.length > n: memory.pop()
-        observer.next?(observerWillSee)
-      )
-    )
+  memory = []
+  priorObservable~map((x) ->
+    memory.unshift(x)
+    observerWillSee = memory.slice()
+    if memory.length > n: memory.pop()
+    observerWillSee
   )
-
-  defineObservable({subscribe})
