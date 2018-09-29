@@ -1,6 +1,27 @@
 import { createBehaviorSubject, test } from '..'
 
 describe! 'createBehaviorSubject', ->
+  it! 'emits undefined when unprimed', ->
+    subj = createBehaviorSubject()
+
+    test(subj, console.log.bind(console), [
+      (x) -> x == undefined
+      'complete'
+      'failure'
+    ])
+
+    subj.complete()
+
+  it! 'doesnt emit undefined when unprimed', ->
+    subj = createBehaviorSubject({ emitBeforeNext: false })
+
+    test(subj, console.log.bind(console), [
+      'complete'
+      'failure'
+    ])
+
+    subj.complete()
+
   it! 'should work', ->
     subj = createBehaviorSubject()
 
@@ -38,3 +59,17 @@ describe! 'createBehaviorSubject', ->
       'failure'
     ])
     subj2.next(1); subj2.complete()
+
+  it! 'unsubscribe', ->
+    subj = createBehaviorSubject()
+
+    sub = subj.subscribe({
+      next(x) -> console.log(x)
+    })
+
+    subj.next(1)
+
+    sub.unsubscribe()
+
+    subj.next(2)
+    subj.complete()
