@@ -20,3 +20,11 @@ test! 'works', ->
 
   now tree = component.toJSON()
   expect(tree).toMatchSnapshot()
+
+  o.next(2)
+  now tree = component.toJSON()
+  expect(tree).toMatchSnapshot()
+
+  p.next(20)
+  now tree = component.toJSON()
+  expect(tree).toMatchSnapshot()

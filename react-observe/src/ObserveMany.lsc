@@ -23,8 +23,8 @@ export class ObserveMany extends Observe:
 
   // Compare two state.source values to determine if the source has changed.
   // Return true if same, false if different
-  static compareSourceToSource(nextSource, prevSource) ->
-    nextState.source == prevState.source
+  compareSourceToSource(nextSource, prevSource) ->
+    nextSource == prevSource
 
   // Get the state.source value corresponding to the given props
   static getSourceFromProps(props) ->
