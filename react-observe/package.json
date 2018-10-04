@@ -2,7 +2,7 @@
   "name": "@ormojo/react-observe",
   "version": "0.1.0",
   "license": "MIT",
-  "description": "A React component for monitoring observables..",
+  "description": "React components for monitoring observables.",
   "main": "lib/index.js",
   "module": "lib/index.es.js",
   "jsnext:main": "lib/index.es.js",
