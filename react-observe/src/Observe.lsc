@@ -9,9 +9,10 @@ export class Observe extends React.Component:
     super(props)
     classOfThis = classOf(this)
     source = classOfThis.getSourceFromProps(props)
+    this.earlySubscribe(source)
     this.state = {
       source
-      value: classOfThis.getValueFromSource(source)
+      value: this._earlyValue
       classOfThis
     }
 
@@ -31,8 +32,7 @@ export class Observe extends React.Component:
     classOfThis = prevState.classOfThis
     if not classOfThis.comparePropsToSource(nextProps, prevState.source):
       source = classOfThis.getSourceFromProps(nextProps)
-      value = classOfThis.getValueFromSource(source)
-      { source, value }
+      { source }
     else:
       null
 
@@ -55,6 +55,12 @@ export class Observe extends React.Component:
   /////////////// Subscription handling
   callback(value): void =>
     if this._hasUnmounted: return
+
+    // Early mode
+    if this._earlySource:
+      this._earlyValue = value
+      return
+
     { source } = this.state
 
     this.setState((state) ->
@@ -69,13 +75,41 @@ export class Observe extends React.Component:
       this.subscription.unsubscribe()
       this.subscription = undefined
 
+  clearEarlyData(): void ->
+    this._earlySubscription = undefined
+    this._earlySource = undefined
+    this._earlyValue = undefined
+
+  earlySubscribe(source): void ->
+    if not source: return
+    this._earlySource = source
+    observable = this.getObservableFromSource(source)
+    this._earlySubscription = observable.subscribe({next: this.callback})
+
+  earlyResolve(source): boolean ->
+    result = if source != this._earlySource:
+      // Source changed, unsubscribe
+      this._earlySubscription.unsubscribe()
+      false
+    else:
+      // Same source, pass subscription through
+      this.subscription = this._earlySubscription
+      true
+
+    // We must re-emit any values emitted between early subscription and now
+    // regardless of if the source has changed
+    value = this._earlyValue
+    this.clearEarlyData()
+    if (value != this.state.value): this.setState({value})
+
+    // If sources are same, we're done
+    result
+
   subscribe(): void ->
     { source } = this.state
-    if not source: return
+    // Early source resolution
+    if this._earlySource and this.earlyResolve(source): return
     observable = this.getObservableFromSource(source)
-    value = classOf(this).getValueFromSource(source)
-    if (value != undefined) and (value != this.state.value):
-      this.setState({value})
     this.subscription = observable.subscribe({next: this.callback})
 
   //////////////////// Behavioral methods
@@ -94,10 +128,6 @@ export class Observe extends React.Component:
   // Get the state.source value corresponding to the given props
   static getSourceFromProps(props) ->
     props.source
-
-  // Get the Value associated with the given source.
-  static getValueFromSource(source) ->
-    source?.getValue?()
 
   // Get the ES7 Observable corresponding to the given state.source along
   // with its initial value, as an { observable, value } pair
