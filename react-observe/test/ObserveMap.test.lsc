@@ -1,0 +1,29 @@
+import React from 'react'
+import renderer from 'react-test-renderer'
+import { createBehaviorSubject, createConstant, combineLatest } from '@ormojo/fobs'
+import { ObserveMap, setDebugHandler } from '..'
+
+import { RenderCounter } from './RenderCounter'
+beforeAll! ->
+  setDebugHandler(console.log)
+
+test! 'const pattern', ->
+  let tree
+  o = createBehaviorSubject()
+  p = createConstant(5)
+  o.next(1)
+
+  component = renderer.create(
+    <ObserveMap map={-> combineLatest({o, p})}>{o ->
+      <RenderCounter value={JSON.stringify(o)} />
+    }</ObserveMap>
+  )
+
+  now tree = component.toJSON()
+  expect(tree).toMatchSnapshot()
+
+  o.next(2)
+  now tree = component.toJSON()
+  expect(tree).toMatchSnapshot()
+
+  component.unmount()

@@ -1,0 +1,15 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`const pattern 1`] = `
+<div>
+  ["{\\"o\\":1,\\"p\\":5}"]
+  {"o":1,"p":5}
+</div>
+`;
+
+exports[`const pattern 2`] = `
+<div>
+  ["{\\"o\\":1,\\"p\\":5}","{\\"o\\":2,\\"p\\":5}"]
+  {"o":2,"p":5}
+</div>
+`;
