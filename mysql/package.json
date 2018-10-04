@@ -17,7 +17,7 @@
     "test:debug": "node --inspect --debug-brk $(npm bin)/jest -i --env jest-environment-node-debug",
     "coverage": "npm run clean && npm run build:coverage && jest --coverage",
     "lint": "eslint --ext .js,.lsc src",
-    "preversion": "npm run lint && npm run test"
+    "preversion": "npm run lint && npm run build"
   },
   "devDependencies": {
     "@oigroup/babel-preset-lightscript": "^3.0.0",
