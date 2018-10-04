@@ -1,0 +1,59 @@
+genericObjectEvaluator() -> {}
+arrayEqual(a1, a2) ->
+  (a1.length == a2.length) and
+  (a1.every((x, i) -> a2[i] == x))
+
+export class ObserveFields extends BaseObserve:
+  static stateForSourceFromProps(props) -> {
+    source: { entity: props.entity, fields: props.fields }
+    value: {}
+    evaluator: genericObjectEvaluator
+  }
+
+  static compareSourcePropsToState(nextProps, prevState) ->
+    (nextProps.entity == prevState.source.entity) and
+    (arrayEqual(nextProps.fields, prevState.source.fields))
+
+  getObservableFromSource(source) ->
+    observedEntity = observe(source.entity)
+    observables = [...for elem k in source.fields:
+      [observedEntity[k]]
+    ]
+    obs = merge(observables)
+    obs
+
+  // eslint-disable-next-line no-unused-vars
+  getValueFromSource(source) -> {}
+
+
+
+export class Observe extends BaseObserve:
+  //////////////////// Lifecycle
+  static stateForSourceFromProps(props) ->
+    stateForProps(props)
+
+  static compareSourceStateToState(nextState, prevState) ->
+    (nextState.source == prevState.source) and
+    (nextState.setter == prevState.setter)
+
+  static compareSourcePropsToState(nextProps, prevState) ->
+    (nextProps.source == prevState.source.entity) and
+    (nextProps.field == prevState.source.field)
+
+  render() ->
+    val = this.state.value
+    this.props.children(val, this.state.setter)
+
+  /////////////// Subscription handling
+  getObservableFromSource(source) ->
+    if source.observable:
+      source.observable
+    else:
+      getObservable(source.entity, source.field)
+
+  getValueFromSource(source) ->
+    if source.observable:
+      undefined
+    else:
+      { value } = getEvaluator(source.entity, source.field)
+      value

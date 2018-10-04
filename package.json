@@ -28,7 +28,8 @@
       "mysql",
       "ephraim",
       "fobs",
-      "tapestry"
+      "tapestry",
+      "react-observe"
     ]
   }
 }

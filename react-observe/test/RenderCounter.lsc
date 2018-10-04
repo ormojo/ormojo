@@ -1,0 +1,13 @@
+import React from 'react'
+
+export class RenderCounter extends React.Component:
+  constructor() ->
+    super()
+    this.renderLog = []
+
+  render() ->
+    this.renderLog.push(this.props.value)
+    <div>
+      { JSON.stringify(this.renderLog) }
+      { this.props.value }
+    </div>

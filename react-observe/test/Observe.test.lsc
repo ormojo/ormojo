@@ -1,0 +1,33 @@
+import React from 'react'
+import renderer from 'react-test-renderer'
+import { createBehaviorSubject } from '@ormojo/fobs'
+import { Observe } from '..'
+
+import { RenderCounter } from './RenderCounter'
+
+test! 'works', ->
+  let tree
+  o = createBehaviorSubject()
+  nonce = {x : 1}
+  o.next(nonce)
+
+  component = renderer.create(
+    <Observe source={o}>{o ->
+      <RenderCounter value={JSON.stringify(o)} />
+    }</Observe>
+  )
+
+  now tree = component.toJSON()
+  expect(tree).toMatchSnapshot()
+
+  o.next(nonce)
+  now tree = component.toJSON()
+  expect(tree).toMatchSnapshot()
+
+  o.next({x: 1})
+  now tree = component.toJSON()
+  expect(tree).toMatchSnapshot()
+
+  o.next({x: 2})
+  now tree = component.toJSON()
+  expect(tree).toMatchSnapshot()

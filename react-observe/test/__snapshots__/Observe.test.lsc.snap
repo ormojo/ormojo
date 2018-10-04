@@ -1,0 +1,29 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`works 1`] = `
+<div>
+  ["{\\"x\\":1}"]
+  {"x":1}
+</div>
+`;
+
+exports[`works 2`] = `
+<div>
+  ["{\\"x\\":1}"]
+  {"x":1}
+</div>
+`;
+
+exports[`works 3`] = `
+<div>
+  ["{\\"x\\":1}","{\\"x\\":1}"]
+  {"x":1}
+</div>
+`;
+
+exports[`works 4`] = `
+<div>
+  ["{\\"x\\":1}","{\\"x\\":1}","{\\"x\\":2}"]
+  {"x":2}
+</div>
+`;
