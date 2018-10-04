@@ -6,6 +6,7 @@
   "scripts": {
     "lerna": "lerna",
     "bootstrap": "lerna clean --yes && lerna bootstrap",
+    "publish:some": "node scripts/releasePackages.js",
     "publish": "node scripts/releasePackages.js all"
   },
   "repository": {

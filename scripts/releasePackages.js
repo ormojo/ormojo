@@ -76,13 +76,13 @@ inquirer.prompt([{type: 'confirm', default: false, name: 'go', message: 'Proceed
 
   //////////////////////// Version bump
   // allow user intervention on version numbers for each package
-  scopedRun(packageList, `publish --skip-npm --skip-git`)
+  run(`yarn run -s lerna version --no-push`)
 
   // read version numbers and stage changes
   packages.forEach(package => {
     package.version = scopedExec([package.name], 'cat package.json | sed -nE "s/.*\\"version\\": ?\\"(.*)\\".*/\\1/p"').trim()
     //scoped([package.name], `exec -- git commit -am ${package.name}@${package.version}`)
-    scopedExec([package.name], `git add -u`)
+    //scopedExec([package.name], `git add -u`)
     // scopedExec([package.name], `git tag ${package.name}@${package.version} -m ${package.name}@${package.version}`)
   })
 
