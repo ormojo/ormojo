@@ -15,28 +15,35 @@ class Source:
     new Query
 
   // Get objects from the store corresponding to a Query
+  // eslint-disable-next-line no-unused-vars
   read(query: Query, opts) -> return
 
 export class SynchronousSource extends Source:
   // Get objects from the store corresponding to a Query
+  // eslint-disable-next-line no-unused-vars
   read(query: Query, opts): ResultSet -> return
 
 export class AsyncSource extends Source:
+  // eslint-disable-next-line no-unused-vars
   read(query: Query, opts): Promise<ResultSet> -> return
 
 class Sink:
   // Create objects in the store with the given JSON data.
+  // eslint-disable-next-line no-unused-vars
   create(data: Array<{}>, opts): Promise<SinkResult> -> return
 
   // Update objects that already exist, applying the given JSON data.
+  // eslint-disable-next-line no-unused-vars
   update(data: Array<{}>, opts): Promise<SinkResult> -> return
 
   // Update objects where the given datacorresponds to an extant object, otherwise
   // create new objects if no object can be located corresponding to the data.
+  // eslint-disable-next-line no-unused-vars
   upsert(data: Array<{}>, opts): Promise<SinkResult> -> return
 
   // Destroy objects with the given data. Data must be sufficient to identify the object
   // to the backing store.
+  // eslint-disable-next-line no-unused-vars
   delete(data: Array<{} | string | number>, opts): Promise<SinkResult> -> return
 
 // A store whose methods execute synchronously and return arrays.
@@ -54,6 +61,7 @@ export class SourceEntityAdapter:
   // internal state appropriately. If no Instance is given, it should be created
   // from scratch.
   // `undefined` data implies a nonexistent instance
+  // eslint-disable-next-line no-unused-vars
   didRead(instance, data) ->
     return
 

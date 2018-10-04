@@ -4,6 +4,7 @@ import { rawSet } from '@ormojo/ephraim'
 import { Relationship } from '@ormojo/ormojo'
 
 // TODO: check T.id is a declared field
+// eslint-disable-next-line
 validateTapestryType(T) -> true
 
 // A Tapestry is a relationship spanning multiple backends.

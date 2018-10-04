@@ -44,17 +44,20 @@ export class Backend {
   //
   // Find entities matching a backend-specific Query.
   //
+  // eslint-disable-next-line no-unused-vars
   find(query: Query, opts): Promise<ResultSet> -> null
 
   //
   // Create an entity of the bound type suitable for this backend,
   // persisting it to the database if data is provided.
   //
+  // eslint-disable-next-line no-unused-vars
   create(T: Type, data, opts): Entity | Promise<Entity> -> null
 
   //
   // Persist instance(s), or changes thereto, to the underlying database.
   //
+  // eslint-disable-next-line no-unused-vars
   save(data: Entity | Array<Entity>, opts): Promise<Entity | Array<Entity>> ->
     null
 
@@ -62,11 +65,13 @@ export class Backend {
   // Destroy the given entity, persisting the destruction to the
   // backend.
   //
+  // eslint-disable-next-line no-unused-vars
   destroy(instance: Entity, opts): Promise<Entity> -> null
 
   //
   // Destroy an entity given an identified type and ID.
   //
+  // eslint-disable-next-line no-unused-vars
   destroyById(T: Type, id, opts): Promise<bool> -> null
 
 }
