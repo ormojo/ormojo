@@ -1,0 +1,6 @@
+let debug = -> return
+
+export setDebugHandler(h) ->
+  now debug = h
+
+export { debug }

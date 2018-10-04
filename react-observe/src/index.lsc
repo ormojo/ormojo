@@ -1,2 +1,4 @@
 export { Observe } from './Observe'
+export { ObserveMap } from './ObserveMap'
 export { ObserveMany } from './ObserveMany'
+export { setDebugHandler } from './debug'

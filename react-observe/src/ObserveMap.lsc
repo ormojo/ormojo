@@ -1,0 +1,44 @@
+import { Observe } from './Observe'
+
+ignoredProps = {
+  pure: true
+  children: true
+  ref: true
+  map: true
+}
+
+export class ObserveMap extends Observe:
+  // Compare current state.source to incoming props to determine if the source
+  // needs to be changed. Return true if same, false if different.
+  static comparePropsToSource(nextProps, prevSource) ->
+    if nextProps.map != prevSource.map: return false
+
+    prevProps = prevSource.props
+
+    // Check for changed or additional props
+    for key k, val v in nextProps:
+      if not ignoredProps[k]:
+        if v != prevProps[k]: return false
+
+    // CHeck for deleted props
+    for key k in prevProps:
+      if not nextProps[k]: return false
+
+    true
+
+  // Compare two state.source values to determine if the source has changed.
+  // Return true if same, false if different
+  compareSourceToSource(nextSource, prevSource) ->
+    nextSource == prevSource
+
+  // Get the state.source value corresponding to the given props
+  static getSourceFromProps(props) ->
+    {
+      map: props.map
+      props: { ...for key k, val v in props: if not ignoredProps[k]: {[k]: v} }
+    }
+
+  // Get the ES7 Observable corresponding to the given state.source along
+  // with its initial value, as an { observable, value } pair
+  getObservableFromSource(source) ->
+    source.map(source.props)

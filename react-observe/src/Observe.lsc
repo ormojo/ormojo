@@ -1,4 +1,5 @@
 import React from 'react'
+import { debug } from './debug'
 
 classOf(obj) ->
   obj.constructor
@@ -32,6 +33,7 @@ export class Observe extends React.Component:
     classOfThis = prevState.classOfThis
     if not classOfThis.comparePropsToSource(nextProps, prevState.source):
       source = classOfThis.getSourceFromProps(nextProps)
+      debug("gDSP: source change from props", source)
       { source }
     else:
       null
@@ -41,6 +43,7 @@ export class Observe extends React.Component:
 
   componentDidUpdate(prevProps, prevState): void ->
     if (not this.compareSourceToSource(this.state.source, prevState.source)):
+      debug("cDU: source change from prevState", this.state.source)
       this.unsubscribe(prevState.source)
       this.subscribe()
 
@@ -71,11 +74,18 @@ export class Observe extends React.Component:
 
   // eslint-disable-next-line no-unused-vars
   unsubscribe(source): void ->
+    if this._earlySubscription:
+      debug("early unsubscribing due to unsubscribe()")
+      this._earlySubscription.unsubscribe()
+      this.clearEarlyData()
+
     if this.subscription:
+      debug("unsubscribe", source)
       this.subscription.unsubscribe()
       this.subscription = undefined
 
   clearEarlyData(): void ->
+    debug("clearEarlyData")
     this._earlySubscription = undefined
     this._earlySource = undefined
     this._earlyValue = undefined
@@ -83,16 +93,19 @@ export class Observe extends React.Component:
   earlySubscribe(source): void ->
     if not source: return
     this._earlySource = source
+    debug("getObservable (early subscribe)", source)
     observable = this.getObservableFromSource(source)
     this._earlySubscription = observable.subscribe({next: this.callback})
 
   earlyResolve(source): boolean ->
     result = if source != this._earlySource:
       // Source changed, unsubscribe
+      debug("early unsubscribing due to source change")
       this._earlySubscription.unsubscribe()
       false
     else:
       // Same source, pass subscription through
+      debug("early subscription was preserved")
       this.subscription = this._earlySubscription
       true
 
@@ -109,6 +122,7 @@ export class Observe extends React.Component:
     { source } = this.state
     // Early source resolution
     if this._earlySource and this.earlyResolve(source): return
+    debug("getObservable (late subscribe)", source)
     observable = this.getObservableFromSource(source)
     this.subscription = observable.subscribe({next: this.callback})
 

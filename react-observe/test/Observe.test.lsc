@@ -1,9 +1,12 @@
 import React from 'react'
 import renderer from 'react-test-renderer'
 import { createBehaviorSubject } from '@ormojo/fobs'
-import { Observe } from '..'
+import { Observe, setDebugHandler } from '..'
 
 import { RenderCounter } from './RenderCounter'
+
+beforeAll! ->
+  setDebugHandler(console.log)
 
 test! 'works', ->
   let tree
@@ -31,3 +34,5 @@ test! 'works', ->
   o.next({x: 2})
   now tree = component.toJSON()
   expect(tree).toMatchSnapshot()
+
+  component.unmount()
