@@ -76,7 +76,7 @@ inquirer.prompt([{type: 'confirm', default: false, name: 'go', message: 'Proceed
 
   //////////////////////// Version bump
   // allow user intervention on version numbers for each package
-  run(`yarn run -s lerna version --no-push`)
+  run(`yarn run -s lerna version --git-tag-version --no-push`)
 
   // read version numbers and stage changes
   packages.forEach(package => {
@@ -106,11 +106,11 @@ inquirer.prompt([{type: 'confirm', default: false, name: 'go', message: 'Proceed
   runArgs('git', commitArgs)
 
   // Tag releases
-  packages.forEach(package => {
-    if(package.version !== package.priorVersion) {
-      scopedExec([package.name], `git tag ${package.name}@${package.version} -m ${package.name}@${package.version}`)
-    }
-  })
+  // packages.forEach(package => {
+  //   if(package.version !== package.priorVersion) {
+  //     scopedExec([package.name], `git tag ${package.name}@${package.version} -m ${package.name}@${package.version}`)
+  //   }
+  // })
 
   run(`git push`)
   run(`git push --tags`)

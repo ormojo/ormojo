@@ -11,5 +11,9 @@
     "tapestry",
     "react-observe"
   ],
-  "version": "independent"
+  "version": "independent",
+  "ignoreChanges": [
+    "**/*.md",
+    "**/tests/**"
+  ]
 }
