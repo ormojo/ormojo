@@ -97,13 +97,13 @@ inquirer.prompt([{type: 'confirm', default: false, name: 'go', message: 'Proceed
   //////////////////////// Push monorepo updates
   //run(`git add ${packageDirs.join(' ')}`)
 
-  commitArgs = ['commit', '-m', '[publish]', '-m', 'Publish to NPM:']
-  packages.forEach(package => {
-    if(package.version !== package.priorVersion) {
-      commitArgs.push('-m', `* ${package.name} v${package.version}`)
-    }
-  })
-  runArgs('git', commitArgs)
+  // commitArgs = ['commit', '-m', '[publish]', '-m', 'Publish to NPM:']
+  // packages.forEach(package => {
+  //   if(package.version !== package.priorVersion) {
+  //     commitArgs.push('-m', `* ${package.name} v${package.version}`)
+  //   }
+  // })
+  // runArgs('git', commitArgs)
 
   // Tag releases
   // packages.forEach(package => {
