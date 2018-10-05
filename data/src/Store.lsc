@@ -1,0 +1,24 @@
+import { $MODEL_TYPE, $TYPEOF } from './symbols'
+import { assert } from './util'
+
+// Where the models live
+export class Store:
+  /**
+  * Bind a model to this store.
+  */
+  // eslint-disable-next-line no-unused-vars
+  bind(model, opts): void ->
+    assert(typeof model == "object" and model[$MODEL_TYPE], "Store.bind: expected a Model")
+
+  /**
+  * Synchronously create a new instance.
+  */
+  // eslint-disable-next-line no-unused-vars
+  createNew(type, data) -> return
+
+export class MemoryStore:
+  bind(model, opts): void ->
+    super.bind(model, opts)
+
+    MemoryModel = model.extend(model, {})
+    MemoryModel.prototype[$TYPEOF] = model

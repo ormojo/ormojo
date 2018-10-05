@@ -1,0 +1,64 @@
+import { Model, attr } from '..'
+
+describe! 'definitions', ->
+  it! 'should work', ->
+    debugger
+
+    MyModel = Model.extend('MyModel', {
+      name: attr('string')
+
+      getName() -> this.name
+    })
+
+    k = new MyModel()
+    k.name = "Alice"
+    expect(k.getModel()).toBe(MyModel)
+    expect(k.getProperties().name).toBeTruthy()
+    expect(k.getName()).toBe('Alice')
+
+  it! 'should ban invalid properties', ->
+    expect(->
+      Model.extend('MyModel', { getModel: attr('string') })
+    ).toThrow("Illegal attribute key")
+    expect(->
+      Model.extend('MyModel', { getProperties: attr('string') })
+    ).toThrow("Illegal attribute key")
+    expect(->
+      Model.extend('MyModel', { getAttributes: attr('string') })
+    ).toThrow("Illegal attribute key")
+    expect(->
+      Model.extend('MyModel', { get: attr('string') })
+    ).toThrow("Illegal attribute key")
+    expect(->
+      Model.extend('MyModel', { set: attr('string') })
+    ).toThrow("Illegal attribute key")
+    expect(->
+      Model.extend('MyModel', { save: attr('string') })
+    ).toThrow("Illegal attribute key")
+    expect(->
+      Model.extend('MyModel', { destroy: attr('string') })
+    ).toThrow("Illegal attribute key")
+
+  it! 'super works the way it should', ->
+    MyModel = Model.extend('MyModel', {
+      method() ->
+        console.log("MyModel.method()")
+        42
+    })
+
+    YourModel = MyModel.extend('YourModel', {
+      method() ->
+        console.log("YourModel.method()")
+        super.method()
+    })
+
+    HisModel = YourModel.extend('HisModel', {
+      method() ->
+        console.log("HisModel.method")
+        super.method() + 1
+    })
+
+    y = new YourModel()
+    h = new HisModel()
+    expect(y.method()).toBe(42)
+    expect(h.method()).toBe(43)

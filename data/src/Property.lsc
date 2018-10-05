@@ -1,0 +1,49 @@
+import { $PROPERTY, $ATTRIBUTE } from './symbols'
+import { any, types, lazyModelType } from './Type'
+
+// Invalid names for properties
+illegalPropertyKeys = {
+  'getModel': true
+  'getProperties': true
+  'getAttributes': true
+  'get': true
+  'set': true
+  'save': true
+  'destroy': true
+}
+
+export normalizeType(t) ->
+  if not t:
+    any
+  elif types[t]:
+    types[t]
+  elif typeof t == 'string':
+    lazyModelType(t)
+  else:
+    t
+
+export class Property:
+  [$PROPERTY] = true
+  constructor(def) ->
+    Object.assign(this, def)
+
+  static isProperty(x) ->
+    (typeof x == 'object') and x[$PROPERTY]
+
+  setKey(key): void ->
+    if illegalPropertyKeys[key]:
+      throw new Error(`Illegal attribute key '${key}'`)
+    this.key = key
+
+  configure(modelClass): void -> return
+
+export class Attribute extends Property:
+  [$ATTRIBUTE] = true
+  constructor(type, def) ->
+    super(def)
+    this.type = type
+
+  static isAttribute(x) -> !!x[$ATTRIBUTE]
+
+export attr(type, def) ->
+  new Attribute(type or any, def)

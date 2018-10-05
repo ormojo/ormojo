@@ -1,0 +1,45 @@
+import { Type } from './Type'
+import { Property } from './Property'
+import { $MODEL_TYPE } from './symbols'
+
+export class Model extends Type:
+  static [$MODEL_TYPE] = true
+  static properties = {}
+
+  // Assign model-specific qualities of this model to another
+  static _assignTo(nextModel): void ->
+    nextModel.properties = Object.assign({}, this.properties)
+
+  // Define attribute on this model
+  static _defineProperty(key, def): void ->
+    this.properties[key] = def
+    def.setKey(key)
+    def.configure(this)
+
+  static extend(name, def) ->
+    if typeof(name) != 'string':
+      throw new Error(`${this.name}.extend: a string name is required`)
+    extension = class extends this {}
+    Object.defineProperty(extension, "name", { value: name })
+    // This makes es6 super calls work
+    Object.setPrototypeOf(def, this.prototype)
+    this._assignTo(extension)
+    for key k, val v in def:
+      if Property.isProperty(v):
+        extension._defineProperty(k, v)
+      else:
+        extension.prototype[k] = v
+
+    extension
+
+  // Apply default values to all properties that don't have them
+  _initializer() ->
+    return
+
+  // Get the model associated with an instance
+  getModel() ->
+    this.constructor
+
+  // Get all properties of the defining model as a hash {[name]: Property}
+  getProperties() ->
+    this.constructor.properties
