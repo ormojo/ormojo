@@ -9,7 +9,8 @@
     "ephraim",
     "fobs",
     "tapestry",
-    "react-observe"
+    "react-observe",
+    "data"
   ],
   "version": "independent",
   "ignoreChanges": [

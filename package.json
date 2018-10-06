@@ -30,7 +30,11 @@
       "ephraim",
       "fobs",
       "tapestry",
-      "react-observe"
+      "react-observe",
+      "data"
+    ],
+    "nohoist": [
+      "**/babel-jest"
     ]
   }
 }
