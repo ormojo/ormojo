@@ -1,0 +1,11 @@
+import { Model, attr, MemoryStore } from '..'
+
+it! 'should work', ->
+  MyModel = Model.extend('MyModel', {
+    name: attr('string')
+  })
+  MyStore = new MemoryStore()
+  MyStore.bind(MyModel)
+  k = MyStore.new('MyModel')
+  k.name = "Alice"
+  expect(k.name).toBe("Alice")

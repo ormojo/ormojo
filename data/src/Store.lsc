@@ -1,24 +1,65 @@
-import { $MODEL_TYPE, $TYPEOF } from './symbols'
+import { $MODEL_TYPE, $TYPEOF, $DATA } from './symbols'
 import { assert } from './util'
 
 // Where the models live
 export class Store:
+  // Map from model name to model
+  models = {}
+
+  // Internal bind method
+  // eslint-disable-next-line no-unused-vars
+  _bind(name, model, opts) ->
+    throw new Error("Attempt to bind to abstract store")
+
   /**
   * Bind a model to this store.
   */
   // eslint-disable-next-line no-unused-vars
-  bind(model, opts): void ->
-    assert(typeof model == "object" and model[$MODEL_TYPE], "Store.bind: expected a Model")
+  bind(model, opts = {}): void ->
+    assert(typeof model == "function" and model[$MODEL_TYPE], "Store.bind: expected a Model")
+
+    name = opts.name or model.name
+    BoundModel = this._bind(name, model, opts)
+    // When inquring after the type of the bound model, the original
+    // model should be returned
+    BoundModel.prototype[$TYPEOF] = model
+    this.models[name] = BoundModel
 
   /**
   * Synchronously create a new instance.
   */
   // eslint-disable-next-line no-unused-vars
-  createNew(type, data) -> return
+  new(type) -> return
 
-export class MemoryStore:
-  bind(model, opts): void ->
-    super.bind(model, opts)
+// eslint-disable-next-line no-unused-vars
+createGetter(proto, type, key) ->
+  () -> this[$DATA][key]
 
-    MemoryModel = model.extend(model, {})
-    MemoryModel.prototype[$TYPEOF] = model
+// eslint-disable-next-line no-unused-vars
+createSetter(proto, type, key) ->
+  (val): void ->
+    if this[$DATA][key] == val: return
+    this[$DATA][key] = val
+
+export class MemoryStore extends Store:
+  _bind(name, model, opts) ->
+    BoundModel = model.extend(name, {
+      _construct(): void ->
+        this[$DATA] = {}
+    })
+    proto = BoundModel.prototype
+    // Make setters for each primitive key
+    for key k, val prop in model.properties:
+      if prop.isAttribute() and prop.type.isPrimitive():
+        Object.defineProperty(proto, k, {
+          configurable: false
+          enumerable: true
+          get: createGetter(proto, prop.type, k)
+          set: createSetter(proto, prop.type, k)
+        })
+
+    BoundModel
+
+  new(type) ->
+    model = this.models[type]
+    new model()

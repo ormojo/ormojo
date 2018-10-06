@@ -10,3 +10,7 @@ export {
 export {
   attr, Attribute, Property
 } from './Property'
+
+export {
+  Store, MemoryStore
+} from './Store'

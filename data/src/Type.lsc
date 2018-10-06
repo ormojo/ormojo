@@ -18,6 +18,9 @@ export class Type:
   // Copy an object of this type
   static clone(x) -> x
 
+  // Is this type primitive?
+  static isPrimitive(): bool -> this[$PRIMITIVE_TYPE]
+
 export class Primitive extends Type:
   static [$PRIMITIVE_TYPE] = true
 

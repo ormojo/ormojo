@@ -37,6 +37,8 @@ export class Property:
 
   configure(modelClass): void -> return
 
+  isAttribute(): boolean -> !!this[$ATTRIBUTE]
+
 export class Attribute extends Property:
   [$ATTRIBUTE] = true
   constructor(type, def) ->

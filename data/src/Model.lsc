@@ -32,8 +32,17 @@ export class Model extends Type:
 
     extension
 
+  // Create a new empty instance
+  constructor() ->
+    super()
+    this._construct()
+
+  // Overridable subclass constructor
+  _construct() ->
+    return
+
   // Apply default values to all properties that don't have them
-  _initializer() ->
+  _initialize() ->
     return
 
   // Get the model associated with an instance
