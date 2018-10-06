@@ -24,9 +24,13 @@
     "lint": "eslint --ext .js,.lsc src",
     "lint:fix": "eslint --fix --ext .js,.lsc src"
   },
+  "dependencies": {
+    "@ormojo/fobs": "^1.0.7"
+  },
   "devDependencies": {
     "@lightscript/babel-preset": "4.0.0-alpha.18",
     "@lightscript/eslint-plugin": "^4.0.0-alpha.18",
+    "@babel/plugin-proposal-logical-assignment-operators": "^7.0.0",
     "@babel/preset-env": "^7.1.0",
     "@babel/cli": "^7.1.2",
     "@babel/core": "^7.1.2",

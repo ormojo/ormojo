@@ -5,7 +5,10 @@ module.exports = {
       {
         "env": {
           "targets": { "node": 8 }
-        }
+        },
+        "additionalPlugins": [
+          "@babel/proposal-logical-assignment-operators"
+        ]
       }
     ]
   ]
