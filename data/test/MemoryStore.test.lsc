@@ -1,6 +1,7 @@
-import { Model, attr, MemoryStore } from '..'
+import { Model, attr, MemoryStore, _internals } from '..'
 
 it! 'should work', ->
+  debugger
   MyModel = Model.extend('MyModel', {
     name: attr('string')
   })
@@ -9,3 +10,34 @@ it! 'should work', ->
   k = MyStore.new('MyModel')
   k.name = "Alice"
   expect(k.name).toBe("Alice")
+
+it! 'should observe primitive', ->
+  debugger
+  MyModel = Model.extend('MyModel', { name: attr('string') })
+  MyStore = new MemoryStore()
+  MyStore.bind(MyModel)
+  k = MyStore.new('MyModel')
+  k.name = "Alice"
+  observations = []
+  sub1 = k.observe("name").subscribe({
+    next(x) ->
+      console.log("next", x)
+      observations.push(x.value)
+  })
+  expect(observations).toEqual(['Alice'])
+  k.name = "Bob"
+  expect(observations).toEqual(['Alice', 'Bob'])
+  sub1.unsubscribe()
+
+it! 'should mutate internal interest structure properly', ->
+  debugger
+  MyModel = Model.extend('MyModel', { name: attr('string') })
+  MyStore = new MemoryStore()
+  MyStore.bind(MyModel)
+  k = MyStore.new('MyModel')
+  k.name = "Alice"
+  expect(k[_internals.symbols.$INTEREST]).toBe(undefined)
+  sub1 = k.observe("name").subscribe({ next() -> return })
+  expect(k[_internals.symbols.$INTEREST].name).toBeTruthy()
+  sub1.unsubscribe()
+  expect(k[_internals.symbols.$INTEREST]).toBe(undefined)

@@ -1,0 +1,72 @@
+import { createBehaviorSubject } from '@ormojo/fobs'
+import { $DATA, $INTEREST } from './symbols'
+import { Store } from './Store'
+
+isEmpty(obj) ->
+  for val v in obj: if v~looseNotEq(null): return false
+  true
+
+// eslint-disable-next-line no-unused-vars
+createGetter(proto, type, key) ->
+  const DATA = $DATA
+  () -> this[DATA][key]
+
+// eslint-disable-next-line no-unused-vars
+createSetter(proto, type, key) ->
+  const DATA = $DATA, INTEREST = $INTEREST
+  (val): void ->
+    if this[DATA][key] == val: return
+    this[DATA][key] = val
+
+    // Notify interested parties of key changes
+    interest = this[INTEREST]
+    if interest:
+      observation = { key, value: val, record: this }
+      interest[key]?.next(observation)
+      interest._shallow?.next(observation)
+      interest._deep?.next(observation)
+
+observeLocalKey(key) ->
+  record = this
+  interest = record[$INTEREST] ||= {}
+  if interest[key]: return interest[key]
+
+  observable = createBehaviorSubject({
+    onObserversChanged(observers, added, removed): void ->
+      // If we removed the last observer
+      if removed and observers.length == 0:
+        // Clear us from the interested fields list
+        interest[key] = undefined
+        // If interested list is empty, eliminate it
+        if interest~isEmpty(): record[$INTEREST] = undefined
+  })
+
+  // Prime behavior subject with initial value
+  observable.next({ key, value: record[key], record })
+
+  interest[key] = observable
+
+export class MemoryStore extends Store:
+  _bind(name, model, opts) ->
+    BoundModel = model.extend(name, {
+      _construct(): void ->
+        this[$DATA] = {}
+
+      observe: observeLocalKey
+    })
+    proto = BoundModel.prototype
+    // Make setters for each primitive key
+    for key k, val prop in model.properties:
+      if prop.isAttribute() and prop.type.isPrimitive():
+        Object.defineProperty(proto, k, {
+          configurable: false
+          enumerable: true
+          get: createGetter(proto, prop.type, k)
+          set: createSetter(proto, prop.type, k)
+        })
+
+    BoundModel
+
+  new(type) ->
+    model = this.models[type]
+    new model()

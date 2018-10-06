@@ -12,7 +12,7 @@ illegalPropertyKeys = {
   'destroy': true
 }
 
-export normalizeType(t) ->
+normalizeType(t) ->
   if not t:
     any
   elif types[t]:
@@ -43,7 +43,7 @@ export class Attribute extends Property:
   [$ATTRIBUTE] = true
   constructor(type, def) ->
     super(def)
-    this.type = type
+    this.type = normalizeType(type)
 
   static isAttribute(x) -> !!x[$ATTRIBUTE]
 

@@ -1,4 +1,4 @@
-import { $MODEL_TYPE, $TYPEOF, $DATA } from './symbols'
+import { $MODEL_TYPE, $TYPEOF } from './symbols'
 import { assert } from './util'
 
 // Where the models live
@@ -30,36 +30,3 @@ export class Store:
   */
   // eslint-disable-next-line no-unused-vars
   new(type) -> return
-
-// eslint-disable-next-line no-unused-vars
-createGetter(proto, type, key) ->
-  () -> this[$DATA][key]
-
-// eslint-disable-next-line no-unused-vars
-createSetter(proto, type, key) ->
-  (val): void ->
-    if this[$DATA][key] == val: return
-    this[$DATA][key] = val
-
-export class MemoryStore extends Store:
-  _bind(name, model, opts) ->
-    BoundModel = model.extend(name, {
-      _construct(): void ->
-        this[$DATA] = {}
-    })
-    proto = BoundModel.prototype
-    // Make setters for each primitive key
-    for key k, val prop in model.properties:
-      if prop.isAttribute() and prop.type.isPrimitive():
-        Object.defineProperty(proto, k, {
-          configurable: false
-          enumerable: true
-          get: createGetter(proto, prop.type, k)
-          set: createSetter(proto, prop.type, k)
-        })
-
-    BoundModel
-
-  new(type) ->
-    model = this.models[type]
-    new model()

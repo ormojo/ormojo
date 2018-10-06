@@ -12,5 +12,15 @@ export {
 } from './Property'
 
 export {
-  Store, MemoryStore
+  Store
 } from './Store'
+
+export {
+  MemoryStore
+} from './MemoryStore'
+
+// Internal exports, do not use or you will be fired
+import * as symbols from './symbols'
+_internals = { symbols }
+
+export { _internals }
