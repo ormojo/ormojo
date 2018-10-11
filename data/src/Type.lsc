@@ -1,4 +1,4 @@
-import { $TYPE, $PRIMITIVE_TYPE, $MODEL_TYPE } from './symbols'
+import { $TYPE, $PRIMITIVE_TYPE, $MODEL_TYPE, $OPAQUE_TYPE } from './symbols'
 
 export class Type:
   static [$TYPE] = true
@@ -26,6 +26,9 @@ export class Type:
 
 export class Primitive extends Type:
   static [$PRIMITIVE_TYPE] = true
+
+export class Opaque extends Type:
+  static [$OPAQUE_TYPE] = true
 
 export class any extends Primitive:
   static validate(): boolean -> true
@@ -58,6 +61,6 @@ export class integer extends Primitive:
 
 export types = { any, nil, boolean, number, string, text, integer }
 
-export class Opaque extends Type {}
+
 
 export lazyModelType(t) -> t
