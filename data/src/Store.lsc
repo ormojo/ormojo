@@ -25,6 +25,9 @@ export class Store:
     BoundModel.prototype[$TYPEOF] = model
     this.models[name] = BoundModel
 
+  // eslint-disable-next-line no-unused-vars
+  createRaw(type) -> return
+
   /**
   * Synchronously create a new instance.
   */

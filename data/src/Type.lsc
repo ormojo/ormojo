@@ -1,4 +1,4 @@
-import { $TYPE, $PRIMITIVE_TYPE } from './symbols'
+import { $TYPE, $PRIMITIVE_TYPE, $MODEL_TYPE } from './symbols'
 
 export class Type:
   static [$TYPE] = true
@@ -20,6 +20,9 @@ export class Type:
 
   // Is this type primitive?
   static isPrimitive(): bool -> this[$PRIMITIVE_TYPE]
+
+  // Is this type a model?
+  static isModel(): bool -> this[$MODEL_TYPE]
 
 export class Primitive extends Type:
   static [$PRIMITIVE_TYPE] = true

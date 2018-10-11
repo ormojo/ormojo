@@ -44,6 +44,18 @@ export class Attribute extends Property:
   constructor(type, def) ->
     super(def)
     this.type = normalizeType(type)
+    this.isNullable = true
+    if def:
+      this.initializer = def.defaultValue or def.default
+      if def.isNullable~looseNotEq(null): this.isNullable = def.isNullable
+
+  setKey(key): void ->
+    super.setKey(key)
+    if not this.isNullable:
+      if this.initializer~looseEq(null):
+        throw new Error(`Non-nullable field '${key}' must have a defaultValue.`)
+
+  hasInitializer(): boolean -> this.initializer~looseNotEq(null)
 
   static isAttribute(x) -> !!x[$ATTRIBUTE]
 

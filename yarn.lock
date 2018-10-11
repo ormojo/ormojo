@@ -1418,10 +1418,34 @@
     "@babel/plugin-transform-flow-strip-types" "^7.0.0"
     "@lightscript/transform" "4.0.0-alpha.18"
 
+"@lightscript/babel-preset@4.0.0-alpha.22":
+  version "4.0.0-alpha.22"
+  resolved "https://registry.yarnpkg.com/@lightscript/babel-preset/-/babel-preset-4.0.0-alpha.22.tgz#be0cd8fae0e90c7e018ea55e7854426c04ffa1b1"
+  integrity sha512-BFdPKAonEGQGKlWtp/Vq+Ix0EjBJpP3GIthIx2l6ZkqNHI+sqHnwHLryCybesCrObXJ/QAvzI2YZDCbit+qIgg==
+  dependencies:
+    "@babel/helper-plugin-utils" "^7.0.0"
+    "@babel/plugin-proposal-class-properties" "^7.1.0"
+    "@babel/plugin-proposal-decorators" "^7.1.2"
+    "@babel/plugin-proposal-object-rest-spread" "^7.0.0"
+    "@babel/plugin-proposal-optional-chaining" "^7.0.0"
+    "@babel/plugin-proposal-throw-expressions" "^7.0.0"
+    "@babel/plugin-transform-destructuring" "^7.1.2"
+    "@babel/plugin-transform-flow-strip-types" "^7.0.0"
+    "@lightscript/transform" "4.0.0-alpha.22"
+
 "@lightscript/eslint-plugin@^4.0.0-alpha.18":
   version "4.0.0-alpha.18"
   resolved "https://registry.yarnpkg.com/@lightscript/eslint-plugin/-/eslint-plugin-4.0.0-alpha.18.tgz#4aec0508923bdf46d8773fa520551665811be634"
   integrity sha512-ng0z9DfPcsLOgNPD1vUWoirgMrYEja4CLRN0Gy60sPUjXIyTjzFLKe3aDQKkxLeHrT7XYE+/7wsv6ReVo76AnQ==
+  dependencies:
+    "@babel/code-frame" "^7.0.0"
+    eslint-scope "^4.0.0"
+    eslint-visitor-keys "^1.0.0"
+
+"@lightscript/eslint-plugin@^4.0.0-alpha.22":
+  version "4.0.0-alpha.22"
+  resolved "https://registry.yarnpkg.com/@lightscript/eslint-plugin/-/eslint-plugin-4.0.0-alpha.22.tgz#98bea60bb80616fb11e5d312faff00e1ff0e1607"
+  integrity sha512-zR7zaRcZS4DOT1Ppk1t/MWPZyiRR0/kLNqdqeT8FIIURjeFi1jyplSSQZpPFyVzmhchm9trSZgcIvPZt3tP+oA==
   dependencies:
     "@babel/code-frame" "^7.0.0"
     eslint-scope "^4.0.0"
@@ -1432,6 +1456,11 @@
   resolved "https://registry.yarnpkg.com/@lightscript/parser/-/parser-4.0.0-alpha.18.tgz#53ce73df83441b2e4a12e1f5b0fd82a1bf2c0cb7"
   integrity sha512-zmYVAwulJyPkAiDEl7H5dV1CXzHMyfavher3AFA4EJH/5R4lVjmnuO+bHB9vQ2hLQYdH22wEPjJBVgcAzGaxiw==
 
+"@lightscript/parser@4.0.0-alpha.22":
+  version "4.0.0-alpha.22"
+  resolved "https://registry.yarnpkg.com/@lightscript/parser/-/parser-4.0.0-alpha.22.tgz#d776ed9b9f24cdf6480b215230c183ce5a29ee78"
+  integrity sha512-ygt37qimZbuBb7jhlDos7hohNHJRuRwUovVldzTrrY9L3B4bgqTiXeMQhkRb5xYKVk8+0lKKJeS2Bo35fQ8zmw==
+
 "@lightscript/transform@4.0.0-alpha.18":
   version "4.0.0-alpha.18"
   resolved "https://registry.yarnpkg.com/@lightscript/transform/-/transform-4.0.0-alpha.18.tgz#78f91eee0c5fb4049a13eaae58cc21dfbabaf65f"
@@ -1439,6 +1468,17 @@
   dependencies:
     "@babel/types" "^7.0.0"
     "@lightscript/parser" "4.0.0-alpha.18"
+    "@oigroup/lightscript-runtime" "^0.1.1"
+    ast-loc-utils "^1.1.0"
+    find-babel-config "^1.1.0"
+
+"@lightscript/transform@4.0.0-alpha.22":
+  version "4.0.0-alpha.22"
+  resolved "https://registry.yarnpkg.com/@lightscript/transform/-/transform-4.0.0-alpha.22.tgz#d0b8fc8857d175b0e632ea5262cf7a50254ae915"
+  integrity sha512-5yeoOqI//uVgroNsaMmItfrPsgyLDEzVRfIDhEEacJ5cF3SRzr70UC5XkFORGs+xfB3WJIkmK0QJeSQgPF22Kg==
+  dependencies:
+    "@babel/types" "^7.0.0"
+    "@lightscript/parser" "4.0.0-alpha.22"
     "@oigroup/lightscript-runtime" "^0.1.1"
     ast-loc-utils "^1.1.0"
     find-babel-config "^1.1.0"

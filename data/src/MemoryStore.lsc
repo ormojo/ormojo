@@ -46,11 +46,38 @@ observeLocalKey(key) ->
 
   interest[key] = observable
 
+initializeModel(record, attr, store) ->
+  val = store.new(attr.type.name)
+  init = attr.initializer
+  if typeof(init) == 'function':
+    init.call(record, val)
+  val._initialize()
+  val
+
+initializeValue(attr) ->
+  init = attr.initializer
+  if typeof(init) == 'function':
+    init()
+  else:
+    attr.type.clone(init)
+
 export class MemoryStore extends Store:
   _bind(name, model, opts) ->
+    store = this
+
     BoundModel = model.extend(name, {
       _construct(): void ->
+        super._construct()
         this[$DATA] = {}
+
+      _initialize(): void ->
+        super._initialize()
+        for key k, val attr in model.attributes:
+          if this[k] == undefined and attr.hasInitializer():
+            if attr.type.isModel():
+              this[k] = initializeModel(this, attr, store)
+            else:
+              this[k] = initializeValue(attr)
 
       observe: observeLocalKey
     })
@@ -67,6 +94,12 @@ export class MemoryStore extends Store:
 
     BoundModel
 
-  new(type) ->
+  createRaw(type) ->
     model = this.models[type]
     new model()
+
+  new(type) ->
+    model = this.models[type]
+    record = new model()
+    record._initialize()
+    record

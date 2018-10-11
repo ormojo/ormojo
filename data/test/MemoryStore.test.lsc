@@ -41,3 +41,16 @@ it! 'should mutate internal interest structure properly', ->
   expect(k[_internals.symbols.$INTEREST].name).toBeTruthy()
   sub1.unsubscribe()
   expect(k[_internals.symbols.$INTEREST]).toBe(undefined)
+
+it! 'should default', ->
+  debugger
+  MyModel = Model.extend('MyModel', {
+    name: attr('string', { defaultValue: 'Joe' })
+    addr: attr('string', { defaultValue: -> '123 Drury Ln'})
+  })
+  MyStore = new MemoryStore()
+  MyStore.bind(MyModel)
+  k = MyStore.new('MyModel')
+  console.log(k)
+  expect(k.name).toBe('Joe')
+  expect(k.addr).toBe('123 Drury Ln')

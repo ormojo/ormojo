@@ -5,14 +5,19 @@ import { $MODEL_TYPE } from './symbols'
 export class Model extends Type:
   static [$MODEL_TYPE] = true
   static properties = {}
+  // Attributes are properties that have independent, stored values, i.e.
+  // not computed or private properties.
+  static attributes = {}
 
   // Assign model-specific qualities of this model to another
   static _assignTo(nextModel): void ->
     nextModel.properties = Object.assign({}, this.properties)
+    nextModel.attributes = Object.assign({}, this.attributes)
 
   // Define attribute on this model
   static _defineProperty(key, def): void ->
     this.properties[key] = def
+    if def.isAttribute(): this.attributes[key] = def
     def.setKey(key)
     def.configure(this)
 
@@ -21,7 +26,7 @@ export class Model extends Type:
       throw new Error(`${this.name}.extend: a string name is required`)
     extension = class extends this {}
     Object.defineProperty(extension, "name", { value: name })
-    // This makes es6 super calls work
+    // This makes es6 super calls work for methods defined on the `def` argument
     Object.setPrototypeOf(def, this.prototype)
     this._assignTo(extension)
     for key k, val v in def:
