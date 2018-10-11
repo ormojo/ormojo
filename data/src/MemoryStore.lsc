@@ -82,15 +82,14 @@ export class MemoryStore extends Store:
       observe: observeLocalKey
     })
     proto = BoundModel.prototype
-    // Make setters for each primitive key
-    for key k, val prop in model.properties:
-      if prop.isAttribute() and prop.type.isPrimitive():
-        Object.defineProperty(proto, k, {
-          configurable: false
-          enumerable: true
-          get: createGetter(proto, prop.type, k)
-          set: createSetter(proto, prop.type, k)
-        })
+    // Make getters/setters for each attribute
+    for key k, val prop in model.attributes:
+      Object.defineProperty(proto, k, {
+        configurable: false
+        enumerable: true
+        get: createGetter(proto, prop.type, k)
+        set: createSetter(proto, prop.type, k)
+      })
 
     BoundModel
 
