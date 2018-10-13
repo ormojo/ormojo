@@ -84,3 +84,24 @@ it! 'should allow type self-ref', ->
   console.log(k)
   expect(k.recursive).toBeFalsy()
   expect(k.name).toBe('Bob')
+
+it! 'should allow type cycles', ->
+  debugger
+  MyModel = Model.extend('MyModel', {
+    yourModel: attr('YourModel')
+    name: attr('string', { defaultValue: 'Bob'})
+  })
+  YourModel = Model.extend('YourModel', {
+    myModel: attr('MyModel')
+    addr: attr('string', { defaultValue: '123 Drury Ln'})
+  })
+  MyStore = new MemoryStore()
+  MyStore.bind(MyModel)
+  MyStore.bind(YourModel)
+  k = MyStore.new('MyModel')
+  l = MyStore.new('YourModel')
+  k.yourModel = l
+  l.myModel = k
+  console.log(k)
+  expect(k.name).toBe('Bob')
+  expect(k.yourModel.addr).toBe('123 Drury Ln')
