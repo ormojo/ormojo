@@ -28,10 +28,16 @@ export class Property:
   static isProperty(x) ->
     (typeof x == 'object') and x[$PROPERTY]
 
+  setType(type): void ->
+    this.type = type
+
   setKey(key): void ->
     if illegalPropertyKeys[key]:
       throw new Error(`Illegal attribute key '${key}'`)
     this.key = key
+
+  setDef(def): void ->
+    Object.assign(this, def)
 
   setModel(model): void ->
     this.model = model
@@ -46,12 +52,9 @@ export class Property:
 export class Attribute extends Property:
   [$ATTRIBUTE] = true
 
-  setType(type): void ->
-    this.type = type
-
   setDef(def = {}): void ->
     this.isNullable = true
-    Object.assign(this, def)
+    super.setDef(def)
     this.initializer = def.defaultValue or def.default
 
   setKey(key): void ->
