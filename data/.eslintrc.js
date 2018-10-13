@@ -11,5 +11,9 @@ module.exports = {
   "env": {
     "node": true,
     "es6": true
+  },
+  "rules": {
+    "no-unreachable": 0,
+    "no-console": "error"
   }
 }

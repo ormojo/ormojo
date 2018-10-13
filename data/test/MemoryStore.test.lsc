@@ -54,3 +54,33 @@ it! 'should default', ->
   console.log(k)
   expect(k.name).toBe('Joe')
   expect(k.addr).toBe('123 Drury Ln')
+
+it! 'should default object', ->
+  debugger
+  MyModel = Model.extend('MyModel', {
+    name: attr('string', { defaultValue: 'Joe' })
+  })
+  YourModel = Model.extend('YourModel', {
+    myModel: attr('MyModel', { defaultValue: {} })
+    addr: attr('string', { defaultValue: '123 Drury Ln' })
+  })
+  MyStore = new MemoryStore()
+  MyStore.bind(MyModel)
+  MyStore.bind(YourModel)
+  k = MyStore.new('YourModel')
+  console.log(k)
+  expect(k.myModel.name).toBe('Joe')
+  expect(k.addr).toBe('123 Drury Ln')
+
+it! 'should allow type self-ref', ->
+  debugger
+  MyModel = Model.extend('MyModel', {
+    recursive: attr('MyModel')
+    name: attr('string', { defaultValue: 'Bob'})
+  })
+  MyStore = new MemoryStore()
+  MyStore.bind(MyModel)
+  k = MyStore.new('MyModel')
+  console.log(k)
+  expect(k.recursive).toBeFalsy()
+  expect(k.name).toBe('Bob')

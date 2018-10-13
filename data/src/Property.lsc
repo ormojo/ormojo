@@ -24,8 +24,6 @@ normalizeType(t) ->
 
 export class Property:
   [$PROPERTY] = true
-  constructor(def) ->
-    Object.assign(this, def)
 
   static isProperty(x) ->
     (typeof x == 'object') and x[$PROPERTY]
@@ -35,19 +33,26 @@ export class Property:
       throw new Error(`Illegal attribute key '${key}'`)
     this.key = key
 
-  configure(modelClass): void -> return
+  setModel(model): void ->
+    this.model = model
 
   isAttribute(): boolean -> !!this[$ATTRIBUTE]
 
+  clone() ->
+    x = new this.constructor()
+    Object.assign(x, this)
+    x
+
 export class Attribute extends Property:
   [$ATTRIBUTE] = true
-  constructor(type, def) ->
-    super(def)
-    this.type = normalizeType(type)
+
+  setType(type): void ->
+    this.type = type
+
+  setDef(def = {}): void ->
     this.isNullable = true
-    if def:
-      this.initializer = def.defaultValue or def.default
-      if def.isNullable~looseNotEq(null): this.isNullable = def.isNullable
+    Object.assign(this, def)
+    this.initializer = def.defaultValue or def.default
 
   setKey(key): void ->
     super.setKey(key)
@@ -60,4 +65,8 @@ export class Attribute extends Property:
   static isAttribute(x) -> !!x[$ATTRIBUTE]
 
 export attr(type, def) ->
-  new Attribute(type or any, def)
+  now type = normalizeType(type)
+  a = new Attribute()
+  a.setType(type)
+  a.setDef(def)
+  a

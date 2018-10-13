@@ -1,4 +1,4 @@
-import { $TYPE, $PRIMITIVE_TYPE, $MODEL_TYPE, $OPAQUE_TYPE } from './symbols'
+import { $TYPE, $PRIMITIVE_TYPE, $MODEL_TYPE, $OPAQUE_TYPE, $LAZY_TYPE } from './symbols'
 
 export class Type:
   static [$TYPE] = true
@@ -23,6 +23,9 @@ export class Type:
 
   // Is this type a model?
   static isModel(): bool -> this[$MODEL_TYPE]
+
+  // Is this type lazily resolved?
+  static isLazy(): bool -> this[$LAZY_TYPE]
 
 export class Primitive extends Type:
   static [$PRIMITIVE_TYPE] = true
@@ -61,6 +64,10 @@ export class integer extends Primitive:
 
 export types = { any, nil, boolean, number, string, text, integer }
 
+export lazyModelType(t) ->
+  class LazyModel extends Type:
+    static [$MODEL_TYPE] = true
+    static [$LAZY_TYPE] = true
 
-
-export lazyModelType(t) -> t
+  Object.defineProperty(LazyModel, "name", { value: t })
+  LazyModel

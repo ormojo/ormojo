@@ -18,7 +18,7 @@
     "build:rollup": "rollup -c",
     "build:plain": "babel --source-maps -x \".js\",\".lsc\" src --out-dir lib",
     "build:rollup:coverage": "cross-env COVERAGE=true rollup -c",
-    "test": "run-s clean build test:only",
+    "test": "run-s lint clean build test:only",
     "test:only": "jest",
     "test:only:coverage": "jest --coverage",
     "test:debug": "node --inspect-brk $(npm bin)/jest -i",
@@ -27,7 +27,8 @@
     "lint:fix": "eslint --fix --ext .js,.lsc src"
   },
   "dependencies": {
-    "@ormojo/fobs": "^1.0.7"
+    "@ormojo/fobs": "^1.0.7",
+    "debug": "^4.1.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.1.2",

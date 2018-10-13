@@ -1,6 +1,7 @@
 import { createBehaviorSubject } from '@ormojo/fobs'
-import { $DATA, $INTEREST } from './symbols'
+import { $DATA, $INTEREST, $TYPEOF } from './symbols'
 import { Store } from './Store'
+import { debug } from './debug'
 
 isEmpty(obj) ->
   for val v in obj: if v~looseNotEq(null): return false
@@ -46,8 +47,13 @@ observeLocalKey(key) ->
 
   interest[key] = observable
 
-initializeModel(record, attr, store) ->
-  val = store.new(attr.type.name)
+initializeModel(record, key, attr, store) ->
+  val = try:
+    store.createRaw(attr.type.name)
+  catch err:
+    // Clarify error on key creation
+    throw new Error(`Error while instantiating '${key}' of type '${attr.type.name}' on record of type '${record[$TYPEOF].name}': `+ err.message)
+
   init = attr.initializer
   if typeof(init) == 'function':
     init.call(record, val)
@@ -62,10 +68,22 @@ initializeValue(attr) ->
     attr.type.clone(init)
 
 export class MemoryStore extends Store:
-  _bind(name, model, opts) ->
+  _applyProperty(boundModel, prop, type): void ->
+    debug("MemoryStore._applyProperty", boundModel.name, '[', prop.key, ']:', type.name)
+    proto = boundModel.prototype
+    key = prop.key
+    Object.defineProperty(proto, key, {
+      configurable: false
+      enumerable: true
+      get: createGetter(proto, type, key)
+      set: createSetter(proto, type, key)
+    })
+
+  // eslint-disable-next-line no-unused-vars
+  _createBoundModel(name, model, opts) ->
     store = this
 
-    BoundModel = model.extend(name, {
+    model.extend(name, {
       _construct(): void ->
         super._construct()
         this[$DATA] = {}
@@ -75,30 +93,20 @@ export class MemoryStore extends Store:
         for key k, val attr in model.attributes:
           if this[k] == undefined and attr.hasInitializer():
             if attr.type.isModel():
-              this[k] = initializeModel(this, attr, store)
+              this[k] = initializeModel(this, k, attr, store)
             else:
               this[k] = initializeValue(attr)
 
       observe: observeLocalKey
     })
-    proto = BoundModel.prototype
-    // Make getters/setters for each attribute
-    for key k, val prop in model.attributes:
-      Object.defineProperty(proto, k, {
-        configurable: false
-        enumerable: true
-        get: createGetter(proto, prop.type, k)
-        set: createSetter(proto, prop.type, k)
-      })
-
-    BoundModel
 
   createRaw(type) ->
-    model = this.models[type]
+    model = this.models.get(type)
+    if not model:
+      throw new Error(`No model named ${type} is bound to this store`)
     new model()
 
   new(type) ->
-    model = this.models[type]
-    record = new model()
+    record = this.createRaw(type)
     record._initialize()
     record

@@ -1,14 +1,63 @@
 import { $MODEL_TYPE, $TYPEOF } from './symbols'
 import { assert } from './util'
+import { debug } from './debug'
+
+export class TypeMap:
+  constructor(store) ->
+    this.store = store
+
+  // Map from type names to types
+  types = {}
+  // Map from types to attributes who are trying to lazily resolve that type
+  lazyList = {}
+
+  set(typeName, type): void ->
+    this.types[typeName] = type
+    for elem attr in (this.lazyList[typeName] or []):
+      this.store._lazyResolved(attr, type)
+
+  get(typeName) -> this.types[typeName]
+
+  lazyGet(typeName, attr) ->
+    t = this.get(typeName)
+    if t: return t
+    entry = this.lazyList[typeName] ||= []
+    if entry.indexOf(attr) < 0:
+      debug("TypeMap.lazyGet: added", attr.model.name, '[', attr.key, '] to lazy list for', typeName)
+      entry.push(attr)
+    null
 
 // Where the models live
 export class Store:
   // Map from model name to model
-  models = {}
+  models = new TypeMap(this)
 
-  // Internal bind method
+  // Internal method: just learned about the type of a lazy attribute
+  _lazyResolved(attr, type): void ->
+    debug("Store._lazyResolved", attr.model.name, '[', attr.key, '] lazily resolved to', type.name)
+    this._applyProperty(attr.model, attr, type)
+
+  // Internal method: create bound model class
   // eslint-disable-next-line no-unused-vars
-  _bind(name, model, opts) ->
+  _createBoundModel(name, model, opts) ->
+    throw new Error("Attempt to bind to abstract store")
+
+  // Internal method: try to apply a property, possibly failing for
+  // lack of lazily resolved types
+  _tryApplyProperty(boundModel, prop): void ->
+    realType = if prop.type?.isModel():
+      this.models.lazyGet(prop.type.name, prop)
+    else:
+      prop.type
+    if not realType:
+      debug("Store._tryApplyProperty", boundModel.name, '[', prop.key, '] was not applied')
+      return
+    this._applyProperty(boundModel, prop, realType)
+
+  // Internal method: create getter/setter functions for props
+  // on model prototype
+  // eslint-disable-next-line no-unused-vars
+  _applyProperty(boundModel, prop, type): void ->
     throw new Error("Attempt to bind to abstract store")
 
   /**
@@ -19,11 +68,14 @@ export class Store:
     assert(typeof model == "function" and model[$MODEL_TYPE], "Store.bind: expected a Model")
 
     name = opts.name or model.name
-    BoundModel = this._bind(name, model, opts)
+    BoundModel = this._createBoundModel(name, model, opts)
     // When inquring after the type of the bound model, the original
     // model should be returned
     BoundModel.prototype[$TYPEOF] = model
-    this.models[name] = BoundModel
+    // Try to apply all properties of the bound model to itself
+    for val property in BoundModel.properties:
+      this._tryApplyProperty(BoundModel, property)
+    this.models.set(name, BoundModel)
 
   // eslint-disable-next-line no-unused-vars
   createRaw(type) -> return
