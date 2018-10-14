@@ -1,5 +1,7 @@
 import { createBehaviorSubject } from '@ormojo/fobs'
-import { $DATA, $INTEREST, $TYPEOF } from './symbols'
+import {
+  $DATA, $INTEREST, $TYPEOF, SC_OPAQUE, SC_PRIMITIVE, SC_REF
+} from './symbols'
 import { Store } from './Store'
 import { debug } from './debug'
 
@@ -48,13 +50,15 @@ observeLocalKey(key) ->
   interest[key] = observable
 
 initializeModel(record, key, attr, store) ->
+  init = attr.initializer
+  if not init: return null
+
   val = try:
     store.createRaw(attr.type.name)
   catch err:
     // Clarify error on key creation
     throw new Error(`Error while instantiating '${key}' of type '${attr.type.name}' on record of type '${record[$TYPEOF].name}': `+ err.message)
 
-  init = attr.initializer
   if typeof(init) == 'function':
     init.call(record, val)
   val._initialize()
@@ -62,10 +66,20 @@ initializeModel(record, key, attr, store) ->
 
 initializeValue(attr) ->
   init = attr.initializer
+  if not init: return null
   if typeof(init) == 'function':
     init()
   else:
     attr.type.clone(init)
+
+initForStorageClass(sc, record, key, prop, store): void ->
+  match sc:
+    | == SC_PRIMITIVE, == SC_OPAQUE:
+      record[$DATA][key] = initializeValue(prop)
+    | == SC_REF:
+      record[$DATA][key] = initializeModel(record, key, prop, store)
+    | else:
+      return
 
 export class MemoryStore extends Store:
   _applyProperty(boundModel, prop, type): void ->
@@ -82,6 +96,7 @@ export class MemoryStore extends Store:
   // eslint-disable-next-line no-unused-vars
   _createBoundModel(name, model, opts) ->
     store = this
+    props = model.properties
 
     model.extend(name, {
       _construct(): void ->
@@ -90,12 +105,9 @@ export class MemoryStore extends Store:
 
       _initialize(): void ->
         super._initialize()
-        for key k, val attr in model.attributes:
-          if this[k] == undefined and attr.hasInitializer():
-            if attr.type.isModel():
-              this[k] = initializeModel(this, k, attr, store)
-            else:
-              this[k] = initializeValue(attr)
+        for key k, val prop in props:
+          if prop.storageClass:
+            initForStorageClass(prop.storageClass, this, k, prop, store)
 
       observe: observeLocalKey
     })

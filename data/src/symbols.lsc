@@ -5,8 +5,17 @@ export $TYPEOF = Symbol.for('ephraim.typeOf')
 export $TYPE = Symbol.for('ephraim.type')
 export $PROPERTY = Symbol.for('ephraim.property')
 export $ATTRIBUTE = Symbol.for('ephraim.attribute')
+export $LIST = Symbol.for('ephraim.list')
 export $PROPERTY_DEFINITION = Symbol.for('ephraim.propertyDefinition')
 export $PRIMITIVE_TYPE = Symbol.for('ephraim.primitiveType')
 export $MODEL_TYPE = Symbol.for('ephraim.modelType')
 export $OPAQUE_TYPE = Symbol.for('ephraim.opaqueType')
 export $LAZY_TYPE = Symbol.for('ephraim.lazyType')
+
+// Storage classes
+export SC_UNKNOWN = 1
+export SC_PRIMITIVE = 2
+export SC_OPAQUE = 3
+export SC_REF = 4
+export SC_SHORT_LIST_VALUE = 5
+export SC_SHORT_LIST_REF = 6

@@ -1,4 +1,7 @@
-import { $PROPERTY, $ATTRIBUTE } from './symbols'
+import {
+  $PROPERTY, $ATTRIBUTE, $LIST, SC_REF, SC_UNKNOWN, SC_PRIMITIVE
+  SC_SHORT_LIST_REF, SC_SHORT_LIST_VALUE
+} from './symbols'
 import { any, types, lazyModelType } from './Type'
 
 // Invalid names for properties
@@ -51,6 +54,7 @@ export class Property:
 
 export class Attribute extends Property:
   [$ATTRIBUTE] = true
+  storageClass = SC_UNKNOWN
 
   setDef(def = {}): void ->
     this.isNullable = true
@@ -67,9 +71,36 @@ export class Attribute extends Property:
 
   static isAttribute(x) -> !!x[$ATTRIBUTE]
 
+export class PrimitiveAttribute extends Attribute:
+  storageClass = SC_PRIMITIVE
+
+export class RecordAttribute extends Attribute:
+  storageClass = SC_REF
+
+export class ListAttribute extends Attribute:
+  [$LIST] = true
+
 export attr(type, def) ->
   now type = normalizeType(type)
-  a = new Attribute()
+  a = if type.isModel():
+    new RecordAttribute()
+  elif type.isPrimitive():
+    new PrimitiveAttribute()
+  else:
+    new Attribute()
+
+  a.setType(type)
+  a.setDef(def)
+  a
+
+export list(type, def) ->
+  now type = normalizeType(type)
+  a = new ListAttribute()
+  if type.isModel():
+    a.storageClass = SC_SHORT_LIST_REF
+  else:
+    a.storageClass = SC_SHORT_LIST_VALUE
+
   a.setType(type)
   a.setDef(def)
   a

@@ -8,7 +8,7 @@ export {
 } from './Model'
 
 export {
-  attr, Attribute, Property
+  attr, list, Attribute, Property
 } from './Property'
 
 export {
