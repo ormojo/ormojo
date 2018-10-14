@@ -69,6 +69,7 @@ export class Store:
 
     name = opts.name or model.name
     BoundModel = this._createBoundModel(name, model, opts)
+    BoundModel.opts = opts
     // When inquring after the type of the bound model, the original
     // model should be returned
     BoundModel.prototype[$TYPEOF] = model
