@@ -105,3 +105,15 @@ it! 'should allow type cycles', ->
   console.log(k)
   expect(k.name).toBe('Bob')
   expect(k.yourModel.addr).toBe('123 Drury Ln')
+
+it! 'shouldnt overwrite pushed advice', ->
+  debugger
+  MyModel = Model.extend('MyModel', {
+    name: attr('string', { defaultValue: 'Bob'})
+  })
+  MyStore = new MemoryStore()
+  MyStore.bind(MyModel)
+  k = MyStore.createRaw('MyModel')
+  k.name = 'Alice'
+  k._initialize()
+  expect(k.name).toBe('Alice')
