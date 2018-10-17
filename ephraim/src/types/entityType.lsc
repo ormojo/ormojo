@@ -59,7 +59,11 @@ export EntityType = singleton("EntityType", ->
 
     // eslint-disable-next-line no-unused-vars
     initialize(entity, spec, creator, initializer) ->
-      creator(this)
+      rst = initializer?.call(entity)
+      if rst~looseEq(null):
+        rst
+      else:
+        creator(this)
 
     setEntityConstructor(constr): void ->
       // Wire javascript prototype propertly
@@ -134,6 +138,7 @@ export EntityType = singleton("EntityType", ->
       throw new Error("entities without a driver cannot be observed")
 
     recurseLeft(left, state) ->
+      if left~looseEq(null): return left
       memo = state.seen(left)
       if memo: return memo
       obj = state.create(this, left)

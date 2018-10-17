@@ -56,17 +56,20 @@ test! 'init via constructor', ->
 
 test! 'subentity', ->
   @entity() class E:
-    @field() e
+    @field() e = undefined
 
   @entity() class F:
-    @field(E) subE
+    @field(E) subE = undefined
+    @field(E) subE2 = null
 
   f = create(F)
+  expect(f.subE).toBe(undefined)
+  expect(f.subE2).toBe(null)
   f.subE = create(E)
   f.subE.e = 1
 
   expect(f.subE.e).toBe(1)
-  expect(f~toPlainObject!).toEqual({ subE: { e: 1 }})
+  expect(f~toPlainObject!).toEqual({ subE: { e: 1 }, subE2: null })
 
 test! 'subentity init', ->
   @entity() class E:

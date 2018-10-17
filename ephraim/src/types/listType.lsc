@@ -11,7 +11,11 @@ export ListType = singleton("ListType", ->
 
     // eslint-disable-next-line no-unused-vars
     initialize(entity, spec, creator, initializer) ->
-      creator(this)
+      rst = initializer?.call(entity)
+      if rst~looseEq(null):
+        rst
+      else:
+        creator(this)
 
     isKindOf(otherT): boolean ->
       (otherT instanceof ListType)
