@@ -30,8 +30,12 @@ export getObservableForField(ent, k) ->
   // the whole observedPrimitives key if empty
   opts = {
     initialValue
-    onObserversChanged(observers, added, removed) ->
+    onObserversChanged(observers, added, removed): void ->
       if removed and observers.length == 0:
+        // Reentrancy: another onObserversChanged call may already have deleted the
+        // field list
+        if not ent[observedFieldsSymbol]: return
+
         delete ent[observedFieldsSymbol][k]
         if ent[observedFieldsSymbol]~isEmpty!:
           ent[observedFieldsSymbol] = undefined
