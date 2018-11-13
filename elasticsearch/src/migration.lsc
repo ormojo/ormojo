@@ -204,6 +204,7 @@ export class ESMigration extends Migration:
         index: plan.index.name
         currentSettings: plan.currentSettings
         targetSettings: plan.targetSettings
+        settingsDiff: plan.migrationDiff
       }]
     ]
 
