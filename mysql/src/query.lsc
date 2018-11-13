@@ -5,17 +5,24 @@ export Field(T, field) ->
   (query) ->
     query.backend._getTableForType(T)?.columnForField[field]?.fqcn
 
-export Op(field, o, val) ->
+export RawOp(field, o, val) ->
   (query, clause): void ->
     col = if typeof(field) == 'function':
       field(query)
     else:
       query.columnLookup[field]?.fqcn
     if col:
-      clause.push(`${col}${o}${q(val)}`)
+      clause.push(`${col}${o}${val}`)
     else:
       throw new Error(`MySQLQuery: could not find column for field '${field}'`)
     clause
+
+export Op(field, o, val) ->
+  RawOp(field, o, q(val))
+
+export In(field, vals) ->
+  sqlSet = [...for elem x in vals: [q(x)]].join(',')
+  RawOp(field, ' IN ', '(' + sqlSet + ')')
 
 export Eq(field, val) -> Op(field, '=', val)
 
