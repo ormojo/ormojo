@@ -48,6 +48,12 @@ export class ESBackend extends Backend:
   _getTypeInfoForInstance(inst) ->
     this._getTypeInfo(underlyingTypeOfType(typeOf(inst)))
 
+  normalizeIndexName(idxName) ->
+    if this.indexPrefix:
+      this.indexPrefix + idxName
+    else:
+      idxName
+
   createMigration(): ESMigration ->
     new ESMigration(this)
 
