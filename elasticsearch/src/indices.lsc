@@ -93,4 +93,8 @@ export class ESIndices:
 
   getEphraimTypeForESType(esIndex, esType) ->
     idx = this.findIndexByName(esIndex)
-    if idx: idx.types[esType].ephraimType
+    if idx:
+      idx.types[esType].ephraimType
+    else:
+      this.backend.log.warn(`Unexpected type lookup failure for index '${esIndex}' and type '${esType}'`)
+      undefined
