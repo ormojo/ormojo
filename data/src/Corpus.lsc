@@ -1,0 +1,11 @@
+// The Corpus is the overarching container for all data objects. Generally
+// speaking there should be one Corpus globally.
+
+import { LazyMap } from './util/LazyMap'
+
+export class Corpus {
+  models = new LazyMap()
+  stores = new LazyMap()
+  collections = new LazyMap()
+  storageClasses = {}
+}

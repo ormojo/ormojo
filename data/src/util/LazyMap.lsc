@@ -1,0 +1,31 @@
+// The LazyMap is a map from strings to data elements that will notify
+// receivers if a missing element is later added to the map.
+import { debug } from '../debug'
+
+export class LazyMap:
+  // Actual data map
+  data = {}
+  // Map from strings to interested parties who should be notified when
+  // the strings are added
+  lazyList = {}
+
+  lazyResolve(k, v): void ->
+    lazyList = this.lazyList[k]
+    if not lazyList: return
+    for elem party in lazyList: party._lazyResolved(k, v)
+    this.lazyList[k] = undefined
+
+  set(k, v): void ->
+    this.data[k] = v
+    if v != undefined: this.lazyResolve(k, v)
+
+  rawGet(k) -> this.data[k]
+
+  get(k, notify) ->
+    v = this.data[k]
+    if v != undefined or (not notify): return v
+    entry = this.lazyList[k] ||= []
+    if entry.indexOf(notify) < 0:
+      debug("LazyMap: added lazy resolution for ", k, ": ", notify)
+      entry.push(notify)
+    undefined
