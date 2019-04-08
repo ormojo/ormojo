@@ -12,6 +12,7 @@ export typeCheckAssignment(T, key, val) ->
 
 objectConversionState(opts) ->
   includeTypeStamp = opts?.includeTypeStamp
+  includeTransients = opts?.includeTransients
   {
     seen(x) -> this.map?.get(x)
     remember(x, val): void ->
@@ -24,7 +25,8 @@ objectConversionState(opts) ->
       else: true
     visitField(obj, k, v, spec): void ->
       if spec:
-        obj[k] = spec.type.recurseLeft(v, this)
+        if includeTransients or (not spec.transient):
+          obj[k] = spec.type.recurseLeft(v, this)
       else:
         obj[k] = v
     visitListEntry(obj, i, v, type): void ->

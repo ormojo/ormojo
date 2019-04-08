@@ -1,0 +1,11 @@
+import { entity, field, toPlainObject, assignPlainObject, types, listOf, createMemory as create, augment, hydratePlainObject } from '@ormojo/ephraim'
+
+test! 'toPlainObject transients', ->
+  @entity() class E:
+    @field({type: types.any, transient: true}) t
+
+  e = create(E)
+  e.flex = 2
+  e.t = 1
+  console.log(e~toPlainObject({includeTypeStamp: true}))
+  console.log(e~toPlainObject({includeTypeStamp: true, includeTransients: true}))
