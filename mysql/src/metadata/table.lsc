@@ -131,6 +131,8 @@ export class MySQLTable {
     for elem fieldKey in fieldKeyList:
       thisFieldSpec = fieldSpecs[fieldKey]
       thisFieldOpts = fieldOpts[fieldKey] or {}
+      // Ignore transient fields
+      if thisFieldSpec.transient: continue
       // Allow fields to be ignored
       if thisFieldOpts.ignore: continue
       // Allow fields to be renamed
