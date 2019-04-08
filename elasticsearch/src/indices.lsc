@@ -24,7 +24,7 @@ export class ESIndex:
 
     // Individual field mappings
     for key k, val spec in T~declaredFields():
-      if k != 'id':
+      if k != 'id' and (not spec.transient):
         fieldBinding = fields[k] or {}
         mapping = fieldBinding.mapping or {}
         // Merge missing keys from typemap defaults
