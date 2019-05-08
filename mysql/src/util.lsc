@@ -27,4 +27,29 @@ export quoteIdentifier(id) ->
 
 // Escape a raw value in a sql query
 export escapeValue(val) ->
-  SqlString.escape(val)
+  if (typeof(val) == 'object') and (val instanceof Date):
+    dt = val
+    year       = dt.getUTCFullYear();
+    month       = dt.getUTCMonth() + 1;
+    day         = dt.getUTCDate();
+    hour        = dt.getUTCHours();
+    minute      = dt.getUTCMinutes();
+    second      = dt.getUTCSeconds();
+    millisecond = dt.getUTCMilliseconds();
+
+    str = zeroPad(year, 4) + '-' + zeroPad(month, 2) + '-' + zeroPad(day, 2) + ' ' +
+    zeroPad(hour, 2) + ':' + zeroPad(minute, 2) + ':' + zeroPad(second, 2) + '.' +
+    zeroPad(millisecond, 3)
+
+    SqlString.escape(str)
+  else:
+    SqlString.escape(val)
+
+function zeroPad(number, length) {
+  now number = number.toString();
+  while (number.length < length) {
+    now number = '0' + number;
+  }
+
+  return number;
+}
