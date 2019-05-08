@@ -8,6 +8,7 @@ export class MySQLConnectionManager:
       user: opts.user
       ...if opts.database: { database: opts.database }
       ...if opts.password: { password: opts.password }
+      dateStrings: true
     }
 
     if opts.pool:

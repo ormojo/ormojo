@@ -32,6 +32,12 @@ _deserializeRow(backend, row, readPattern) ->
         let val = nextColumn!
         if val: now val = JSON.parse(val)
         rawSet(currentEntity, entry[1], val)
+      | "readDate":
+        let val = nextColumn!
+        if val:
+          t = val.split(/[- :]/)
+          now val = new Date(Date.UTC(t[0], t[1]-1, t[2], t[3], t[4], t[5]))
+        rawSet(currentEntity, entry[1], val)
       | "readBool":
         val = if nextColumn! == 0: false else: true
         rawSet(currentEntity, entry[1], val)
