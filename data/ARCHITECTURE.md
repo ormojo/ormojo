@@ -19,6 +19,8 @@ A library should be able to
 - Should be able to serialize a subobject as a JSON field within a containing object and rehydrate properly
 - Ignore fields at bind time, serialize time, persistence time ("transients")
 - "To SQL Value" function should be implemented at the data-type level
+- The Result/ResultSet distinction is annoying (but probably necessary)
+- .save, .destroy, etc should reside on model instances, not as tilde-call gimmicks
 
 # Concepts
 
