@@ -124,6 +124,14 @@ export class MySQLQuery extends Query:
       if where == null: return null
       `SELECT ${this._getFieldsClause()} FROM ${this._getFromClause()} WHERE ${where} ${this._getOrderByClause()} ${this._getOffsetClause()}`
 
+  _getDeleteSQL() ->
+    if this.sql:
+      this.sql
+    else:
+      where = this._getWhereClause()
+      if where == null: return null
+      `DELETE FROM ${this._getFromClause()} WHERE ${where}`
+
 export class MySQLCursor extends Cursor:
   constructor(query) ->
     super()

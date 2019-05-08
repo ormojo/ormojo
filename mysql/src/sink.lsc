@@ -182,3 +182,9 @@ export class MySQLSink extends AsyncSink:
     this.backend.rawQuery(qry)
     .then! ->
       true
+
+  deleteByQuery(q) ->
+    sql = q._getDeleteSQL()
+    this.backend.rawQuery(sql)
+    .then! ->
+      true

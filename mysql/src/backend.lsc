@@ -126,5 +126,8 @@ export class MySQLBackend extends Backend:
     now T = typeFrom(T)
     this.sink.deleteById(this.typeMap.get(T), id)
 
+  destroyByQuery(q) ->
+    this.sink.deleteByQuery(q)
+
   find(query) ->
     this.source.read(query)
