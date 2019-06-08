@@ -21,6 +21,7 @@ A library should be able to
 - "To SQL Value" function should be implemented at the data-type level
 - The Result/ResultSet distinction is annoying (but probably necessary)
 - .save, .destroy, etc should reside on model instances, not as tilde-call gimmicks
+- Models should know which backend they are bound to. It should be transparent to user code.
 
 # Concepts
 
