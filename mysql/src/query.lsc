@@ -163,4 +163,4 @@ export class MySQLResultSet extends ResultSet:
       qry = this.backend.createQuery().resumeFrom(this.cursor)
       this.backend.find(qry)
     else:
-      Promise.resolve(new MySQLResultSet(this.backend))
+      Promise.resolve(null)

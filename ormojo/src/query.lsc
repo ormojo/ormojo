@@ -128,6 +128,15 @@ export class ResultSet {
   //
   // @return [Boolean] `true` if more results are available.
   hasMore() -> this.getCursor()
+
+  // Retrieve the next page of results.
+  nextPage() -/>
+    cursor = this.getCursor()
+    if not cursor: return null
+    query = this.backend.createQuery()
+    query.resumeFrom(cursor)
+    query.findAll()
+
 } // class ResultSet
 
 // Object representing a pagination of results returned from a backend.
