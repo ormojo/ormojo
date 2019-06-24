@@ -130,7 +130,7 @@ export class ResultSet {
   hasMore() -> this.getCursor()
 
   // Retrieve the next page of results.
-  nextPage() -/>
+  nextPage() ->
     cursor = this.getCursor()
     if not cursor: return null
     query = this.backend.createQuery()
