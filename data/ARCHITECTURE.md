@@ -23,6 +23,7 @@ A library should be able to
 - .save, .destroy, etc should reside on model instances, not as tilde-call gimmicks
 - Models should know which backend they are bound to. It should be transparent to user code.
 - ResultSets should have a .nextPage() or similar which gets the next resultSet
+- ResultSets should be async-iterable in such a way that the iteration will retrieve the entire resultset through pagination
 - Cursors should have known/queriable serializability properties. Can I serialize the whole cursor? Offset-only?
 
 # Concepts
