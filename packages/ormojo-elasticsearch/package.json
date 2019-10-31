@@ -51,7 +51,7 @@
     "esq": "^1.0.0",
     "mocha": "^2.4.5",
     "rimraf": "^2.6.1",
-    "eslint": "^3.19.0",
+    "eslint": "^6.6.0",
     "mkdirp": "^0.5.1",
     "blackbird-promises": "^0.0.1"
   },
