@@ -12,6 +12,8 @@ A library should be able to
 
 - DEFEATED BY MINIFICATION - DO NOT RELY ON CLASSNAMES
 - Minification mangles class names, but should not defeat our system for hydrating objects...
+- Allow only a subset of needed models to be required.
+- Dispel typeOf/typeFrom confusion.
 - Lists vs Arrays is super annoying.
 - ALlow assignment of Arrays from regular JS arrays via setter.
 - Should implement toJSON() properly.
@@ -25,6 +27,12 @@ A library should be able to
 - ResultSets should have a .nextPage() or similar which gets the next resultSet
 - ResultSets should be async-iterable in such a way that the iteration will retrieve the entire resultset through pagination
 - Cursors should have known/queriable serializability properties. Can I serialize the whole cursor? Offset-only?
+- Delete en-masse by ID, automatically "paginating"/bulkifying the delete query
+- Delete by query where supported
+- Handle Protobufs somehow
+- Import only the Models you need.
+- USE CONTEXT!!!! to map Models to BoundModels!!!
+- VALIDATION!!
 
 # Concepts
 

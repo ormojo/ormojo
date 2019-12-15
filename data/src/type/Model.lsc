@@ -1,0 +1,52 @@
+import { Mixable } from './Mixin'
+import { $MODEL_TYPE } from '../symbols'
+
+
+// MODEL
+//
+// NOTES:
+// - Models have a fully qualified name (similar to a protobuf name, eg. google.protobuf.Any)
+// and a shortname which is the last dot-separated chunk of the FQN.
+// - Models may be referred to by shortname except in the event of a naming conflict in which case
+// FQNs must be used for any model with a duplicate shortname.
+//
+// - When you do Model.create or Model.find, the current context is searched for a bound version of
+// the model.
+//
+// - Multiple contexts (e.g. storage context and wire context)
+// USE CASES:
+// - Observables
+// - Wire transport
+// - Relationships
+// - Validation and validation errors
+//
+export class Model extends Mixable:
+  static [$MODEL_TYPE] = true
+  // Attributes are properties that have independent, stored values, i.e.
+  // not computed or private properties.
+  static attributes = {}
+
+  static materialize(): void ->
+    super.materialize()
+    this.attributes = {...for key k, val property in this.properties:
+      if property.isAttribute():
+        {[k]: property}
+    }
+
+
+  // Create a new empty instance
+  constructor() ->
+    super()
+    this._construct()
+
+  // Overridable subclass constructor
+  _construct() ->
+    return
+
+  // Apply default values to all properties that don't have them
+  _initialize() ->
+    return
+
+  // Get the model associated with an instance
+  getModel() ->
+    this.constructor

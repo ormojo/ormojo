@@ -1,0 +1,27 @@
+import { $DATA } from '../symbols'
+
+handleChangeInterest(interest, entity, key, val) ->
+  keyInterest = interest[key]
+  allInterest = interest._all_
+  if keyInterest or allInterest:
+    event = { entity, key, val }
+    keyInterest?.next(event)
+    allInterest?.next(event)
+
+class PrimitiveMemoryAttribute extends Attribute:
+  createGetterMethod() ->
+    key = this.key
+
+    () -> this[$DATA][key]
+
+  createSetterMethod() ->
+    key = this.key
+    T = this.type
+
+    (val): void ->
+      curVal = this[$DATA][key]
+      if T.eq(val, curVal): return
+      this[$DATA][key] = val
+
+      interest = this[$INTEREST]
+      if interest: handleChangeInterest(interest, this, key, val)

@@ -1,0 +1,48 @@
+// DATE TYPE
+//
+// We want to support native JS dates as well as widely deployed Date libraries
+// including in particular Moment.js and Luxon.
+//
+// The user should be able to install a Date library into the Context (Before
+// creating any model instances) and have that Date library be operative.
+//
+// To do this, he creates a class extending DateType.
+import { Opaque } from './Type'
+import { Namespace } from '../context/Namespace'
+
+export class DateType extends Opaque:
+  static typeName = "date"
+
+  // Get the JavaScript primitive time value, in milliseconds since 1/1/1970 UTC
+  // represented by the date object.
+  static getTime(x) -> x.valueOf()
+
+  // Construct a new date object representing the given primitive time value
+  // in milliseconds since 1/1/1970 UTC
+  static fromTime(x) ->
+    throw new Error('attempt to instantiate abstract date')
+
+  // Generically clone a date
+  static clone(x) -> this.fromTime(this.getTime(x))
+
+  // Generically compare dates for equality
+  static eq(x, y) -> this.getTime(x) == this.getTime(y)
+
+export class JSDateType extends DateType:
+  static validate(x) -> x instanceof Date
+
+  static fromTime(x) -> new Date(x)
+
+let date
+
+export setDateType(dateType): void ->
+  // XXX: check dateType extends DateType
+  now date = dateType
+  // Forcibly replace date type registration in global namespace.
+  ns = Namespace.get()
+  ns._force('date', 'date', date)
+
+// Initial date type is plain JS date.
+setDateType(JSDateType)
+
+export { date }

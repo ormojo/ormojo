@@ -1,0 +1,81 @@
+import { Primitive, Opaque } from './Type'
+import { Namespace } from '../context/Namespace'
+
+cloneDeep = require('lodash.clonedeep')
+isEqual = require('lodash.isequal')
+
+// Type representing any JavaScript value.
+export class any extends Opaque:
+  static typeName = "any"
+
+  static validate(): boolean -> true
+
+  static clone(x) ->
+    throw new Error("cannot clone value of type `any`")
+
+// Type representing a nil value (null or undefined)
+export class nil extends Primitive:
+  static typeName = "nil"
+
+  static validate(x): boolean -> x~looseEq(null)
+
+// Type representing a boolean value.
+export class boolean extends Primitive:
+  static typeName = "boolean"
+
+  static validate(x): boolean ->
+    x~looseEq(null) or typeof x == "boolean"
+
+// Type representing a JavaScript primitive number, i.e. a 64-bit float.
+export class number extends Primitive:
+  static typeName = "number"
+
+  static validate(x): boolean ->
+    x~looseEq(null) or typeof x == "number"
+
+// Type representing whole numbers.
+export class integer extends Primitive:
+  static typeName = "integer"
+
+  static validate(x): boolean ->
+    x~looseEq(null) or typeof x == "number"
+
+// Type representing strings.
+export class string extends Primitive:
+  static typeName = "string"
+
+  static validate(x): boolean ->
+    x~looseEq(null) or typeof x == "string"
+
+// Type representing text. Both string and text are stored as JavaScript
+// strings, but underlying data drivers may interpret them differently.
+//
+// For instance, the ElasticSearch driver uses full-text indexing parameters
+// for text fields, and the MySQL driver will store them as TEXT rather
+// than VARCHAR.
+export class text extends Primitive:
+  static typeName = "text"
+
+  static validate(x): boolean ->
+    x~looseEq(null) or typeof x == "string"
+
+// Type representing data convertible directly to JSON. The rules are:
+//
+// - A JSON is either a primitive, an array of JSONs, or an object whose values
+// are JSONs.
+// - A JSON contains no circular references or references to anything outside
+// the JSON tree.
+export class json extends Opaque:
+  static typeName = "json"
+
+  static validate(x): boolean ->
+    // XXX: implement some basic checks her
+    true
+
+  static clone(x) -> cloneDeep(x)
+
+  static eq(x, y): boolean -> isEqual(x, y)
+
+// Register all basic types at boot time.
+for elem e in [any, nil, boolean, number, integer, string, text, json]:
+  Namespace.register(e)

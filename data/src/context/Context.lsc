@@ -1,0 +1,30 @@
+import { $CONTEXT } from '../symbols'
+
+export class Context:
+  // Bindings
+  typeBindings = new Map()
+
+  // Get the current default context
+  static get() ->
+    global[$CONTEXT]
+
+  bound(T) ->
+    if not T:
+      throw new Error('Context.bound: invalid type')
+
+    foundType = this.typeBindings.get(T)
+    if foundType: return foundType
+
+    boundType = this.binder.bind(T)
+    if boundType:
+      this.typeBindings.set(T, boundType)
+      boundType
+    else:
+      throw new Error(`Context.bound: cannot bind type '${T.typeName}'`)
+
+
+  constructor() ->
+    this.initialize()
+
+  initialize() ->
+    return

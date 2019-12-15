@@ -1,0 +1,49 @@
+import { $TYPE, $PRIMITIVE_TYPE, $MODEL_TYPE, $OPAQUE_TYPE } from './symbols'
+
+export class Type:
+  static [$TYPE] = true
+
+  // Fully qualified name of type.
+  static typeName = undefined
+
+  // Check that this type inherits/extends another type
+  static isKindOf(otherT): boolean ->
+    otherT == this
+
+  // For instances of a type, check inheritance.
+  isa(otherT): boolean ->
+    this.constructor.isKindOf(otherT)
+
+  // For instantiable types, check typename.
+  get typeName(): string -> this.constructor.typeName
+
+  // For types that may contain circular or unresolved references, resolve them.
+  static materialize(): void -> return
+
+  // Check that x is an instance of this type
+  // eslint-disable-next-line no-unused-vars
+  static validate(x): boolean ->
+    false
+
+  // Compare two objects of this type
+  static eq(x, y): boolean -> x == y
+
+  // Copy an object of this type
+  static clone(x) -> x
+
+  // Is this type primitive?
+  static isPrimitive(): bool -> this[$PRIMITIVE_TYPE]
+
+  // Is this type a model?
+  static isModel(): bool -> this[$MODEL_TYPE]
+
+// A Primitive type represents a basic JavaScript value that can be compared with
+// === and can be passed without defensive copying.
+export class Primitive extends Type:
+  static [$PRIMITIVE_TYPE] = true
+
+// An Opaque type represents a data structure whose internals will not be manipulated
+// by the framework. Such a type must provide methods for comparison, cloning, and
+// serialization.
+export class Opaque extends Type:
+  static [$OPAQUE_TYPE] = true

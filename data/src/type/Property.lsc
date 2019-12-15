@@ -1,0 +1,49 @@
+import {
+  $PROPERTY, $ATTRIBUTE
+} from '../symbols'
+
+import { Namespace } from '../context/Namespace'
+
+// Invalid names for properties
+illegalPropertyKeys = {
+  'getModel': true
+  'getProperties': true
+  'getAttributes': true
+  'get': true
+  'set': true
+  'save': true
+  'destroy': true
+}
+
+export class Property:
+  [$PROPERTY] = true
+
+  static isProperty(x) ->
+    (typeof x == 'object') and x[$PROPERTY]
+
+  materialize(): void ->
+    if not this.type: return
+    this.type = Namespace.resolve(this.type)
+    this.type.materialize()
+
+  setType(type): void ->
+    this.type = type
+
+  setKey(key): void ->
+    if illegalPropertyKeys[key]:
+      throw new Error(`Illegal attribute key '${key}'`)
+    this.key = key
+
+  setDef(def): void ->
+    Object.assign(this, def)
+
+  setModel(model): void ->
+    this.model = model
+
+  isAttribute(): boolean -> !!this[$ATTRIBUTE]
+
+  clone(alternateConstructor) ->
+    cons = alternateConstructor or this.constructor
+    x = new cons()
+    Object.assign(x, this)
+    x

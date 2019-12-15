@@ -1,21 +1,19 @@
-export $DATA = Symbol.for('ephraim.data')
-export $INTEREST = Symbol.for('ephraim.interest')
-export $TYPEOF = Symbol.for('ephraim.typeOf')
+export $CONTEXT_PROVIDER = Symbol.for('ormojo.ContextProvider')
+export $CONTEXT = Symbol.for('ormojo.Context')
+export $NAMESPACE = Symbol.for('ormojo.Namespace')
 
-export $TYPE = Symbol.for('ephraim.type')
-export $PROPERTY = Symbol.for('ephraim.property')
-export $ATTRIBUTE = Symbol.for('ephraim.attribute')
-export $LIST = Symbol.for('ephraim.list')
-export $PROPERTY_DEFINITION = Symbol.for('ephraim.propertyDefinition')
-export $PRIMITIVE_TYPE = Symbol.for('ephraim.primitiveType')
-export $MODEL_TYPE = Symbol.for('ephraim.modelType')
-export $OPAQUE_TYPE = Symbol.for('ephraim.opaqueType')
-export $LAZY_TYPE = Symbol.for('ephraim.lazyType')
+export $DATA = Symbol.for('ormojo.data')
+export $METADATA = Symbol.for('ormojo.metadata')
+export $INTEREST = Symbol.for('ormojo.interest')
+export $TYPEOF = Symbol.for('ormojo.typeOf')
 
-// Storage classes
-export SC_UNKNOWN = 1
-export SC_PRIMITIVE = 2
-export SC_OPAQUE = 3
-export SC_REF = 4
-export SC_SHORT_LIST_VALUE = 5
-export SC_SHORT_LIST_REF = 6
+export $TYPE = Symbol.for('ormojo.type')
+export $PRIMITIVE_TYPE = Symbol.for('ormojo.primitiveType')
+export $MODEL_TYPE = Symbol.for('ormojo.modelType')
+export $OPAQUE_TYPE = Symbol.for('ormojo.opaqueType')
+export $MIXIN_TYPE = Symbol.for('ormojo.mixinType')
+
+export $PROPERTY = Symbol.for('ormojo.property')
+export $ATTRIBUTE = Symbol.for('ormojo.attribute')
+export $LIST = Symbol.for('ormojo.list')
+export $PROPERTY_DEFINITION = Symbol.for('ormojo.propertyDefinition')

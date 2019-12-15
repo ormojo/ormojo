@@ -1,0 +1,99 @@
+import { $NAMESPACE, $TYPE } from '../symbols'
+
+export class Namespace:
+  // A map of all types indexed by FQN (fully qualified name)
+  typesByFqn = {}
+
+  // A map of all types indexed by shortname.
+  typesByShortname = {}
+
+  // A map from conflicted short names to models that conflict
+  shortnameConflicts = {}
+
+  // Naming options
+  options = {
+    allowShortnameConflicts: false
+  }
+
+  static get(): Namespace -> global[$NAMESPACE]
+
+  static shortestName(type): string ->
+    type.shortname or type.typeName
+
+  static shortnameFromName(fqn): string ->
+    dotted = fqn.split('.')
+    dotted[dotted.length - 1]
+
+  static register(type): void ->
+    global[$NAMESPACE].register(type)
+
+  static lookup(name) ->
+    global[$NAMESPACE].lookup(name)
+
+  // Look up type by name, or return the identical type if it is already a
+  // known type.
+  static resolve(typeOrName) ->
+    // XXX: Possible additional debug check here to make sure the type is
+    // fully registered and resolves to itself.
+    ty = if (typeof(typeOrName) == 'string'):
+      this.lookup(typeOrName)
+    else:
+      typeOrName
+
+    if (typeof(ty) != 'function') or (not ty[$TYPE]):
+      throw new Error(`Namespace.resolve(): unresolved type '${typeOrName}'`)
+
+    ty
+
+  register(type): void ->
+    fqn = type?.typeName
+    this.validateName(fqn)
+
+    // Register by fqn
+    this.typesByFqn[fqn] = type
+
+    // Register by shortname
+    shortname = Namespace.shortnameFromName(fqn)
+    let prior = this.typesByShortname[shortname]
+    let conflict = this.shortnameConflicts[shortname]
+    if prior or conflict:
+      // In the event of a conflict, neither type gets the shortname.
+      this.typesByShortname[shortname] = undefined
+      prior.shortname = undefined
+      type.shortname = undefined
+
+      // Throw or record conflict according to global config.
+      if this.options.allowShortnameConflicts:
+        if conflict:
+          conflict.push(type)
+        else:
+          this.shortnameConflicts[shortname] = [prior, type]
+      else:
+        throw new Error(`Namespace.register: duplicate short type name '${shortname}'`)
+    else:
+      this.typesByShortname[shortname] = type
+
+  lookup(name) ->
+    if typeof(name) != 'string':
+      throw new Error(`Namespace.lookup: type name '${name}' is not a string`)
+
+    this.typesByFqn[name] or this.typesByShortname[name]
+
+  validateName(fqn): void ->
+    if (not fqn) or (typeof(fqn) != 'string'):
+      throw new Error("Namespace.validateName: invalid type name")
+    if this.typesByFqn[fqn]:
+      throw new Error(`Namespace.validateName: duplicate fully-qualified type name '${fqn}'`)
+    shortname = Namespace.shortnameFromName(fqn)
+    if this.typesByShortname[shortname] and (not this.options.allowShortnameConflicts):
+      throw new Error(`Namespace.validateName: type named '${fqn}' has duplicate shortname '${shortname}'`)
+
+  _force(fqn, shortname, type): void ->
+    this.typesByFqn[fqn] = type
+    this.typesByShortname[shortname] = type
+
+if not global[$NAMESPACE]:
+  ns = new Namespace()
+  global[$NAMESPACE] = ns
+elif process.env.NODE_ENV != 'production':
+  throw new Error(`Namespace: global namespace was initialized twice. (This could indicate multiple instances or versions of ormojo.data, which is an unsupported configuration.)`)

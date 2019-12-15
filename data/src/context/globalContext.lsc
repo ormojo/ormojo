@@ -1,0 +1,7 @@
+import { $CONTEXT } from '../symbols'
+
+export getContext() ->
+  global[$CONTEXT]
+
+export setContext(ctx): void ->
+  global[$CONTEXT] = ctx

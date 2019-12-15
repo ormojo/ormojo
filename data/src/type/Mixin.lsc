@@ -1,0 +1,172 @@
+import { Type } from './Type'
+import { Property } from './Property'
+import { Namespace } from '../context/Namespace'
+import { $MIXIN_TYPE, $MATERIALIZED } from '../symbols'
+
+debug = require('debug')('ormojo.data:metadata')
+
+export function extendBase(base, fqn, def) ->
+  extension = class extends base {}
+  extension.typeName = fqn
+  shortname = Namespace.shortnameFromName(fqn)
+  Object.defineProperty(extension, "name", { value: shortname })
+  Object.setPrototypeOf(def, base.prototype)
+  extension
+
+export class Mixable extends Type {
+  // Mixables have Properties with well-defined metadata.
+  static properties = {}
+  // Mixables may-or-may-not have Mixins
+  static mixins = null
+
+  static isKindOf(otherT): boolean ->
+    // Classy inheritance
+    if (otherT == this) return true
+    if (typeof(otherT) == 'function') and (this.prototype instanceof otherT):
+      return true
+
+    // Mixin inheritance
+    if otherT[$MIXIN_TYPE]:
+      if this.mixins?.has(otherT):
+        return true
+
+    false
+
+  // Handle special definition keys
+  static isSpecialKey(k): boolean ->
+    k == "mixins"
+
+  static handleSpecialKey(k, v, extension): void ->
+    match k:
+      | "mixins":
+        extension.declaredMixins = v
+
+  static declareProperty(key, def): void ->
+    if not this.declaredProperties: this.declaredProperties = {}
+    this.declaredProperties[key] = def
+    def.setKey(key)
+    def.setType(this)
+
+  static declarePrototypeProperty(key, def): void ->
+    if not this.declaredPrototypeProperties: this.declaredPrototypeProperties = {}
+    this.declaredPrototypeProperties[key] = def
+
+  static mergeMixins(other): void ->
+    if other.mixins:
+      for k of other.mixins.keys():
+        this.mixins.set(k, true)
+
+  static materialize(): void -> {
+    if this[$MATERIALIZED]: return
+    super.materialize()
+    debug("Mixable.materialize: materializing type:", this.typeName)
+
+    this.mixins = new Map()
+    this.mixins.set(this, true)
+
+    // Materialize the direct base class
+    directBase = this.prototype.constructor
+    // XXX: Better type check here, possibly use a symbol
+    if directBase and directBase.materialize:
+      directBase.materialize()
+      this.mergeMixins(directBase)
+
+    // Materialize mixins
+    if this.declaredMixins:
+      // Resolve declared mixins
+      for idx i, elem mixin in this.declaredMixins:
+        actualMixin = Namespace.resolve(mixin)
+        if not actualMixin[$MIXIN_TYPE]:
+          throw new Error(`Mixable.materialize: ${mixin} was not a Mixin.`)
+        this.declaredMixins[i] = actualMixin
+
+      // Eliminate redundant mixins that were inherited from base
+      this.declaredMixins = [...for elem mixin in this.declaredMixins:
+        if this.mixins.has(mixin):
+          debug("type '", this.typeName, "' has declared mixin '", mixin.typeName, "' which was already inherited from a base class. The mixin was dropped.")
+        else:
+          [mixin]
+      ]
+
+      // Materialize final mixins
+      for elem mixin in this.declaredMixins:
+        mixin.materialize()
+
+    // Materialize props
+    if this.declaredProperties:
+      for val property in this.declaredProperties:
+        property.materialize()
+
+    // Compute final props
+    this.properties = {}
+    this.prototypeProperties = {}
+
+    // Clone props from base class
+    if directBase and directBase.properties:
+      for key k, val property in directBase.properties:
+        nextProp = property.clone()
+        nextProp.setType(this)
+        this.properties[k] = nextProp
+    // Apply mixins
+    if this.declaredMixins:
+      for elem mixin in this.declaredMixins:
+        mixin.applyTo(this)
+    // Apply declared properties
+    for key k, val property in (this.declaredProperties or {}):
+      this.properties[k] = property
+    // Apply prototype properties
+    for key k, val property in (this.declaredPrototypeProperties or {}):
+      this.prototypeProperties[k] = property
+    for key k, val property in this.prototypeProperties:
+      this.prototype[k] = property
+
+    this[$MATERIALIZED] = true
+    debug("Mixable.materialize: materialized type:", this.typename)
+  } // materialize
+
+  static extend(name, def) -> {
+    extension = extendBase(this, name, def)
+    Namespace.register(extension)
+
+    for key k, val v in def:
+      if Property.isProperty(v):
+        extension.declareProperty(k, v)
+      elif this.isSpecialKey(k):
+        this.handleSpecialKey(k, v, extension, def)
+      else:
+        extension.declarePrototypeProperty(k, v)
+
+    try:
+      extension.materialize()
+    catch err:
+      debug("Mixable.extend: early materialization for '", extension.typeName, "' failed, error was", err)
+
+    extension
+  } // extend
+
+  // Get all properties of the Mixable as a hash {[name]: Property}
+  getProperties() ->
+    this.constructor.properties
+} // class Mixable
+
+export class Mixin extends Mixable {
+  static [$MIXIN_TYPE] = true
+
+  static applyTo(ty): void ->
+    // Apply properties
+    if this.properties:
+      for key k, val property in this.properties:
+        nextProp = property.clone()
+        nextProp.setType(ty)
+        ty.properties[k] = nextProp
+
+    // Apply prototype properties
+    if this.prototypeProperties:
+      for key k, val property in this.prototypeProperties:
+        ty.prototypeProperties[k] = property
+
+    // Apply mixins table
+    for mixin of this.mixins.keys():
+      ty.mixins.set(mixin, true)
+
+} // class Mixin
