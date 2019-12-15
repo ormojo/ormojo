@@ -1,16 +1,21 @@
 // Helpers for defining types
-import { typeFrom, isType } from './types/type'
+import { typeFrom, isType, typeSymbol } from './types/type'
 import { EntityType } from './types/entityType'
 import { any } from './types/primitiveTypes'
 import { fieldsSymbol } from './fields'
 
 // Associate a prototype with an Ephraim EntityType
-export bootstrapPrototype(proto, typeClass): void ->
-  if not proto.hasOwnProperty(fieldsSymbol):
+export bootstrapPrototype(proto, typeClass, typeName): void ->
+  if not proto.hasOwnProperty(typeSymbol):
     // Create EntityType
-    T = new typeClass(proto.constructor.name)
+    T = new typeClass(typeName or proto.constructor.name)
     // Associate it with the prototype
     T.bootstrapFromPrototype(proto)
+  elif typeName:
+    // We may be in a situation where @entity was called after @field
+    // Allow type name to be overridden
+    type = proto[typeSymbol]
+    type._rename(typeName)
 
 normalizeFieldSpec(spec) ->
   if not spec: return { type: any }
@@ -66,7 +71,7 @@ export entity(spec) ->
 
   (constructor) ->
     proto = constructor.prototype
-    bootstrapPrototype(proto, EntityType)
+    bootstrapPrototype(proto, EntityType, spec.name)
     T = typeFrom(proto.constructor)
     Object.assign(T.entitySpec, spec)
     T.freezeNativeProperties(constructor)

@@ -11,6 +11,9 @@ export Type = singleton("Type", ->
       this.name = name
       this.typeIdentity = Symbol(name)
 
+    _rename(newName): void ->
+      this.name = newName
+
     extends(otherT): void ->
       this.extra = Object.assign({}, otherT?.extra)
 
