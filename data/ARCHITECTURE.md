@@ -33,6 +33,8 @@ A library should be able to
 - Import only the Models you need.
 - USE CONTEXT!!!! to map Models to BoundModels!!!
 - VALIDATION!!
+- Fully qualified names
+- DDL similar to GraphQL DDL language
 
 # Concepts
 
