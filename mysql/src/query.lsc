@@ -47,6 +47,13 @@ export class MySQLQuery extends Query:
   constructor(backend) ->
     super(backend)
 
+  Op(field, op, val) -> Op(field, op, val)
+  Eq(field, val) -> Op(field, '=', val)
+  Not(op) -> Not(op)
+  And(...args) -> Logical("AND", ...args)
+  Or(...args) -> Logical("OR", ...args)
+  In(field, vals) -> In(field, vals)
+
   setType(T) ->
     super.setType(T)
     tbl = this.backend._getTableForType(T)
