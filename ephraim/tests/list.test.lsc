@@ -12,15 +12,15 @@ test! "list primitive types", ->
 
 
 test! "list entity types", ->
-  @entity() class Animal {}
-  @entity() class Dog extends Animal {}
+  @entity({name: "Animal"}) class Animal {}
+  @entity({name: "Dog"}) class Dog extends Animal {}
 
   expect(listOf(Dog).isKindOf(listOf(Animal))).toBeTruthy()
   expect(listOf(Animal).isKindOf(listOf(Dog))).toBeFalsy()
   expect(listOf(Animal).isKindOf(listOf(Animal))).toBeTruthy()
 
 test! "basic list", ->
-  @entity() class A:
+  @entity({name: "A"}) class A:
     @field() a
 
   debugger
@@ -37,7 +37,7 @@ test! "basic list", ->
   console.log(listOfA~toPlainObject!)
 
 test! "list field init", ->
-  @entity() class E:
+  @entity({name: "E"}) class E:
     @field(listOf(types.string)) strs = []
 
   e = create(E)

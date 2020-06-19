@@ -6,9 +6,9 @@ import '@ormojo/ephraim': {
 }
 
 test! "isKindOf", ->
-  @entity() class Animal {}
-  @entity() class Dog extends Animal {}
-  @entity() class Plant {}
+  @entity({name: "Animal"}) class Animal {}
+  @entity({name: "Dog"}) class Dog extends Animal {}
+  @entity({name: "Plant"}) class Plant {}
 
   expect(Animal~isKindOf(Animal)).toBeTruthy()
   expect(Animal~isKindOf(Plant)).toBeFalsy()
@@ -16,15 +16,15 @@ test! "isKindOf", ->
   expect(Animal~isKindOf(Dog)).toBeFalsy()
 
 test! "spec inheritance", ->
-  @entity({willInherit: true}) class E {}
-  @entity() class D extends E {}
+  @entity({name: "E", willInherit: true}) class E {}
+  @entity({name: "D"}) class D extends E {}
   expect(typeFrom(D).entitySpec.willInherit).toBeTruthy()
 
 test! "field extension", ->
-  @entity() class E:
+  @entity({name: "E"}) class E:
     @field() f
 
-  @entity() class D extends E:
+  @entity({name: "D"}) class D extends E:
     @field({extension: true}) f = 3
 
   expect(typeFrom(E).fields.f.initializer).toBeFalsy()
@@ -33,29 +33,29 @@ test! "field extension", ->
   expect(typeFrom(D).fields.f.initializer).toBeTruthy()
 
 test! "multiple inheritance", ->
-  @entity() class Sentient {
+  @entity({name: "Sentient"}) class Sentient {
     @field() iq = 50
 
     speak() -> "protolanguage"
   }
-  @entity() class Animal {
+  @entity({name: "Animal"}) class Animal {
     @field() iq = 0
 
     speak() -> "ruff ruff"
   }
-  @entity() class Supergenius {
+  @entity({name: "Supergenius"}) class Supergenius {
     @field() iq = 250
 
     speak() -> "ds^2 = g_mu_nu dx_mu dx_nu"
   }
 
-  @entity({inherits: [Sentient]}) class Elephant extends Animal {}
-  @entity({inherits: [Sentient]}) class Human extends Animal {
+  @entity({name: "Elephant", inherits: [Sentient]}) class Elephant extends Animal {}
+  @entity({name: "Human", inherits: [Sentient]}) class Human extends Animal {
     @field() iq = 100
 
     speak() -> "hello friend"
   }
-  @entity({inherits: [Supergenius]}) class Einstein extends Human {
+  @entity({name: "Einstein", inherits: [Supergenius]}) class Einstein extends Human {
   }
 
   expect(Human~isKindOf(Animal)).toBeTruthy()
@@ -87,5 +87,3 @@ test! "multiple inheritance", ->
   expect(albert~isa(Elephant)).toBeFalsy()
   expect(albert.iq).toEqual(250)
   expect(albert.speak!).toEqual("ds^2 = g_mu_nu dx_mu dx_nu")
-
-

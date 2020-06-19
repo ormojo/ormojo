@@ -1,7 +1,7 @@
 import { entity, field, toPlainObject, assignPlainObject, types, listOf, createMemory as create, augment, hydratePlainObject } from '@ormojo/ephraim'
 
 test! 'toPlainObject', ->
-  @entity() class E:
+  @entity({name: "E"}) class E:
     @field() nonFlex
     @field(types.date) d
 
@@ -13,7 +13,7 @@ test! 'toPlainObject', ->
   console.log(e~toPlainObject({includeTypeStamp: true}))
 
 test! 'toPlainObject transients', ->
-  @entity() class E:
+  @entity({name: "E"}) class E:
     @field({type: types.any, transient: true}) t
 
   e = create(E)
@@ -23,7 +23,7 @@ test! 'toPlainObject transients', ->
   console.log(e~toPlainObject({includeTypeStamp: true, includeTransients: true}))
 
 test! "basic assign", ->
-  @entity() class E:
+  @entity({name: "E"}) class E:
     @field(types.string) str
 
   e = create(E)
@@ -32,10 +32,10 @@ test! "basic assign", ->
   expect(e~toPlainObject!).toEqual({str: "str"})
 
 test! "deep assign", ->
-  @entity() class E:
+  @entity({name: "E"}) class E:
     @field(types.string) str
 
-  @entity() class D:
+  @entity({name: "D"}) class D:
     @field(E) subE
 
   d = create(D)
@@ -44,7 +44,7 @@ test! "deep assign", ->
   expect(d~toPlainObject!).toEqual({ subE: { str: "str" } })
 
 test! "primitive list assign", ->
-  @entity() class E:
+  @entity({name: "E"}) class E:
     @field(listOf(types.string)) strs
 
   e = create(E)
@@ -53,10 +53,10 @@ test! "primitive list assign", ->
   expect(e~toPlainObject!).toEqual({strs: ["1", "2", "3"]})
 
 test! "entity list assign", ->
-  @entity() class E:
+  @entity({name: "E"}) class E:
     @field(types.string) str
 
-  @entity() class D:
+  @entity({name: "D"}) class D:
     @field(listOf(E)) es
 
   d = create(D)
@@ -66,10 +66,10 @@ test! "entity list assign", ->
   expect(d~toPlainObject!).toEqual({ es: [ { str: "1"}, { str: "2"}, { str: "3"} ] })
 
 test! 'circular assign entity', ->
-  @entity() class Parent:
+  @entity({name: "Parent"}) class Parent:
     @field() child
 
-  @entity() class Child:
+  @entity({name: "Child"}) class Child:
     @field(Parent) parent
     @field() data
 
@@ -90,7 +90,7 @@ test! 'circular assign entity', ->
   expect(p~toPlainObject!).toEqual(p2~toPlainObject!)
 
 test! 'circular assign list', ->
-  @entity() class E:
+  @entity({name: "E"}) class E:
     @field(types.string) str
 
   loe = create(listOf(E))
@@ -111,16 +111,16 @@ test! 'circular assign list', ->
   expect(loe2.get(1)).toBe(loe2.get(2))
 
 test! 'entity type unpickling', (): void ->
-  @entity() class Base:
+  @entity({name: "Base"}) class Base:
     @field() b
 
-  @entity() class Child1 extends Base:
+  @entity({name: "Child1"}) class Child1 extends Base:
     @field() c1
 
-  @entity() class Child2 extends Base:
+  @entity({name: "Child2"}) class Child2 extends Base:
     @field() c2
 
-  @entity() class Container:
+  @entity({name: "Container"}) class Container:
     @field(Base) x1
     @field(Base) x2
 

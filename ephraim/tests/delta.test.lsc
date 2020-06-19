@@ -3,7 +3,7 @@ import { entity, field, toPlainObject, createMemoryDelta as create, isDelta, has
 debugger
 
 test! 'basic', ->
-  @entity() class E:
+  @entity({name: "E"}) class E:
     @field() f = 0
 
   e = create(E)
@@ -26,7 +26,7 @@ test! 'basic', ->
   console.log(e)
 
 test! 'basic opaque', ->
-  @entity() class E:
+  @entity({name: "E"}) class E:
     @field(types.array) f = []
     @field(types.date) d
 
@@ -53,7 +53,7 @@ test! 'basic opaque', ->
   expect(e~hasChanges!).toBe(false)
 
 test! 'opaque resets', ->
-  @entity() class E:
+  @entity({name: "E"}) class E:
     @field(types.array) f = []
 
   e = create(E)
@@ -84,7 +84,7 @@ test! 'opaque resets', ->
   expect(e~hasChanges!).toBe(false)
 
 test! 'primitive set previous value', ->
-  @entity() class E:
+  @entity({name: "E"}) class E:
     @field(types.integer) i = 1
     @field(types.array) f = []
 
@@ -101,7 +101,7 @@ test! 'primitive set previous value', ->
   expect(e.i).toEqual(5)
 
 test! 'opaque set previous value', ->
-  @entity() class E:
+  @entity({name: "E"}) class E:
     @field(types.integer) i = 1
     @field(types.array) f = []
 
@@ -119,7 +119,7 @@ test! 'opaque set previous value', ->
 
 
 test! 'rawSet', ->
-  @entity() class E:
+  @entity({name: "E"}) class E:
     @field() f
 
   e = create(E)
@@ -140,7 +140,7 @@ test! 'rawSet', ->
   expect(e~hasChanges!).toBe(false)
 
 test! 'init', ->
-  @entity() class E:
+  @entity({name: "E"}) class E:
     @field() f = 1
 
   debugger
@@ -149,10 +149,10 @@ test! 'init', ->
   console.log("init", e)
 
 test! 'subentity', ->
-  @entity() class E:
+  @entity({name: "E"}) class E:
     @field() e
 
-  @entity() class F:
+  @entity({name: "F"}) class F:
     @field(E) subE
 
   f = create(F)
@@ -163,10 +163,10 @@ test! 'subentity', ->
   expect(f~toPlainObject!).toEqual({ subE: { e: 1 }})
 
 test! 'subentity init', ->
-  @entity() class E:
+  @entity({ name: "E"}) class E:
     @field() e = 1
 
-  @entity() class F:
+  @entity({name: "F"}) class F:
     @field(E) subE = {}
 
   f = create(F)

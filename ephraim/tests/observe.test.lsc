@@ -2,7 +2,7 @@ import { entity, field, observe, toPlainObject, createMemory as create } from '@
 import { test as testObservable } from '@ormojo/fobs'
 
 test! 'observe', ->
-  @entity() class E:
+  @entity({name: "E"}) class E:
     @field() f
 
   e = create(E)
@@ -23,10 +23,10 @@ test! 'observe', ->
   expect(true).toBeTruthy!
 
 test! 'observe child', ->
-  @entity() class Child:
+  @entity({name: "Child"}) class Child:
     @field() data
 
-  @entity() class Parent:
+  @entity({name: "Parent"}) class Parent:
     @field(Child) child
 
   let storage

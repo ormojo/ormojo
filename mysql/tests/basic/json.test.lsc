@@ -3,7 +3,7 @@ import { save, destroy } from '@ormojo/ormojo'
 import { toPlainObject, entity, field, types } from '@ormojo/ephraim'
 import { createBackend } from '../backend'
 
-@entity() class Widget:
+@entity({name: 'Widget'}) class Widget:
   @field(types.integer) id
   @field(types.json) extra
 

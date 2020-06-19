@@ -15,7 +15,7 @@ afterAll! ->
 
 describe('alter table migration tests: ', ->
   it('add modify drop column', ->
-    @entity() class Widget:
+    @entity({name: 'Widget'}) class Widget:
       @field(types.string) id
       @field(types.boolean) noMigrateBoolean
       @field(types.integer) willChangeType
@@ -27,7 +27,7 @@ describe('alter table migration tests: ', ->
     .then! ->
       mig.execute!
     .then! ->
-      @entity() class Widget2:
+      @entity({name: 'Widget2'}) class Widget2:
         @field(types.string) id
         @field(types.boolean) noMigrateBoolean
         @field(types.string) willChangeType
@@ -43,7 +43,7 @@ describe('alter table migration tests: ', ->
       mig.execute!
   )
 
-  @entity() class Wodget:
+  @entity({name: 'Wodget'}) class Wodget:
     @field(types.string) id
     @field(types.integer) f1
     @field(types.integer) f2

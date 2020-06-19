@@ -5,7 +5,7 @@ import { MySQLBackend, MySQLQuery } from '..'
 export makeCorpus(extraName) ->
   backend = createBackend()
 
-  @entity() class Widget:
+  @entity({name: "Widget"}) class Widget:
     @field(types.string) id
     @field(types.text) name = 'nameless'
     @field(types.integer) qty = 2

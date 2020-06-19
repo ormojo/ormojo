@@ -4,17 +4,17 @@ import { create, save, findById, destroy, find } from '@ormojo/ormojo'
 import { toPlainObject, entity, field, types, listOf, extendField } from '@ormojo/ephraim'
 import { createBackend } from '../backend'
 
-@entity() class Widget:
+@entity({name: 'Widget'}) class Widget:
   @field(types.string) id
   @field(types.string) name = 'nameless'
   @field(types.integer) qty = 2
 
-@entity() class Widget2 extends Widget {}
+@entity({name: 'Widget2'}) class Widget2 extends Widget {}
 
-@entity() class NuWidget extends Widget:
+@entity({name: 'NuWidget'}) class NuWidget extends Widget:
   @field(types.string) extra
 
-@entity() class AutoInc:
+@entity({name: 'AutoInc'}) class AutoInc:
   @field(types.integer) id
 
 let backend = null

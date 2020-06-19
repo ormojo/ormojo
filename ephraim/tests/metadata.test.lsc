@@ -10,10 +10,10 @@ import '@ormojo/ephraim': {
 
 
 test! "fields by class", ->
-  @entity() class E:
+  @entity({name: "E"}) class E:
     @field() anyField
 
-  @entity() class D extends E:
+  @entity({name: "D"}) class D extends E:
     @field(types.string) strField
 
   expect! E~declaredFields()['anyField']
@@ -34,16 +34,16 @@ test! "fields by class", ->
 test! "illegal field names", ->
   expect!
     ->
-      @entity() class Bad1:
+      @entity({name: "Bad1"}) class Bad1:
         @field() _underscored
     .toThrow("Field '_underscored' may not begin with '_' or contain '.'")
   // TODO: dotted example once class properties + decorators work right
 
 test! "instance field metadata", ->
-  @entity() class E:
+  @entity({name: "E"}) class E:
     @field() anyField
 
-  @entity() class D extends E:
+  @entity({name: "D"}) class D extends E:
     @field(types.string) strField
 
   e = create(E)
@@ -60,7 +60,7 @@ test! "instance field metadata", ->
   expect(d~flexFieldKeys()).toEqual(['flex'])
 
 test! "primitive defaults metadata", ->
-  @entity() class E:
+  @entity({name: "E"}) class E:
     @field(types.string) F = "default"
     @field(types.string) G
     @field(types.string) H = -> "initializerFunction"
@@ -76,7 +76,7 @@ test! "primitive defaults metadata", ->
 
 
 test! "underlying types", ->
-  @entity() class E:
+  @entity({name: "E"}) class E:
     @field() anyField
 
   e = create(E)

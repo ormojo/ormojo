@@ -4,7 +4,7 @@ import { toPlainObject, entity, field, types } from '@ormojo/ephraim'
 import { createBackend } from '../backend'
 import { And, Or, Not, Eq, Op } from '../..'
 
-@entity() class Widget:
+@entity({name: 'Widget'}) class Widget:
   @field(types.string) id
   @field(types.string) name = 'nameless'
   @field(types.integer) qty = 2
