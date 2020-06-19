@@ -16,7 +16,10 @@ export class MySQLBackend extends Backend:
     super()
     this.log = normalizeLoggerObject(opts?.log)
     // Initialize SQL backend api, including connection pool if enabled
-    this.connectionManager = new MySQLConnectionManager(mysql2, opts)
+    this.connectionManager = if opts?.connectionManager:
+      opts.connectionManager
+    else:
+      new MySQLConnectionManager(mysql2, opts)
     // Record target database
     this.database = opts.database
     if not this.database:

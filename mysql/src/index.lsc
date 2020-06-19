@@ -1,3 +1,4 @@
 export { MySQLBackend } from './backend'
 export { MySQLQuery, Field, Op, Eq, Not, Logical, And, Or, In, RawOp } from './query'
 export { MySQLRelationship, OneToOneRelationship, ManyToManyRelationship } from './relationship'
+export { MySQLConnectionManager } from './connection'
