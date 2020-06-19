@@ -15,5 +15,7 @@ export sqlTypeMap(orType) ->
     'DATETIME'
   else if orType == types.json:
     'TEXT'
+  else if orType == types.point:
+    'GEOMETRY'
   else:
     undefined
