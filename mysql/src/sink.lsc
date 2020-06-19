@@ -38,6 +38,8 @@ toSqlValue(val, T) ->
     quoteOrNull(val)
   elif (T == types.boolean):
     q(if val: 1 else: 0)
+  elif (T == types.date):
+    q(val)
   elif (T instanceof PrimitiveType):
     quoteOrNull(val)
   elif T instanceof OpaqueType:
