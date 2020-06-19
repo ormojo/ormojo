@@ -4,16 +4,16 @@ import { toPlainObject, entity, field, types, setFieldType } from '@ormojo/ephra
 import { createBackend } from '../backend'
 import { ManyToManyRelationship, And, Or, Not, Eq, Op, Field } from '../..'
 
-@entity() class Master:
+@entity({name: 'Master'}) class Master:
   @field(types.integer) id
   @field(types.string) name = 'nameless'
 
-@entity() class Detail:
+@entity({name: 'Detail'}) class Detail:
   @field(types.integer) id
   @field(types.string) value = 'valueless'
   @field(types.string) extraField
 
-@entity() class MasterDetailJoin:
+@entity({name: 'MasterDetailJoin'}) class MasterDetailJoin:
   @field(types.integer) masterId
   @field(types.integer) detailId
   @field(types.string) extra

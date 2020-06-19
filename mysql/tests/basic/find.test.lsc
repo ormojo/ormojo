@@ -76,6 +76,6 @@ describe('find', ->
       expect(results.getResults()[0].qty).toBe(9)
       results.nextPage()
     .then! (results) ->
-      expect(results.isEmpty()).toBe(true)
+      expect(results == null).toBe(true)
   )
 )

@@ -4,18 +4,18 @@ import { toPlainObject, entity, field, types, setFieldType } from '@ormojo/ephra
 import { createBackend } from '../backend'
 import { OneToOneRelationship, And, Or, Not, Eq, Op, Field } from '../..'
 
-@entity() class Master:
+@entity({name: 'Master'}) class Master:
   @field(types.integer) id
   @field(types.string) name = 'nameless'
   @field() detail
   @field() detail2
 
-@entity() class Detail:
+@entity({name: 'Detail'}) class Detail:
   @field(types.integer) MasterId
   @field(Master) master
   @field(types.integer) qty = 2
 
-@entity() class Detail2:
+@entity({name: 'Detail2'}) class Detail2:
   @field(types.integer) id
   @field(types.integer) MasterId
   @field(Master) master
