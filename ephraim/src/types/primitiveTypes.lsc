@@ -43,3 +43,10 @@ export integer = singleton("integer", ->
   integer.validate = (x) -> x~looseEq(null) or typeof x == "number"
   integer
 )
+
+// Spatial point
+export point = singleton("point", ->
+  const point = new PrimitiveType("point")
+  point.validate = (x) -> Array.isArray(x) and (x.length == 2)
+  point
+)
