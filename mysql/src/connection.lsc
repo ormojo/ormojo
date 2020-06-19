@@ -1,6 +1,8 @@
 export class MySQLConnectionManager:
-  constructor(driver, opts) ->
+  constructor(driver) ->
     this.driver = driver
+
+  defaultSetup(opts): void ->
     // Create a system that allows connections to be obtained from the driver.
     configHash = {
       host: opts.host
@@ -12,14 +14,14 @@ export class MySQLConnectionManager:
     }
 
     if opts.pool:
-      pool = driver.createPool(configHash)
+      pool = this.driver.createPool(configHash)
       this.pool = pool
       this.openConnection = ->
         conn = pool.getConnection()
         conn
     else:
       this.openConnection = ->
-        conn = driver.createConnection(configHash)
+        conn = this.driver.createConnection(configHash)
         conn
 
   closeConnection(conn) ->

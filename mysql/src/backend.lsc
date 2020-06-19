@@ -19,7 +19,9 @@ export class MySQLBackend extends Backend:
     this.connectionManager = if opts?.connectionManager:
       opts.connectionManager
     else:
-      new MySQLConnectionManager(mysql2, opts)
+      mgr = new MySQLConnectionManager(mysql2)
+      mgr.defaultSetup(opts)
+      mgr
     // Record target database
     this.database = opts.database
     if not this.database:
