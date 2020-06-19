@@ -61,6 +61,8 @@ normalizeEntitySpec(spec) ->
   if spec == undefined: now spec = {}
   if typeof(spec) != "object":
     throw new Error("Entity specification must be an object. (Did you forget () after a decorator?)")
+  if not spec.name:
+    throw new Error("Entity specification must include an explicit model name")
   spec
 
 // @entity decorator
