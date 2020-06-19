@@ -2,7 +2,6 @@
 import { typeFrom, isType, typeSymbol } from './types/type'
 import { EntityType } from './types/entityType'
 import { any } from './types/primitiveTypes'
-import { fieldsSymbol } from './fields'
 
 // Associate a prototype with an Ephraim EntityType
 export bootstrapPrototype(proto, typeClass, typeName): void ->
