@@ -1,6 +1,6 @@
 {
   "name": "@ormojo/ormojo",
-  "version": "0.2.11",
+  "version": "0.2.12",
   "license": "MIT",
   "description": "A multi-backend, isomorphic ORM for JavaScript.",
   "main": "lib/index.js",
