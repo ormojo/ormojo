@@ -5,50 +5,54 @@ import { ESBackend } from '../..'
 
 let backend
 
-@entity() class Sentient {
+@entity({name: 'Sentient'}) class Sentient {
   @field(types.integer) iq = 50
 
   speak() -> "protolanguage"
 }
-@entity() class Animal {
+@entity({name: "Animal"}) class Animal {
   @field(types.string) id
   @field(types.integer) iq = 0
 
   speak() -> "ruff ruff"
 }
-@entity() class Supergenius {
+@entity({name: "Supergenius"}) class Supergenius {
   @field(types.integer) iq = 250
 
   speak() -> "ds^2 = g_mu_nu dx_mu dx_nu"
 }
 
-@entity({inherits: [Sentient]}) class Elephant extends Animal {}
-@entity({inherits: [Sentient]}) class Human extends Animal {
+@entity({name: "Elephant", inherits: [Sentient]}) class Elephant extends Animal {}
+@entity({name: "Human", inherits: [Sentient]}) class Human extends Animal {
   @field(types.integer) iq = 100
   @field(types.string) name = "Bob"
 
   speak() -> "hello friend"
 }
-@entity({inherits: [Supergenius]}) class Einstein extends Human {
+@entity({name: "Einstein", inherits: [Supergenius]}) class Einstein extends Human {
   @field(types.string) name = "Albert"
 }
 
 @entity({
+  name: "ESHuman"
   index: `es_test_mi`
   type: `human`
 }) class ESHuman extends Human {}
 
 @entity({
+  name: "ESElephant"
   index: `es_test_mi`
   type: `elephant`
 }) class ESElephant extends Elephant {}
 
 @entity({
+  name: "ESAnimal"
   index: `es_test_mi`
   type: `animal`
 }) class ESAnimal extends Animal {}
 
 @entity({
+  name: "ESEinstein"
   index: `es_test_mi`
   type: `einstein`
 }) class ESEinstein extends Einstein {}

@@ -1,10 +1,13 @@
 // Make the ES client for testing.
 // Do not expose credentials for a live server to git!
-import elasticsearch from 'elasticsearch'
+import { Client } from '@elastic/elasticsearch'
 
-esclient = new elasticsearch.Client({
-  host: 'http://localhost:9200'
-  apiVersion: '5.4'
+esclient = new Client({
+  node: 'http://localhost:9200'
+  auth: {
+    username: 'test'
+    password: 'tester'
+  }
 })
 
 export default esclient

@@ -6,6 +6,7 @@ import { ESBackend,QueryDsl } from '../..'
 jest.setTimeout(10000)
 
 @entity({
+  name: 'widget'
   index: `widget_migration`
   type: `widget`
   filter: {

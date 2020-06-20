@@ -9,6 +9,7 @@ let rel
 
 @entity({
   // Elasticsearch backend type info
+  name: 'Widget'
   index: `widget_parentchild`
   type: `widget`
 }) class Widget:
@@ -18,6 +19,7 @@ let rel
   @field(listOf(types.string)) tags = []
 
 @entity({
+  name: 'Kidget'
   index: `widget_parentchild`
   type: `kidget`
 }) class Kidget {
