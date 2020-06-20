@@ -3,6 +3,8 @@
 import { MySQLBackend } from '..'
 mysql2 = require('mysql2/promise')
 
+logger = console.log.bind(console)
+
 export createBackend() ->
   new MySQLBackend(mysql2, {
     host: 'localhost'
@@ -10,5 +12,12 @@ export createBackend() ->
     password: 'drivertest'
     database: 'drivertest'
     pool: true
-    log: console.log.bind(console)
+    log: {
+      trace: if process.env.SQL_TRACE: logger else: (-> return)
+      debug: logger
+      info: logger
+      warn: logger
+      error: logger
+      fatal: logger
+    }
   })
