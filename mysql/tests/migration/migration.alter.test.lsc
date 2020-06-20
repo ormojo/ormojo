@@ -4,6 +4,8 @@ import { create, save, findById, destroy, find } from '@ormojo/ormojo'
 import { toPlainObject, entity, field, types, listOf, extendField } from '@ormojo/ephraim'
 import { createBackend } from '../backend'
 
+util = require('util')
+
 let backend = null
 beforeAll! ->
   now backend = createBackend()
@@ -65,5 +67,10 @@ describe('alter table migration tests: ', ->
       console.log("******** NOOP")
       backend._clearInternalTableStructure!
       backend.bind(Wodget, { table: 'Wodget_alter', indices: [{ columnNames: ['f1', 'f2'], unique: true }] })
-      backend.createMigration!.prepare!.then(mig -> mig.execute!)
+      backend.createMigration!.prepare!
+      .then(mig ->
+        console.log("plan", util.inspect(mig.getMigrationPlan(), false, null))
+        mig
+      )
+      .then(mig -> mig.execute!)
 )

@@ -16,6 +16,9 @@ _createColumn(table, colName, fieldKey, fieldType, colType) ->
   column.setType(colType)
   column
 
+isZeroish(x) -> (x == 0) or (x == '0')
+isOneish(x) -> (x == 1) or (x == '1')
+
 // Represents a MySQL table
 export class MySQLTable {
   constructor(backend, database, name) ->
@@ -59,11 +62,12 @@ export class MySQLTable {
     .then! (rst): void =>
       let currentIndex = null
       for elem ixDef in rst[0] or []:
-        if (not this.indices[ixDef.index_name]) and ixDef.seq_in_index == 1:
+        if (not this.indices[ixDef.index_name]) and isOneish(ixDef.seq_in_index):
           now currentIndex = new MySQLIndex(this)
           currentIndex.name = ixDef.index_name
           this.addIndex(currentIndex)
-          if ixDef.non_unique == 0: currentIndex.unique = true
+          if isZeroish(ixDef.non_unique):
+            currentIndex.unique = true
 
         if currentIndex and (currentIndex.name == ixDef.index_name):
           currentIndex.columnNames.push(ixDef.column_name)
