@@ -33,6 +33,16 @@ export class MySQLColumn:
     this.quotedName = quoteIdentifier(name)
     this.fqcn = `${quoteIdentifier(tableName)}.${quoteIdentifier(name)}`
 
+  toJSON() -> {
+    type: 'MySQLColumn'
+    tableName: this.tableName
+    name: this.name
+    dataType: this.type
+    nullable: !!this.nullable
+    default: this.default
+    keyType: this.keyType
+  }
+
   setType(ty) ->
     this.type = ty
     if(

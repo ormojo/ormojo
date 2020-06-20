@@ -1,6 +1,8 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
 import { createBackend } from '../backend'
 
+util = require('util')
+
 let backend
 
 beforeAll! ->
@@ -17,6 +19,4 @@ describe! 'migration metadata', ->
     .then! ->
       mig.existingTables._getAllTableMetadata()
     .then! ->
-      ddl = mig.existingTables._getCreateDDL!
-      for elem ddlx in ddl:
-        console.log("DDL:", ddlx)
+      console.log(util.inspect(mig.existingTables.toJSON(), false, null))

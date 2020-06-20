@@ -10,6 +10,9 @@ export class MySQLTables:
     this.tables = Object.create(null)
     this.ordinalTables = []
 
+  toJSON() ->
+    {...for key k, val v in this.tables: {[k]: v.toJSON()}}
+
   // Obtain list of tables from mysql
   _enumerateTables() ->
     this.backend.rawQuery('SHOW TABLES;')

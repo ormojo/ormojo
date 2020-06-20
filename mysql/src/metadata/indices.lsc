@@ -7,6 +7,13 @@ export class MySQLIndex:
     this.table = table
     this.columnNames = []
 
+  toJSON() -> {
+    type: 'MySQLIndex'
+    tableName: this.table?.name
+    unique: !!this.unique
+    columnNames: this.columnNames
+  }
+
   getName(): string ->
     if this.name:
       this.name

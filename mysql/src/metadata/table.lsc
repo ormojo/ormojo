@@ -27,6 +27,13 @@ export class MySQLTable {
     this.ordinalColumns = []
     this.indices = {}
 
+  toJSON() -> {
+    type: 'MySQLTable'
+    name: this.name
+    columns: [...for elem col in this.ordinalColumns: [col.toJSON()]]
+    indices: {...for key k, val v in this.indices: {[k]: v.toJSON()}}
+  }
+
   _dropTable(): Promise<any> ->
     this.backend.rawQuery(`DROP TABLE IF EXISTS ${this.quotedName};`)
 

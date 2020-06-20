@@ -11,6 +11,15 @@ export class MySQLForeignKey extends MySQLIndex:
     this.onDelete = "CASCADE"
     this.onUpdate = "CASCADE"
 
+  toJSON() -> {
+    type: 'MySQLForeignKey'
+    name: this.name
+    columnNames: this.columnNames
+    referencedColumnNames: this.referencedColumnNames
+    tableName: this.table?.name
+    referencedTableName: this.referencedTableName
+  }
+
   setSingleColumn(columnName, foreignTableName, foreignColumnName) ->
     this.columnNames = [columnName]
     this.referencedTableName = foreignTableName

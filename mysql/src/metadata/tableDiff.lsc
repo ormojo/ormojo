@@ -32,21 +32,30 @@ export getTableDiff(lhs: MySQLTable, rhs: MySQLTable) ->
     if not lhs.indices[idxKey]:
       indexDrops.push(idx._toAlterDropDDL!)
 
-  { differences, indexDrops }
+  ddl = if differences.length > 0:
+    `ALTER TABLE ${rhs.quotedName} ${differences.join(',')}`
+  indexDropDDL = if indexDrops.length > 0:
+    `ALTER TABLE ${rhs.quotedName} ${indexDrops.join(',')}`
+  different = Boolean(ddl or indexDropDDL)
+
+  { target: lhs.toJSON(), prior: rhs.toJSON(), different, ddl, indexDropDDL }
 
 // List of ALTER TABLE queries to turn the entire RHS tableset into
 // a best match for the LHS
 export getTablesDiff(lhs: MySQLTables, rhs: MySQLTables) ->
-  differences = []
+  diffs = []
+  ddl = []
 
   for key tableKey, val table in lhs.tables:
     if rhs.tables[tableKey]:
       tableDiff = getTableDiff(table, rhs.tables[tableKey])
-      if tableDiff.indexDrops.length > 0:
-        differences.push(`ALTER TABLE ${table.quotedName} ${tableDiff.indexDrops.join(',')}`)
-      if tableDiff.differences.length > 0:
-        differences.push(`ALTER TABLE ${table.quotedName} ${tableDiff.differences.join(',')}`)
+      diffs.push(tableDiff)
+      if tableDiff.different:
+        if tableDiff.indexDropDDL: ddl.push(tableDiff.indexDropDDL)
+        ddl.push(tableDiff.ddl)
     else:
-      differences.push(table._toCreateDDL!)
+      createDDL = table._toCreateDDL()
+      diffs.push({target: table.toJSON(), prior: null, different: true, ddl: createDDL})
+      ddl.push(createDDL)
 
-  differences
+  { diffs, ddl }

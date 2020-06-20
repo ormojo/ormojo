@@ -20,9 +20,10 @@ export class MySQLMigration extends Migration:
     .then! =>
       this.currentTables._getAllTableMetadata()
     .then! =>
-      this.ddl = getTablesDiff(this.backend.tables, this.currentTables)
+      this.plan = getTablesDiff(this.backend.tables, this.currentTables)
+      this.ddl = this.plan.ddl
       if this.ddl.length == 0:
-        this.backend.log.info("MySQLMigration: trivial migration")
+        this.backend.log.trace("MySQLMigration: trivial migration")
       else:
         this.backend.log.trace("MySQLMigration: nontrivial migration", this.ddl)
       this
@@ -31,10 +32,11 @@ export class MySQLMigration extends Migration:
     this.ddl = []
     for elem tbl in this.backend.tables.getTableList():
       this.ddl.push(tbl._toCreateDDL!)
+    this.plan = { ddl: this.ddl }
     Promise.resolve(this)
 
   getMigrationPlan() ->
-    { sql: this.ddl }
+    this.plan
 
   execute() ->
     backend = this.backend
