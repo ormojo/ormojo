@@ -2,10 +2,12 @@
   "name": "@ormojo/elasticsearch",
   "version": "0.2.14",
   "license": "MIT",
-  "description": "Elasticsearch driver for ormojo.",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "Elasticsearch 7.x driver for ormojo.",
+  "type": "commonjs",
   "main": "lib/index.js",
-  "module": "lib/index.es.js",
-  "jsnext:main": "lib/index.es.js",
   "files": [
     "lib"
   ],
@@ -27,7 +29,7 @@
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-plugin-istanbul": "^4.1.5",
     "cross-env": "^5.0.5",
-    "elasticsearch": "^14.0.0",
+    "@elastic/elasticsearch": "^7.8.0",
     "eslint": "~4.8.0",
     "jest": "^21.2.1",
     "jest-environment-node-debug": "^2.0.0",
@@ -50,7 +52,7 @@
   "dependencies": {
     "@ormojo/ephraim": "^0.2.9",
     "@ormojo/ormojo": "^0.2.12",
-    "deep-diff": "^0.3.8",
-    "lodash": "^4.17.5"
+    "deep-diff": "^1.0.2",
+    "lodash": "^4.17.15"
   }
 }
