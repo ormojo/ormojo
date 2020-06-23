@@ -1,6 +1,6 @@
 {
   "name": "@ormojo/elasticsearch",
-  "version": "0.2.14",
+  "version": "0.2.15",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
@@ -24,13 +24,13 @@
     "self-link": "mkdir -p node_modules/@ormojo && ln -s ../.. node_modules/@ormojo/ephraim-memory"
   },
   "devDependencies": {
+    "@elastic/elasticsearch": "^7.8.0",
     "@oigroup/babel-preset-lightscript": "^3.0.0",
     "@oigroup/lightscript-eslint": "^3.0.0",
     "babel-cli": "^6.26.0",
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-plugin-istanbul": "^4.1.5",
     "cross-env": "^5.0.5",
-    "@elastic/elasticsearch": "^7.8.0",
     "eslint": "~4.8.0",
     "jest": "^21.2.1",
     "jest-environment-node-debug": "^2.0.0",
