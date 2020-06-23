@@ -55,10 +55,6 @@ var withFormat = (format) => ({
   external: isExternal
 })
 
-// Only build CJS when doing coverage
 var formats = [withFormat("cjs")];
-if (!coverage) {
-  formats.push(withFormat("es"));
-}
 
 export default formats;
