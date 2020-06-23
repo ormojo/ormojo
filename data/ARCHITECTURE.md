@@ -38,6 +38,14 @@ A library should be able to
 
 # Concepts
 
+## Data Flow and Boundaries
+
+- A "persistence boundary" is crossed when data moves between a persistent storage layer and a running application. Transient fields and models don't cross persistence boundaries.
+
+- A "secret boundary" is crossed when data moves between a subsystem that stores secrets and a subsystem that needs access to secret data. Secret fields and models don't cross secret boundaries unless a secrecy transform is applied (e.g. at-rest encryption)
+
+- A "systems boundary" is crossed when data moves between an internal subsystem (where it is controlled by first parties) and an external one (where it may be visible to the world). Hidden fields and models don't cross systems boundaries.
+
 ## Corpus
 
 The Corpus represents the "global" state of @ormojo/data. Generally speaking
