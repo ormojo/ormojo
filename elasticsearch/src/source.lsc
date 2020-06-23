@@ -11,58 +11,52 @@ export class ESSource extends AsyncSource:
     this.es = opts.es
     this.log = opts.log
 
-  _get(query, id) ->
+  _get(query, id) -/>
     // Elasticsearch GET
-    { log, es, typeMap, defaultType, errorOnMissingType, backend } = this
+    { es, typeMap, defaultType, errorOnMissingType, backend } = this
     rq = {
       id
       index: query.index
-      type: query.type
-      ignore: [404]
-      ...if query.parent: { parent: query.parent }
+      stored_fields: 'orm_type'
+      _source: true
     }
-    log.trace("es.get >", rq)
-    es.get(rq).then! (rst) ->
-      log.trace("es.get <", rst)
-      if rst.found:
-        new ESResultSet(backend, [rst])._hydrate(typeMap, defaultType, errorOnMissingType)
-      else:
-        new ESResultSet(backend, [])
+    rst <- es.get(rq, { ignore: [404] })
+    if rst.found:
+      new ESResultSet(backend, [rst])._hydrate(typeMap, defaultType, errorOnMissingType)
+    else:
+      new ESResultSet(backend, [])
 
-  _mget(query, ids) ->
+
+  _mget(query, ids) -/>
     // Elasticsearch MGET
-    { log, es, typeMap, defaultType, errorOnMissingType, backend } = this
+    { es, typeMap, defaultType, errorOnMissingType, backend } = this
     rq = {
       index: query.index
-      type: query.type
+      stored_fields: 'orm_type'
       body: { ids }
-      ...if query.parent: { routing: query.parent }
+      _source: true
     }
-    log.trace("es.mget >", rq)
-    es.mget(rq).then! (rst) ->
-      log.trace("es.mget <", rst)
-      docs = rst?.docs or []
-      new ESResultSet(backend, [
-        ...for elem doc in docs: if doc?.found: [doc] else: [undefined]
-      ])._hydrate(typeMap, defaultType, errorOnMissingType)
+    rst <- es.mget(rq)
+    docs = rst?.docs or []
+    new ESResultSet(backend, [
+      ...for elem doc in docs: if doc?.found: [doc] else: [undefined]
+    ])._hydrate(typeMap, defaultType, errorOnMissingType)
 
-  _find(query) ->
-    { log, es, typeMap, defaultType, errorOnMissingType, backend } = this
+  _find(query) -/>
+    { es, typeMap, defaultType, errorOnMissingType, backend } = this
     rq = {
       body: query.getQueryDsl()
-      version: true
+      seq_no_primary_term: true
       index: query.index
-      type: query.type
+      _source: true
       ...if query.offset: { from: query.offset }
       ...if query.limit: { size: query.limit }
     }
-    log.trace("es.search >", rq)
-    es.search(rq).then! (rst) ->
-      log.trace("es.search <", rst)
-      if (not rst) or (not rst.hits):
-        new ESResultSet(backend, [], 0, 0, query, 0)
-      else:
-        new ESResultSet(backend, rst.hits.hits, rst.hits.total, rq.from, query, rst.hits.max_score)._hydrate(typeMap, defaultType, errorOnMissingType)
+    rst <- es.search(rq)
+    if (not rst) or (not rst.hits):
+      new ESResultSet(backend, [], 0, 0, query, 0)
+    else:
+      new ESResultSet(backend, rst.hits.hits, rst.hits.total.value, rq.from, query, rst.hits.max_score)._hydrate(typeMap, defaultType, errorOnMissingType)
 
   readIdQuery(query: ESQuery): Promise<ESResultSet> ->
     ids = query.ids

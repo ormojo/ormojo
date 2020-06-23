@@ -7,7 +7,27 @@ export class ESIndex:
     this.backend = backend
     this.name = name
     this.types = {}
-    this.mappings = {}
+    this.properties = {}
+
+  // Get the property descriptor for a single field
+  getPropertyDescriptor(key, spec, fieldBinding = {}) ->
+    // id and transient fields contribute no properties
+    if key == 'id': return null
+    if spec.transient: return null
+
+    // Base configuration comes from Elasticsearch type map.
+    // Can be overridden by the user mapping.
+    typeProps = esTypeMap(spec.type)
+    property = Object.assign({}, typeProps, fieldBinding.mapping)
+
+    property
+
+  getProperties(T, fields = {}) ->
+    {...for key k, val spec in T~declaredFields():
+      property = this.getPropertyDescriptor(k, spec, fields[k])
+      if property: {[fields[k]?.key or spec.key]: property}
+    }
+
 
   addEntityType(T, opts): void ->
     this.types[opts.type] = opts
@@ -17,26 +37,15 @@ export class ESIndex:
     if opts.filter:
       this.filter = Object.assign(this.filter or {}, opts.filter)
 
-    // Build mapping
-    m = { properties: {} }
-    properties = m.properties
-    fields = opts.fields
+    // XXX: Verify that incoming properties are compatible with existing ones
+    Object.assign(this.properties, this.getProperties(T, opts.fields))
 
-    // Individual field mappings
-    for key k, val spec in T~declaredFields():
-      if k != 'id' and (not spec.transient):
-        fieldBinding = fields[k] or {}
-        mapping = fieldBinding.mapping or {}
-        // Merge missing keys from typemap defaults
-        typeMap = esTypeMap(spec.type)
-        if typeMap:
-          for key mk, val mv in typeMap:
-            if not (mk in mapping): mapping[mk] = mv
-
-        properties[fields[k]?.key or spec.key] = mapping
-
-    opts.mapping = m
-    this.mappings[opts.type] = m
+    // Add property for orm type mapping
+    this.properties['orm_type'] = {
+      "type": "keyword"
+      "store": true
+    }
+    this.mappings = { properties: this.properties }
 
   _deleteIndex(): void ->
     this.backend.es.indices.delete({index: this.name})
@@ -84,7 +93,7 @@ export class ESIndices:
     for key k, val idx in this.indices:
       if name.startsWith(k):
         // TODO: allow index naming convention to be changed in config
-        if (k == name) or (/ormojo(\d+)$/.test(name)):
+        if (k == name) or (/_v(\d+)$/.test(name)):
           this.prefixedIndices[k] = idx
           return idx
 

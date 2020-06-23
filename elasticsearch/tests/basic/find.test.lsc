@@ -10,8 +10,8 @@ beforeAll! ->
   mig = backend.createMigration()
   mig.prepare().then(-> mig.execute())
 
-afterAll! ->
-  cleanupCorpus('find')
+afterAll! -/>
+  <- cleanupCorpus('find')
 
 describe('find', ->
 

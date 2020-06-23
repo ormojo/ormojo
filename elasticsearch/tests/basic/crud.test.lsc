@@ -11,8 +11,9 @@ beforeAll! ->
   debugger
   mig.prepare().then(-> mig.execute())
 
-afterAll! ->
-  cleanupCorpus('crud')
+afterAll! -/>
+  <- cleanupCorpus('crud')
+
 
 
 test('should create, save, find by id', ->

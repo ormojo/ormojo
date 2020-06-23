@@ -1,7 +1,7 @@
 import { AsyncSink, SinkResult, NotFoundError, DuplicateError } from '@ormojo/ormojo'
 import { hydrateInstance, getBulkDataForInstance } from './instances'
 import { VersionConflictError } from './errors'
-import { fixVersionConflicts } from './fixVersionConflicts'
+// import { fixVersionConflicts } from './fixVersionConflicts'
 
 errorForResult(res) ->
   err = if res.status == 404:
@@ -70,17 +70,13 @@ getBulkCreateOpForInstance(instance) ->
     {
       create: {
         _index: instance._index
-        _type: instance._type
         _id: id
-        ...if instance._parent: { _parent: instance._parent }
       }
     }
   else:
     {
       index: {
         _index: instance._index
-        _type: instance._type
-        ...if instance._parent: { _parent: instance._parent }
       }
     }
 
@@ -88,10 +84,11 @@ getBulkUpdateOpForInstance(instance, opts) ->
   {
     update: {
       _index: instance._index
-      _type: instance._type
       _id: instance._id
-      ...if instance._version and (not opts?.ignoreVersionConflicts): { _version: instance._version }
-      ...if instance._parent: { _parent: instance._parent }
+      ...if instance._occ and (not opts?.ignoreVersionConflicts): {
+        if_seq_no: instance._occ.seq_no
+        if_primary_term: instance._occ.primary_term
+      }
     }
   }
 
@@ -100,10 +97,11 @@ getBulkUpsertOpForInstance(instance, opts) ->
   {
     index: {
       _index: instance._index
-      _type: instance._type
       ...if id: { _id: id }
-      ...if instance._version and (not opts?.ignoreVersionConflicts): { _version: instance._version }
-      ...if instance._parent: { _parent: instance._parent }
+      ...if instance._occ and (not opts?.ignoreVersionConflicts): {
+        if_seq_no: instance._occ.seq_no
+        if_primary_term: instance._occ.primary_term
+      }
     }
   }
 
@@ -117,19 +115,14 @@ getBulkDeleteOpForInstance(instance) ->
   {
     delete: {
       _index: instance._index
-      _type: instance._type
       _id: instance._id or instance.id
-      ...if instance._parent: { _parent: instance._parent }
     }
   }
 
 bulkOperation(es, log, body, opts) ->
   rq = { body }
   if opts?.refresh: rq.refresh = opts.refresh
-  log.trace("es.bulk >", JSON.stringify(rq, null, 2))
-  es.bulk(rq).then! (res) ->
-    log.trace("es.bulk <", JSON.stringify(res, null, 2))
-    res
+  es.bulk(rq)
 
 shouldThrowFirstError(data, opts) ->
   if opts?.throwFirstError == true:
@@ -156,13 +149,13 @@ crupsert(backend, log, data, lambda1, lambda2, opts) -/>
     if result._lastResultWasSuccess():
       hydrateInstance(data[i], unwrappedItem)
 
-  if opts?.fixVersionConflicts and result._isVersionConflict():
-    now opts = Object.assign({}, opts, {
-      _fixRecursion: (opts._fixRecursion or 0) + 1
-      noTimestamp: true
-    })
-    if opts._fixRecursion <= (opts.maxFixRecursion or 1):
-      <- fixVersionConflicts(backend, data, result, opts, opts?.isConflictFixable, opts?.fixConflict)
+  // if opts?.fixVersionConflicts and result._isVersionConflict():
+  //   now opts = Object.assign({}, opts, {
+  //     _fixRecursion: (opts._fixRecursion or 0) + 1
+  //     noTimestamp: true
+  //   })
+  //   if opts._fixRecursion <= (opts.maxFixRecursion or 1):
+  //     <- fixVersionConflicts(backend, data, result, opts, opts?.isConflictFixable, opts?.fixConflict)
 
   if shouldThrowFirstError(data, opts) and result.hasError():
     throw result.firstError()

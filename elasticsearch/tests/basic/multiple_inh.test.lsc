@@ -77,8 +77,7 @@ beforeAll! ->
 afterAll! ->
   es_client.indices.delete({
     index: [`es_test_mi*`]
-    ignore: [404]
-  })
+  }, { ignore: 404 })
 
 describe('multiple inheritance tests: ', ->
   it! 'should create, store, and rehydrate multitype objects', ->

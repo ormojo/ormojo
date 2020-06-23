@@ -3,10 +3,13 @@
 import { Client } from '@elastic/elasticsearch'
 
 esclient = new Client({
-  node: 'http://localhost:9200'
+  node: 'https://localhost:9200'
   auth: {
     username: 'test'
     password: 'tester'
+  }
+  ssl: {
+    rejectUnauthorized: false
   }
 })
 

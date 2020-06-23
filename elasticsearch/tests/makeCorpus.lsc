@@ -6,7 +6,7 @@ import { createBackend } from './backend'
 export makeCorpus(extraName) ->
   backend = createBackend!
 
-  @entity() class Widget:
+  @entity({name: 'Widget'}) class Widget:
     @field(types.string) id
     @field(types.text) name = 'nameless'
     @field(types.integer) qty = 2
@@ -24,8 +24,14 @@ export makeCorpus(extraName) ->
 
   { backend, Widget }
 
-export cleanupCorpus(extraName) ->
-  es_client.indices.delete({
-    index: [`widget_${extraName}_ormojo*`, `widget_${extraName}`]
-    ignore: [404]
-  })
+export cleanupCorpus(extraName) -/>
+  try:
+    <- es_client.indices.deleteAlias({
+      index: '_all'
+      name: [`widget_${extraName}`]
+    }, { ignore: [404] })
+    <- es_client.indices.delete({
+      index: [`widget_${extraName}_v*`]
+    }, { ignore: [ 404 ] })
+  catch err:
+    console.error("error while cleaning up", err)

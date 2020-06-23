@@ -30,12 +30,11 @@ jest.setTimeout(10000)
   @field(types.date) timestamp
   @field({
     type: listOf(types.text)
-    mapping: (new QueryDsl).q('fields', 'raw', { type: 'keyword'}).body
   }) tags = []
 
-@entity() class Widget2 extends Widget {}
+@entity({name: 'Widget2'}) class Widget2 extends Widget {}
 
-@entity() class NuWidget extends Widget:
+@entity({name: 'NuWidget'}) class NuWidget extends Widget:
   @field(types.string) extra
 
 createBackend() ->
@@ -44,11 +43,11 @@ createBackend() ->
     log: { trace: logger }
   })
 
-afterAll! ->
-  es_client.indices.delete({
-    index: [`widget_migration*`]
-    ignore: [404]
-  })
+afterAll! -/>
+  // <- es_client.indices.delete({
+  //   index: [`widget_migration*`]
+  // }, { ignore: [404] })
+  return
 
 let be, be2, be3
 
@@ -67,7 +66,7 @@ describe('migration tests: ', ->
       mig.execute()
     )
     .then! ->
-      be.create(Widget, {name: 'bob'})
+      be.create(Widget, {name: 'bob'}, {refresh: 'wait_for'})
     .then! (w1) ->
       now id1 = w1.id
       now be2 = createBackend()
@@ -94,7 +93,7 @@ describe('migration tests: ', ->
       // Check that data survived migration
       be3.findById(NuWidget, [id1, id2])
     .then! (results) ->
-      expect(results[0].name).toBe('bob')
-      expect(results[1].extra).toBe('pickles')
+      expect(results?[0]?.name).toBe('bob')
+      expect(results?[1]?.extra).toBe('pickles')
   )
 )

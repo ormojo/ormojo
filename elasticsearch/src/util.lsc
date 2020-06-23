@@ -14,6 +14,7 @@ export _clone(obj) ->
   next = backend.create(underlyingTypeOfType(typeOf(obj)))
   next~assignPlainObject(obj~toPlainObject!)
   for key k, val v in obj:
+    // Underscored fields
     if k.charCodeAt(0) == 95:
       next[k] = v
   next~clearDelta!

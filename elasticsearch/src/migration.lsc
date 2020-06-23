@@ -6,7 +6,7 @@ import set from 'lodash/set'
 _getMigrationCounter(indexList) ->
   let maxn = 0
   for elem index in indexList:
-    mtch = /ormojo(\d+)$/.exec(index)
+    mtch = /_v(\d+)$/.exec(index)
     // Unmigrated indices in the alias = bailout.
     if not mtch: return null
     n = parseInt(mtch[1])
@@ -42,12 +42,8 @@ class MigrationPlan:
 
   getIndex() ->
     this.indexStatus = 'UNKNOWN'
-    this.backend.es.indices.get({
-      index: this.index.name
-      ignore: [404]
-    })
+    this.backend.es.indices.get({index: this.index.name}, { ignore: [404] })
       .then((result) =>
-        this.backend.log.trace('es.indices.get <', JSON.stringify(result, undefined, 2))
         // Check for missing index.
         if result.error:
           if result.status == 404: this.indexStatus = 'DOESNT_EXIST'
@@ -65,7 +61,7 @@ class MigrationPlan:
         else:
           this.indexStatus = 'AUTOMIGRATED'
           this.migrationCounter = n
-          this.mostRecentIndex = `${this.index.name}_ormojo${n}`
+          this.mostRecentIndex = `${this.index.name}_v${n}`
         // Get details of most recent index
         details = result[this.mostRecentIndex]
         this.currentSettings = {
@@ -122,47 +118,38 @@ class MigrationPlan:
     aliases = {}
     aliases[this.index.name] = {}
     body = Object.assign({}, this.targetSettings, { aliases })
-    this.backend.log.trace('es.indices.create >', JSON.stringify(body, undefined, 2))
     Promise.resolve(
       this.backend.es.indices.create({
-        index: `${this.index.name}_ormojo1`
+        index: `${this.index.name}_v1`
         body
       })
     )
-      .then((result) =>
+      .then(({body: result}) =>
         this.backend.log.trace('es.indices.create <', result)
         result
       )
 
   executeReindexStrategy() ->
     if this.migrationStrategy != 'REINDEX': throw new Error('executeReindexStrategy() called in invalid state')
-    prevIndex = `${this.index.name}_ormojo${this.migrationCounter}`
-    nextIndex = `${this.index.name}_ormojo${this.migrationCounter + 1}`
+    prevIndex = `${this.index.name}_v${this.migrationCounter}`
+    nextIndex = `${this.index.name}_v${this.migrationCounter + 1}`
     alias = `${this.index.name}`
-    this.backend.log.trace('es.indices.create >', this.targetSettings)
     Promise.resolve(
       this.backend.es.indices.create({
         index: nextIndex
         body: this.targetSettings
       })
-    ).then((result) =>
-      this.backend.log.trace('es.indices.create <', result)
-      this.backend.log.trace('es.indices.flush >')
+    ).then(=>
       this.backend.es.indices.flush({ index: prevIndex })
-    ).then((result) =>
-      this.backend.log.trace('es.indices.flush <', result)
-      this.backend.log.trace('es.reindex >')
+    ).then(=>
       this.backend.es.reindex({
-        refresh: true
         waitForCompletion: true
         body: {
           source: { index: prevIndex }
-          dest: { index: nextIndex }
+          dest: { index: nextIndex, op_type: 'create' }
         }
       })
-    ).then((result) =>
-      this.backend.log.trace('es.reindex <', result)
-      this.backend.log.trace('es.updateAliases >')
+    ).then(=>
       this.backend.es.indices.updateAliases({
         body: {
           actions: [
@@ -171,8 +158,6 @@ class MigrationPlan:
           ]
         }
       })
-    ).then((result) =>
-      this.backend.log.trace('es.updateAliases <', result)
     )
 
   execute() ->

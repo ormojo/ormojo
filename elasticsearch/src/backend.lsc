@@ -1,4 +1,5 @@
 import { Backend, normalizeLoggerObject } from '@ormojo/ormojo'
+import { ESAPI } from './API'
 import { ESIndices } from './indices'
 import { ESMigration } from './migration'
 import { ESQuery } from './query'
@@ -10,8 +11,8 @@ import { _createNew } from './instances'
 export class ESBackend extends Backend:
   constructor(es, opts) ->
     super()
-    this.es = es
     this.log = normalizeLoggerObject(opts?.log)
+    this.es = new ESAPI(es, this.log)
     this.indices = new ESIndices(this)
     this.sink = new ESSink({backend: this, es: this.es, log: this.log })
     // Source constructor

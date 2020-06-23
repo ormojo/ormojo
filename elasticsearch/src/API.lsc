@@ -1,0 +1,63 @@
+util = require('util')
+
+runner(f, ...args) -> f(...args)
+
+wrapAPI({log, longname, run = runner}, driver, method) ->
+  boundMethod = driver[method].bind(driver)
+  if not longname: now longname = method
+
+  elasticsearchWrapper(...args) -/>
+    let result
+
+    log.trace(`Elasticsearch API call: ${longname}`, util.inspect(args, false, 50))
+
+    try:
+      now result <- boundMethod(...args)
+    catch err:
+      log.error(`Elasticsearch API error while invoking '${longname}'`, {
+        name: err.name
+        message: err.message
+        meta: err.meta
+        ...if err.data: { data: err.data }
+        ...if err.body: { body: util.inspect(err.body, false, 50) }
+        ...if err.statusCode: { statusCode: err.statusCode }
+        ...if err.headers: { headers: err.headers }
+      })
+      throw err
+
+    {body, warnings, meta} = result
+
+    if warnings and warnings.length > 0:
+      log.warn(`Elasticsearch returned warnings while invoking '${longname}'`, { meta })
+      for elem warning in warnings:
+        log.warn(`Elasticsearch warning: ${warning}`)
+
+    log.trace(`Elasticsearch API call: ${longname}: successful`, util.inspect(body, false, 50))
+
+    body
+
+  wrapped(...args) ->
+    run(elasticsearchWrapper, ...args)
+
+export class ESAPI:
+  constructor(driver, log) ->
+    this.driver = driver
+    this.log = log
+    this._wrapMethods()
+
+  _wrapMethods(): void ->
+    { driver, log } = this
+
+    this.indices = {
+      get: wrapAPI({log, longname: 'indices.get'}, driver.indices, 'get')
+      delete: wrapAPI({log, longname: 'indices.delete'}, driver.indices, 'delete')
+      create: wrapAPI({log, longname: 'indices.create'}, driver.indices, 'create')
+      flush: wrapAPI({log, longname: 'indices.flush'}, driver.indices, 'flush')
+      updateAliases: wrapAPI({log, longname: 'indices.updateAliases'}, driver.indices, 'updateAliases')
+    }
+
+    this.reindex = wrapAPI({log}, driver, 'reindex')
+    this.bulk = wrapAPI({log}, driver, 'bulk')
+    this.get = wrapAPI({log}, driver, 'get')
+    this.mget = wrapAPI({log}, driver, 'mget')
+    this.search = wrapAPI({log}, driver, 'search')
