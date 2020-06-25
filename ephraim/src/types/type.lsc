@@ -97,6 +97,7 @@ export ComplexType = singleton("ComplexType", ->
         this.isa[sym] = true
 
     isKindOf(otherT): boolean ->
+      now otherT = typeFrom(otherT)
       otherTypeIdentity = otherT.typeIdentity
       if otherTypeIdentity and this.isa[otherTypeIdentity]: true else: false
 )

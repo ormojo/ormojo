@@ -13,4 +13,5 @@ test! 'basic', ->
 
   expect(e.f).toBe(1)
   expect(e~isDelta!).toBe(true)
+  expect(typeFrom(F).isKindOf(E)).toBeTruthy()
   expect(typeFrom(F).opaqueFields.d).toBeTruthy()
