@@ -46,12 +46,6 @@ describe('Timestamps', ->
       expect(widg.name).toBe('name2')
       now ts2 = widg.updatedAt
       expect(ts1 < ts2).toBe(true)
-      now id = widg.id
-      widg~destroy()
-    ).then(->
-      backend.findById(Widget, id)
-    ).then((x) ->
-      expect(x).toBe(undefined)
     )
   )
 )

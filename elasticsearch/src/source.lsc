@@ -59,13 +59,29 @@ export class ESSource extends AsyncSource:
       new ESResultSet(backend, rst.hits.hits, rst.hits.total.value, rq.from, query, rst.hits.max_score)._hydrate(typeMap, defaultType, errorOnMissingType)
 
   readIdQuery(query: ESQuery): Promise<ESResultSet> ->
-    ids = query.ids
+    let ids = query.ids
     if ids.length == 0:
-      Promise.resolve(new ESResultSet(this.backend, []))
-    else if ids.length == 1:
-      this._get(query, ids[0])
-    else:
-      this._mget(query, ids)
+      return Promise.resolve(new ESResultSet(this.backend, []))
+    if ids.length == 1:
+      now ids = [ ids[0] ]
+
+    idQuery = (new ESQuery()).setQuery(query)
+    idQuery.body = {
+      query: {
+        ids: {
+          values: ids
+        }
+      }
+    }
+    idQuery.limit = ids.length
+
+    this._find(idQuery)
+      .then((resultSet) ->
+        idMap = { ...for elem e in resultSet.getResults(): {[e.id]: e} }
+        nextResults = [ ...for elem id in ids: [idMap[id]] ]
+        resultSet.replaceResults(nextResults)
+        resultSet
+      )
 
   readFullQuery(query: ESQuery): Promise<ESResultSet> ->
     this._find(query)

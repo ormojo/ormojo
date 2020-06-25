@@ -3,15 +3,41 @@ import isEqual from 'lodash/isEqual'
 import deepDiff from 'deep-diff'
 import set from 'lodash/set'
 
-_getMigrationCounter(indexList) ->
-  let maxn = 0
-  for elem index in indexList:
-    mtch = /_v(\d+)$/.exec(index)
-    // Unmigrated indices in the alias = bailout.
-    if not mtch: return null
-    n = parseInt(mtch[1])
-    if n > maxn: now maxn = n
-  maxn
+parseVersion(physicalIndexName) ->
+  mtch = /_v(\d+)$/.exec(physicalIndexName)
+  if mtch: parseInt(mtch[1]) else: null
+
+// Indices that are ignored
+incomparableIndexSettings = [
+  'provided_name'
+  'creation_date'
+  'uuid'
+  'version'
+]
+
+isShardingParameterDiff(difference) ->
+  match difference.path[difference.path.length - 1]:
+    | 'number_of_shards': true
+    | 'number_of_replicas': true
+    | else: false
+
+// Determine if a difference in index settings is relevant during migration
+isRelevantDifference(difference) ->
+  // Elasticsearch stringifies numbers, causing false positives
+  if difference.kind == 'E' and (JSON.stringify(difference.rhs) == difference.lhs):
+    return false
+
+  // Elasticsearch doesn't return date formats when inquiring about index
+  // settings. This may cause false positives.
+  if difference.kind == 'N' and (difference.path[difference.path.length - 1] == 'format'):
+    return false
+
+  // If the user didn't specify sharding or replication parameters, we
+  // don't need to diff them
+  if difference.kind == 'D' and isShardingParameterDiff(difference):
+    return false
+
+  true
 
 //
 // Migration plan for a specific index. Determines if the index can
@@ -21,6 +47,8 @@ class MigrationPlan:
   constructor(backend, index) ->
     this.backend = backend
     this.index = index
+    this.indexStatus = 'UNKNOWN'
+    this.migrationStrategy = 'UNKNOWN'
 
     analysis = {}
     if index.analyzer: analysis.analyzer = index.analyzer
@@ -36,134 +64,153 @@ class MigrationPlan:
 
   getTargetSettings() -> this.targetSettings
 
-  prepare() ->
-    this.getIndex()
-      .then(=> this.finalChecks())
+  prepare() -/>
+    <- this.getExistingAlias()
+    <- this.planIndexTransition()
 
-  getIndex() ->
-    this.indexStatus = 'UNKNOWN'
-    this.backend.es.indices.get({index: this.index.name}, { ignore: [404] })
-      .then((result) =>
-        // Check for missing index.
-        if result.error:
-          if result.status == 404: this.indexStatus = 'DOESNT_EXIST'
-          return
-        // Check for unaliased index which can't be migrated
-        if result[this.index.name]:
-          this.indexStatus = 'NOT_ALIASED'
-          return
-        // Check for highest-numbered automigrated index
-        matchingIndices = [...for key k in result: [k]]
-        n = _getMigrationCounter(matchingIndices)
-        if n == null:
-          this.indexStatus = 'NOT_MIGRATED'
-          return
-        else:
-          this.indexStatus = 'AUTOMIGRATED'
-          this.migrationCounter = n
-          this.mostRecentIndex = `${this.index.name}_v${n}`
-        // Get details of most recent index
-        details = result[this.mostRecentIndex]
-        this.currentSettings = {
-          mappings: details.mappings
-          settings: {
-            analysis: details.settings?.index?.analysis or {}
-          }
-        }
-      )
+  // See if the desired index has an existing alias.
+  getExistingAlias(): void -/>
+    { es } = this.backend
+    aliasName = this.index.name
 
-  finalChecks() ->
-    if this.indexStatus == 'DOESNT_EXIST':
-      this.migrationStrategy = 'CREATE'
+    result <- es.indices.get({index: aliasName}, {ignore:[404]})
+
+    // If no alias, it's safe to create one
+    if (result.error) and (result.status == 404):
+      this.indexStatus = 'DOESNT_EXIST'
       return
 
-    this.backend.log.trace('elasticsearch: computing migration diff', this.currentSettings, this.targetSettings)
+    // If a raw index with this name exists, we can't do a migration.
+    if result[aliasName]:
+      this.indexStatus = "NOT_ALIASED"
+      return
+
+    // If alias exists, locate the "best" physical backing index. If some
+    // particular index is labeled as the write index, we always use that.
+    // Otherwise use the index with the newest creation date
+    let newestVersion = 0
+    let newestTimestamp = 0
+    let writeIndex = null
+    let newestIndex = null
+    for key physicalIndexName, val descriptor in result:
+      version = parseVersion(physicalIndexName)
+      if version != null and version > newestVersion:
+        now newestVersion = version
+
+      if descriptor.aliases[aliasName]?.is_write_index:
+        now writeIndex = physicalIndexName
+
+      timestamp = parseInt(descriptor.settings?.index?.creation_date or '0')
+      if timestamp > newestTimestamp:
+        now newestTimestamp = timestamp
+        now newestIndex = physicalIndexName
+
+    this.previousWriteIndex = writeIndex
+    bestIndex = writeIndex or newestIndex
+    this.nextVersion = newestVersion + 1
+
+    // An alias with no indices at all?
+    if not bestIndex:
+      throw new Error(`Could not find bestIndex for alias '${aliasName}'`)
+
+    // We have a current best index, so there is potential for migration.
+    // Determine the settings we need to compare against to determine if
+    // migration is needed
+    this.indexStatus = 'MIGRATABLE'
+    this.currentIndex = bestIndex
+    details = result[bestIndex]
+    this.currentIndexDetails = details
+
+    settings = Object.assign({}, details.settings?.index)
+    for elem k in incomparableIndexSettings: delete settings[k]
+
+    this.currentSettings = {
+      mappings: details.mappings
+      settings
+    }
+
+
+  planIndexTransition(): void ->
+    { log } = this.backend
+    this.migrationStrategy = 'CANT_MIGRATE'
+
+    // If the index doesn't exist, create it
+    if this.indexStatus == 'DOESNT_EXIST':
+      log.trace('elasticsearch: migration target index missing, will create')
+      this.migrationStrategy = 'ADD_PHYSICAL_INDEX'
+      return
+
+    // If the index is a hard index, we can't migrate
+    if this.indexStatus == 'NOT_ALIASED':
+      this.migrationStrategy = 'CANT_MIGRATE'
+      this.reason = 'Target index is a physical index that cannot be aliased.'
+      return
+
+    log.trace('elasticsearch: computing migration diff', this.currentSettings, this.targetSettings)
 
     // If mappings are the same, migration is unnecessary.
     if isEqual(this.currentSettings, this.targetSettings):
-      this.backend.log.trace('elasticsearch: no difference, migration not needed')
+      log.trace('elasticsearch: no difference, migration not needed')
       this.migrationStrategy = 'NOT_NEEDED'
       return
 
     this.migrationDiff = deepDiff.diff(this.currentSettings, this.targetSettings)
 
     // Patch up white noise in migration diff
-    for elem difference in this.migrationDiff:
-      // Elasticsearch annoyingly stringifies numbers. We must do the same.
-      if difference.kind == 'E' and (JSON.stringify(difference.rhs) == difference.lhs):
-        set(this.targetSettings, difference.path, difference.lhs)
+    this.relevantDiffs = [...for elem difference in this.migrationDiff:
+      if isRelevantDifference(difference): [difference]
+    ]
 
-      // Elasticsearch omits date formats when returning index data.
-      if difference.kind == 'N' and (difference.path[difference.path.length - 1] == 'format'):
-        set(this.currentSettings, difference.path, difference.rhs)
-
-    if isEqual(this.currentSettings, this.targetSettings):
-      this.backend.log.trace('elasticsearch: no difference, migration not needed')
+    if this.relevantDiffs.length == 0:
+      this.backend.log.trace('elasticsearch: no relevant differences in index settings, migration not needed')
       this.migrationStrategy = 'NOT_NEEDED'
       return
 
-    this.backend.log.trace('elasticsearch: diff', this.migrationDiff)
+    this.backend.log.trace('elasticsearch: diff', this.relevantDiffs)
 
-    // Determine a migration strategy.
-    this.migrationStrategy = 'CANT_MIGRATE'
-    if this.indexStatus == 'UNKNOWN' or this.indexStatus == 'NOT_ALIASED' or this.indexStatus == 'NOT_MIGRATED':
-      this.reason = 'Index cannot be automigrated.'
-    else if this.indexStatus == 'AUTOMIGRATED':
-      this.migrationStrategy = 'REINDEX'
+    if this.indexStatus == 'MIGRATABLE':
+      this.migrationStrategy = 'ADD_PHYSICAL_INDEX'
 
-    this
 
-  executeCreateStrategy() ->
-    if this.migrationStrategy != 'CREATE': throw new Error('executeCreateStrategy() called in invalid state')
-    aliases = {}
-    aliases[this.index.name] = {}
+  executeCreateStrategy(): void -/>
+    { es, log } = this.backend
+
+    if this.migrationStrategy != 'ADD_PHYSICAL_INDEX':
+      throw new Error('executeCreateStrategy() called in invalid state')
+
+    // Create the new index
+    log.trace('creating new physical index')
+    newPhysicalIndexName = `${this.index.name}_v${this.nextVersion or 1}`
+    aliases = {
+      [this.index.name]: {}
+    }
     body = Object.assign({}, this.targetSettings, { aliases })
-    Promise.resolve(
-      this.backend.es.indices.create({
-        index: `${this.index.name}_v1`
-        body
-      })
-    )
-      .then(({body: result}) =>
-        this.backend.log.trace('es.indices.create <', result)
-        result
-      )
+    <- es.indices.create({
+      index: newPhysicalIndexName
+      body
+    })
 
-  executeReindexStrategy() ->
-    if this.migrationStrategy != 'REINDEX': throw new Error('executeReindexStrategy() called in invalid state')
-    prevIndex = `${this.index.name}_v${this.migrationCounter}`
-    nextIndex = `${this.index.name}_v${this.migrationCounter + 1}`
-    alias = `${this.index.name}`
-    Promise.resolve(
-      this.backend.es.indices.create({
-        index: nextIndex
-        body: this.targetSettings
-      })
-    ).then(=>
-      this.backend.es.indices.flush({ index: prevIndex })
-    ).then(=>
-      this.backend.es.reindex({
-        waitForCompletion: true
-        body: {
-          source: { index: prevIndex }
-          dest: { index: nextIndex, op_type: 'create' }
+    // Atomically swap new index as write index
+    log.trace('performing atomic write index swap')
+    actions = [{
+      "add": {
+        "index": newPhysicalIndexName
+        "alias": this.index.name
+        "is_write_index": true
+      }
+    }]
+    if this.previousWriteIndex:
+      actions.push({
+        "add": {
+          "index": this.previousWriteIndex
+          "alias": this.index.name
+          "is_write_index": false
         }
       })
-    ).then(=>
-      this.backend.es.indices.updateAliases({
-        body: {
-          actions: [
-            { remove: { index: prevIndex, alias } }
-            { add: { index: nextIndex, alias} }
-          ]
-        }
-      })
-    )
+    <- es.indices.updateAliases({ body: { actions} })
 
   execute() ->
-    if this.migrationStrategy == 'REINDEX':
-      this.executeReindexStrategy()
-    else if this.migrationStrategy == 'CREATE':
+    if this.migrationStrategy == 'ADD_PHYSICAL_INDEX':
       this.executeCreateStrategy()
     else if (not this.migrationStrategy):
       Promise.reject(new Error('unprepared MigrationPlan'))
@@ -189,7 +236,7 @@ export class ESMigration extends Migration:
         index: plan.index.name
         currentSettings: plan.currentSettings
         targetSettings: plan.targetSettings
-        settingsDiff: plan.migrationDiff
+        settingsDiff: plan.relevantDiffs
       }]
     ]
 

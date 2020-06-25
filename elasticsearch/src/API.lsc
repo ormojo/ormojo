@@ -54,6 +54,7 @@ export class ESAPI:
       create: wrapAPI({log, longname: 'indices.create'}, driver.indices, 'create')
       flush: wrapAPI({log, longname: 'indices.flush'}, driver.indices, 'flush')
       updateAliases: wrapAPI({log, longname: 'indices.updateAliases'}, driver.indices, 'updateAliases')
+      getAlias: wrapAPI({log, longname: 'indices.getAliases'}, driver.indices, 'getAlias')
     }
 
     this.reindex = wrapAPI({log}, driver, 'reindex')

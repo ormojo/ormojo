@@ -44,9 +44,9 @@ createBackend() ->
   })
 
 afterAll! -/>
-  // <- es_client.indices.delete({
-  //   index: [`widget_migration*`]
-  // }, { ignore: [404] })
+  <- es_client.indices.delete({
+    index: [`widget_migration*`]
+  }, { ignore: [404] })
   return
 
 let be, be2, be3
@@ -62,7 +62,7 @@ describe('migration tests: ', ->
       plan = mig.getMigrationPlan()
       // console.dir(plan, { depth: 50 })
       // should need to create the index because it's absent
-      expect(plan[0].strategy).toBe('CREATE')
+      expect(plan[0].strategy).toBe('ADD_PHYSICAL_INDEX')
       mig.execute()
     )
     .then! ->
@@ -84,10 +84,10 @@ describe('migration tests: ', ->
     .then! (mig3) ->
       plan = mig3.getMigrationPlan!
       // console.dir(plan, { depth: 50 })
-      expect(plan[0].strategy).toBe('REINDEX')
+      expect(plan[0].strategy).toBe('ADD_PHYSICAL_INDEX')
       mig3.execute()
     .then! ->
-      be3.create(NuWidget, {name: 'joe', extra: 'pickles'})
+      be3.create(NuWidget, {name: 'joe', extra: 'pickles'}, {refresh: 'wait_for'})
     .then! (w2) ->
       now id2 = w2.id
       // Check that data survived migration
