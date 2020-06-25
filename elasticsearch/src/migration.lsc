@@ -1,7 +1,6 @@
 import { Migration } from '@ormojo/ormojo'
 import isEqual from 'lodash/isEqual'
 import deepDiff from 'deep-diff'
-import set from 'lodash/set'
 
 parseVersion(physicalIndexName) ->
   mtch = /_v(\d+)$/.exec(physicalIndexName)
