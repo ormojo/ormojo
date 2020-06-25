@@ -15,6 +15,10 @@ export esTypeMap(orType) ->
     ({ type: 'object' })
   else if orType == types.date:
     ({ type: 'date', format: 'strict_date_optional_time||epoch_millis' })
+  else if orType == types.point:
+    ({ type: 'geo_point' })
+  else if orType == types.ip:
+    ({ type: 'ip' })
   else if (orType instanceof ListType):
     esTypeMap(orType.elementType)
   else:
