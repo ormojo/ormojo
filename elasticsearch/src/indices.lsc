@@ -1,5 +1,6 @@
 import { esTypeMap } from './esTypeMap'
 import { declaredFields } from '@ormojo/ephraim'
+import { Timestamped } from '@ormojo/ormojo'
 
 // Represents an index in Elasticsearch.
 export class ESIndex:
@@ -45,6 +46,11 @@ export class ESIndex:
       "type": "keyword"
       "store": true
     }
+
+    // For timestamped types, add @timestamp mapping
+    if T.isKindOf(Timestamped):
+      this.properties['@timestamp'] = { type: 'date', format: 'strict_date_optional_time||epoch_millis' }
+
     this.mappings = { properties: this.properties }
 
   _deleteIndex(): void ->

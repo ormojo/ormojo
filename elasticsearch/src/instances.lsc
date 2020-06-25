@@ -71,5 +71,8 @@ export getBulkDataForInstance(instance, opts) ->
     instance.updatedAt = new Date()
   ob = instance~toPlainObject()
   ob.orm_type = instance._type
+  // Conform to standard Elasticsearch timestamp naming conventions
+  if instance~isa(Timestamped) and ob.createdAt:
+    ob['@timestamp'] = ob.createdAt
   delete ob.id // use Elasticsearch virtual id field
   ob
