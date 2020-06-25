@@ -47,6 +47,15 @@ export integer = singleton("integer", ->
 // Spatial point
 export point = singleton("point", ->
   const point = new PrimitiveType("point")
-  point.validate = (x) -> Array.isArray(x) and (x.length == 2)
+  point.validate = (x) ->
+    x~looseEq(null)
+    or (Array.isArray(x) and (x.length == 2))
   point
+)
+
+// Spatial point
+export ip = singleton("ip", ->
+  const ip = new PrimitiveType("ip")
+  ip.validate = (x) -> x~looseEq(null) or typeof x == "string"
+  ip
 )
