@@ -121,6 +121,7 @@ getBulkDeleteOpForInstance(instance) ->
 
 bulkOperation(es, log, body, opts) ->
   rq = { body }
+  if opts?.writeConcern != 'NONE': rq.refresh = 'wait_for'
   if opts?.refresh: rq.refresh = opts.refresh
   es.bulk(rq)
 
