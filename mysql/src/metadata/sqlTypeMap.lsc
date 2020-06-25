@@ -17,5 +17,7 @@ export sqlTypeMap(orType) ->
     'TEXT'
   else if orType == types.point:
     'GEOMETRY'
+  else if orType == types.ip:
+    'VARCHAR(64)'
   else:
     undefined
