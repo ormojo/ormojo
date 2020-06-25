@@ -1,6 +1,6 @@
 {
   "name": "@ormojo/elasticsearch",
-  "version": "0.2.15",
+  "version": "0.2.16",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
@@ -51,8 +51,8 @@
     "testRegex": "(\\.|/)test\\.lsc$"
   },
   "dependencies": {
-    "@ormojo/ephraim": "^0.2.9",
-    "@ormojo/ormojo": "^0.2.12",
+    "@ormojo/ephraim": "^0.2.10",
+    "@ormojo/ormojo": "^0.2.13",
     "deep-diff": "^1.0.2",
     "lodash": "^4.17.15"
   }
