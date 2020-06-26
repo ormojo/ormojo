@@ -63,7 +63,7 @@ export class MySQLColumn:
 
   setEphraimField(fieldKey, fieldType) ->
     this.ephraimField = fieldKey
-    if fieldType == types.json:
+    if (fieldType == types.json) or (fieldType == types.object):
       this.readPattern = ['readJson', fieldKey]
     elif fieldType == types.boolean:
       this.readPattern = ['readBool', fieldKey]
