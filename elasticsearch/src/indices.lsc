@@ -99,7 +99,7 @@ export class ESIndices:
     for key k, val idx in this.indices:
       if name.startsWith(k):
         // TODO: allow index naming convention to be changed in config
-        if (k == name) or (/_v(\d+)$/.test(name)):
+        if (k == name) or (/_(\d+)$/.test(name)):
           this.prefixedIndices[k] = idx
           return idx
 

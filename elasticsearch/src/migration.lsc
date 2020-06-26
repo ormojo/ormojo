@@ -3,7 +3,7 @@ import isEqual from 'lodash/isEqual'
 import deepDiff from 'deep-diff'
 
 parseVersion(physicalIndexName) ->
-  mtch = /_v(\d+)$/.exec(physicalIndexName)
+  mtch = /_(\d+)$/.exec(physicalIndexName)
   if mtch: parseInt(mtch[1]) else: null
 
 // Indices that are ignored
@@ -179,7 +179,7 @@ class MigrationPlan:
 
     // Create the new index
     log.trace('creating new physical index')
-    newPhysicalIndexName = `${this.index.name}_v${this.nextVersion or 1}`
+    newPhysicalIndexName = `${this.index.name}_${this.nextVersion or 1}`
     aliases = {
       [this.index.name]: {}
     }
