@@ -100,6 +100,11 @@ export class ResultSet {
   // @return [Array<Instance>] The collection of results.
   getResults() -> this.results or []
 
+  // Retrieve the first result.
+  //
+  // @return [Instance] The first result, or null if there is no result.
+  getFirstResult() -> this.results?[0]
+
   // Return an array of results that can be mutated. May throw if
   // the ResultSet is immutable.
   getMutableResults() ->
