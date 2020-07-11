@@ -1,5 +1,5 @@
 import { Migration } from '@ormojo/ormojo'
-import isEqual from 'lodash/isEqual'
+import { isEqual, last, isEmpty } from 'lodash'
 import deepDiff from 'deep-diff'
 
 parseVersion(physicalIndexName) ->
@@ -15,7 +15,7 @@ incomparableIndexSettings = [
 ]
 
 isShardingParameterDiff(difference) ->
-  match difference.path[difference.path.length - 1]:
+  match last(difference.path):
     | 'number_of_shards': true
     | 'number_of_replicas': true
     | else: false
@@ -28,13 +28,19 @@ isRelevantDifference(difference) ->
 
   // Elasticsearch doesn't return date formats when inquiring about index
   // settings. This may cause false positives.
-  if difference.kind == 'N' and (difference.path[difference.path.length - 1] == 'format'):
+  if difference.kind == 'N' and (last(difference.path) == 'format'):
     return false
 
   // If the user didn't specify sharding or replication parameters, we
   // don't need to diff them
   if difference.kind == 'D' and isShardingParameterDiff(difference):
     return false
+
+  // An empty, new, analysis setting is irrelevant
+  if difference.kind == 'N'
+    and isEqual(difference.path, ['settings', 'analysis'])
+    and isEmpty(difference.rhs):
+      return false
 
   true
 
