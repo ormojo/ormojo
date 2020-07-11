@@ -1,4 +1,4 @@
-import { Query, ResultSet } from './Query'
+import { Query, ResultSet } from './query'
 import { toPlainObject, assignPlainObject } from '@ormojo/ephraim'
 
 export class SinkResult:
