@@ -1,10 +1,10 @@
-import { entity, field, augment, toPlainObject, createMemoryDelta as create, setFieldType, isDelta, types, typeFrom } from '@ormojo/ephraim'
+import { entity, field, augment, toPlainObject, createMemoryDelta as create, setFieldType, isDelta, types, typeFrom, Entity } from '@ormojo/ephraim'
 
 test! 'basic', ->
-  @entity({name: "E"}) class E:
+  @entity({name: "E"}) class E extends Entity:
     @field(types.date) d
 
-  @entity({name: "F", inherits: [E]}) class F:
+  @entity({name: "F", inherits: [E]}) class F extends Entity:
     @field() f
 
   debugger

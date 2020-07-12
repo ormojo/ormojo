@@ -1,14 +1,15 @@
 'use @oigroup/lightscript with flippedImports'
 
 import '@ormojo/ephraim': {
-  entity, isKindOf, typeFrom, field, extendField, isa
+  entity, isKindOf, typeFrom, field, isa
+  Entity
   createMemory as create
 }
 
 test! "isKindOf", ->
-  @entity({name: "Animal"}) class Animal {}
+  @entity({name: "Animal"}) class Animal extends Entity {}
   @entity({name: "Dog"}) class Dog extends Animal {}
-  @entity({name: "Plant"}) class Plant {}
+  @entity({name: "Plant"}) class Plant extends Entity {}
 
   expect(Animal~isKindOf(Animal)).toBeTruthy()
   expect(Animal~isKindOf(Plant)).toBeFalsy()
@@ -16,12 +17,12 @@ test! "isKindOf", ->
   expect(Animal~isKindOf(Dog)).toBeFalsy()
 
 test! "spec inheritance", ->
-  @entity({name: "E", willInherit: true}) class E {}
+  @entity({name: "E", willInherit: true}) class E extends Entity {}
   @entity({name: "D"}) class D extends E {}
   expect(typeFrom(D).entitySpec.willInherit).toBeTruthy()
 
 test! "field extension", ->
-  @entity({name: "E"}) class E:
+  @entity({name: "E"}) class E extends Entity:
     @field() f
 
   @entity({name: "D"}) class D extends E:
@@ -33,17 +34,17 @@ test! "field extension", ->
   expect(typeFrom(D).fields.f.initializer).toBeTruthy()
 
 test! "multiple inheritance", ->
-  @entity({name: "Sentient"}) class Sentient {
+  @entity({name: "Sentient"}) class Sentient extends Entity {
     @field() iq = 50
 
     speak() -> "protolanguage"
   }
-  @entity({name: "Animal"}) class Animal {
+  @entity({name: "Animal"}) class Animal extends Entity {
     @field() iq = 0
 
     speak() -> "ruff ruff"
   }
-  @entity({name: "Supergenius"}) class Supergenius {
+  @entity({name: "Supergenius"}) class Supergenius extends Entity {
     @field() iq = 250
 
     speak() -> "ds^2 = g_mu_nu dx_mu dx_nu"

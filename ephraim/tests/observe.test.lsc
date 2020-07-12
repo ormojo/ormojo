@@ -1,8 +1,8 @@
-import { entity, field, observe, toPlainObject, createMemory as create } from '@ormojo/ephraim'
+import { entity, field, observe, toPlainObject, createMemory as create, Entity } from '@ormojo/ephraim'
 import { test as testObservable } from '@ormojo/fobs'
 
 test! 'observe', ->
-  @entity({name: "E"}) class E:
+  @entity({name: "E"}) class E extends Entity:
     @field() f
 
   e = create(E)
@@ -23,10 +23,10 @@ test! 'observe', ->
   expect(true).toBeTruthy!
 
 test! 'observe child', ->
-  @entity({name: "Child"}) class Child:
+  @entity({name: "Child"}) class Child extends Entity:
     @field() data
 
-  @entity({name: "Parent"}) class Parent:
+  @entity({name: "Parent"}) class Parent extends Entity:
     @field(Child) child
 
   let storage

@@ -6,11 +6,12 @@ import '@ormojo/ephraim': {
   fieldKeys, flexFieldKeys, forEachField
   createMemory as create
   typeOf, underlyingTypeOfType
+  Entity
 }
 
 
 test! "fields by class", ->
-  @entity({name: "E"}) class E:
+  @entity({name: "E"}) class E extends Entity:
     @field() anyField
 
   @entity({name: "D"}) class D extends E:
@@ -34,13 +35,13 @@ test! "fields by class", ->
 test! "illegal field names", ->
   expect!
     ->
-      @entity({name: "Bad1"}) class Bad1:
+      @entity({name: "Bad1"}) class Bad1 extends Entity:
         @field() _underscored
     .toThrow("Field '_underscored' may not begin with '_' or contain '.'")
   // TODO: dotted example once class properties + decorators work right
 
 test! "instance field metadata", ->
-  @entity({name: "E"}) class E:
+  @entity({name: "E"}) class E extends Entity:
     @field() anyField
 
   @entity({name: "D"}) class D extends E:
@@ -60,7 +61,7 @@ test! "instance field metadata", ->
   expect(d~flexFieldKeys()).toEqual(['flex'])
 
 test! "primitive defaults metadata", ->
-  @entity({name: "E"}) class E:
+  @entity({name: "E"}) class E extends Entity:
     @field(types.string) F = "default"
     @field(types.string) G
     @field(types.string) H = -> "initializerFunction"
@@ -76,7 +77,7 @@ test! "primitive defaults metadata", ->
 
 
 test! "underlying types", ->
-  @entity({name: "E"}) class E:
+  @entity({name: "E"}) class E extends Entity:
     @field() anyField
 
   e = create(E)

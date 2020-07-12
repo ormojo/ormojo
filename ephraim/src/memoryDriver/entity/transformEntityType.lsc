@@ -81,22 +81,11 @@ export transformEntityType(ET, transformedTypeSymbol, transformedTypeQualifier, 
   typeName = `${transformedTypeQualifier}(${ET.name})`
   EClass = ET.entityConstructor
 
-  MemoryEntityClass(...args) ->
-    obj = Object.create(MemoryEntityClass.prototype)
-    obj[dataSymbol] = Object.create(null)
-    if needsCloneCache: obj~createCloneCache()
-    EClass.apply(obj, args)
-    return obj
+  class MemoryEntityClass extends EClass:
+    _preinit(): void ->
+      this[dataSymbol] = Object.create(null)
+      if needsCloneCache: createCloneCache(this)
 
-  MemoryEntityClass.prototype = Object.create(EClass.prototype, {
-    constructor: {
-      value: MemoryEntityClass
-      enumerable: false
-      writable: true
-      configurable: true
-    }
-  })
-  Object.setPrototypeOf(MemoryEntityClass, EClass)
   Object.defineProperty(MemoryEntityClass, "name", { value: typeName })
 
   // Create ephraim type for memory entity; associate it with prototype

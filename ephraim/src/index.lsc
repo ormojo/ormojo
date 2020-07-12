@@ -25,7 +25,7 @@ export {
 } from './types/mapType'
 
 export {
-  field, entity, augment, augmentField, setFieldType
+  field, entity, Entity, augment, augmentField, setFieldType
 } from './define'
 
 export {

@@ -2,6 +2,7 @@
 
 import '@ormojo/ephraim': {
   entity, listOf, types, field, createMemory as create, toPlainObject
+  Entity
 }
 
 { string, number } = types
@@ -12,7 +13,7 @@ test! "list primitive types", ->
 
 
 test! "list entity types", ->
-  @entity({name: "Animal"}) class Animal {}
+  @entity({name: "Animal"}) class Animal extends Entity {}
   @entity({name: "Dog"}) class Dog extends Animal {}
 
   expect(listOf(Dog).isKindOf(listOf(Animal))).toBeTruthy()
@@ -20,7 +21,7 @@ test! "list entity types", ->
   expect(listOf(Animal).isKindOf(listOf(Animal))).toBeTruthy()
 
 test! "basic list", ->
-  @entity({name: "A"}) class A:
+  @entity({name: "A"}) class A extends Entity:
     @field() a
 
   debugger
@@ -37,7 +38,7 @@ test! "basic list", ->
   console.log(listOfA~toPlainObject!)
 
 test! "list field init", ->
-  @entity({name: "E"}) class E:
+  @entity({name: "E"}) class E extends Entity:
     @field(listOf(types.string)) strs = []
 
   e = create(E)

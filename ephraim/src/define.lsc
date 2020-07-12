@@ -64,6 +64,13 @@ normalizeEntitySpec(spec) ->
     throw new Error("Entity specification must include an explicit model name")
   spec
 
+// Entity base class
+export class Entity:
+  constructor() ->
+    this._preinit()
+
+  _preinit(): void -> return
+
 // @entity decorator
 export entity(spec) ->
   now spec = normalizeEntitySpec(spec)
@@ -72,6 +79,10 @@ export entity(spec) ->
 
   (constructor) ->
     proto = constructor.prototype
+
+    if not (proto instanceof Entity):
+      throw new Error(`All entities must inherit from ephraim.Entity`)
+
     bootstrapPrototype(proto, EntityType, spec.name)
     T = typeFrom(proto.constructor)
     Object.assign(T.entitySpec, spec)

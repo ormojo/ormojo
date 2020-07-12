@@ -1,7 +1,7 @@
-import { entity, field, toPlainObject, assignPlainObject, types, listOf, createMemory as create, augment, hydratePlainObject } from '@ormojo/ephraim'
+import { entity, field, toPlainObject, assignPlainObject, types, listOf, createMemory as create, augment, hydratePlainObject, Entity } from '@ormojo/ephraim'
 
 test! 'toPlainObject transients', ->
-  @entity({name: "E"}) class E:
+  @entity({name: "E"}) class E extends Entity:
     @field({type: types.any, transient: true}) t
 
   e = create(E)

@@ -1,7 +1,7 @@
-import { entity, field, augment, toPlainObject, createMemory as create, setFieldType, isDelta } from '@ormojo/ephraim'
+import { entity, Entity, field, augment, toPlainObject, createMemory as create, setFieldType, isDelta } from '@ormojo/ephraim'
 
 test! 'basic', ->
-  @entity({name: "E"}) class E:
+  @entity({name: "E"}) class E extends Entity:
     @field() f
 
   debugger
@@ -13,7 +13,7 @@ test! 'basic', ->
   console.log(Object.getPrototypeOf(e))
 
 test! 'static', ->
-  @entity({name: "E"}) class E:
+  @entity({name: "E"}) class E extends Entity:
     @field() f = 1
 
     static staticMethod() -> 1
@@ -21,7 +21,7 @@ test! 'static', ->
   expect(E.staticMethod()).toBe(1)
 
 test! 'init', ->
-  @entity({name: "E"}) class E:
+  @entity({name: "E"}) class E extends Entity:
     @field() f = 1
     @field() g = -> "functional initializer"
 
@@ -32,7 +32,7 @@ test! 'init', ->
   expect(e.g).toBe("functional initializer")
 
 test! 'init via constructor', ->
-  @entity({name: "E"}) class E:
+  @entity({name: "E"}) class E extends Entity:
     @field() e
 
     constructor() ->
@@ -55,10 +55,10 @@ test! 'init via constructor', ->
   expect(bound()).toBe(2)
 
 test! 'subentity', ->
-  @entity({name: "E"}) class E:
+  @entity({name: "E"}) class E extends Entity:
     @field() e = undefined
 
-  @entity({name: "F"}) class F:
+  @entity({name: "F"}) class F extends Entity:
     @field(E) subE = undefined
     @field(E) subE2 = null
 
@@ -72,10 +72,10 @@ test! 'subentity', ->
   expect(f~toPlainObject!).toEqual({ subE: { e: 1 }, subE2: null })
 
 test! 'subentity init', ->
-  @entity({name: "E"}) class E:
+  @entity({name: "E"}) class E extends Entity:
     @field() e = 1
 
-  @entity({name: "F"}) class F:
+  @entity({name: "F"}) class F extends Entity:
     @field(E) subE = {}
 
   f = create(F)
@@ -84,10 +84,10 @@ test! 'subentity init', ->
   expect(f~toPlainObject!).toEqual({ subE: { e: 1 }})
 
 test! 'circular', ->
-  @entity({name: "Parent"}) class Parent:
+  @entity({name: "Parent"}) class Parent extends Entity:
     @field() child
 
-  @entity({name: "Child"}) class Child:
+  @entity({name: "Child"}) class Child extends Entity:
     @field(Parent) parent
     @field() data
 
@@ -107,10 +107,10 @@ test! 'circular', ->
   debugger
 
 test! 'circular 2', ->
-  @entity({name: "Parent"}) class Parent:
+  @entity({name: "Parent"}) class Parent extends Entity:
     @field() child
 
-  @entity({name: "Child"}) class Child:
+  @entity({name: "Child"}) class Child extends Entity:
     @field(Parent) parent
     @field() data
 
