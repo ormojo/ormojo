@@ -2,10 +2,12 @@
   "name": "@ormojo/fobs",
   "version": "1.0.7",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Fast, minimal, functional ES7 Observables.",
+  "type": "commonjs",
   "main": "lib/index.js",
-  "module": "lib/index.es.js",
-  "jsnext:main": "lib/index.es.js",
   "files": [
     "lib"
   ],
@@ -21,37 +23,27 @@
     "lint": "eslint --ext .js,.lsc src",
     "preversion": "npm run test"
   },
+  "dependencies": {
+    "symbol-observable": "^1.1.0"
+  },
   "devDependencies": {
-    "@oigroup/babel-preset-lightscript": "^3.0.0",
-    "@oigroup/lightscript-eslint": "^3.0.0",
-    "babel-cli": "^6.26.0",
-    "babel-core": "^6.26.0",
-    "babel-plugin-external-helpers": "^6.22.0",
-    "babel-plugin-istanbul": "^4.1.5",
-    "cross-env": "^5.0.5",
-    "eslint": "~4.8.0",
-    "jest": "^21.2.1",
-    "rimraf": "^2.6.2",
-    "rollup": "^0.58.0",
-    "rollup-plugin-babel": "^3.0.3",
-    "rollup-plugin-node-resolve": "^3.0.0"
+    "jest": "^24.8.0",
+    "npm-run-all": "^4.1.5"
   },
   "jest": {
+    "testEnvironment": "node",
     "moduleFileExtensions": [
       "js",
       "json",
       "lsc"
     ],
     "transform": {
-      "\\.lsc$": "<rootDir>/lightscript.jest.js"
+      "\\.lsc$": ["babel-jest", { "rootMode": "upward" }]
     },
     "testRegex": "(\\.|/)test\\.lsc$",
     "coveragePathIgnorePatterns": [
       "/node_modules/",
       "/lib/"
     ]
-  },
-  "dependencies": {
-    "symbol-observable": "^1.1.0"
   }
 }
