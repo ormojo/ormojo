@@ -1,22 +1,22 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
-import { entity, field, types, isa } from '@ormojo/ephraim'
+import { entity, field, types, isa, Entity } from '@ormojo/ephraim'
 import es_client from '../es_client'
 import { ESBackend } from '../..'
 
 let backend
 
-@entity({name: 'Sentient'}) class Sentient {
+@entity({name: 'Sentient'}) class Sentient extends Entity {
   @field(types.integer) iq = 50
 
   speak() -> "protolanguage"
 }
-@entity({name: "Animal"}) class Animal {
+@entity({name: "Animal"}) class Animal extends Entity {
   @field(types.string) id
   @field(types.integer) iq = 0
 
   speak() -> "ruff ruff"
 }
-@entity({name: "Supergenius"}) class Supergenius {
+@entity({name: "Supergenius"}) class Supergenius extends Entity {
   @field(types.integer) iq = 250
 
   speak() -> "ds^2 = g_mu_nu dx_mu dx_nu"

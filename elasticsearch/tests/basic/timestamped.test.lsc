@@ -1,9 +1,9 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
 import { save, destroy, Timestamped } from '@ormojo/ormojo'
-import { toPlainObject, entity, field, types } from '@ormojo/ephraim'
+import { toPlainObject, entity, field, types, Entity } from '@ormojo/ephraim'
 import { createBackend, es_client } from '../backend'
 
-@entity({name: "Widget", inherits: [Timestamped]}) class Widget:
+@entity({name: "Widget", inherits: [Timestamped]}) class Widget extends Entity:
   @field(types.string) id
   @field(types.string) name = 'nameless'
   @field(types.integer) qty = 2

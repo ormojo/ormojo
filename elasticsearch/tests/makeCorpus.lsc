@@ -1,4 +1,4 @@
-import { entity, field, types, listOf } from '@ormojo/ephraim'
+import { entity, field, types, listOf, Entity } from '@ormojo/ephraim'
 import es_client from './es_client'
 import { QueryDsl } from '..'
 import { createBackend } from './backend'
@@ -6,7 +6,7 @@ import { createBackend } from './backend'
 export makeCorpus(extraName) ->
   backend = createBackend!
 
-  @entity({name: 'Widget'}) class Widget:
+  @entity({name: 'Widget'}) class Widget extends Entity:
     @field(types.string) id
     @field(types.text) name = 'nameless'
     @field(types.integer) qty = 2

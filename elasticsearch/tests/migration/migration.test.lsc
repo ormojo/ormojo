@@ -1,5 +1,5 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
-import {  entity, field, types, listOf } from '@ormojo/ephraim'
+import {  entity, field, types, listOf, Entity } from '@ormojo/ephraim'
 import es_client from '../es_client'
 import { ESBackend,QueryDsl } from '../..'
 
@@ -23,7 +23,7 @@ jest.setTimeout(10000)
       filter: [ 'lowercase', 'autocomplete_filter' ]
     }
   }
-}) class Widget:
+}) class Widget extends Entity:
   @field(types.string) id
   @field(types.string) name = 'nameless'
   @field(types.integer) qty = 2
