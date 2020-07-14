@@ -1,6 +1,6 @@
 import { fromPromise, test } from '..'
 
-describe! 'fromPromise', ->
+describe! 'fromPromise', (): void ->
   it! 'works', ->
     let resolve, reject
     pr = new Promise! (re, rej) ->

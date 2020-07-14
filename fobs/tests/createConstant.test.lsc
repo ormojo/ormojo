@@ -1,6 +1,6 @@
 import { createConstant, test as testObs } from '..'
 
-test! 'createConstant', ->
+test! 'createConstant', (): void ->
   subj = createConstant(1)
 
   testObs(subj, console.log.bind(console), [

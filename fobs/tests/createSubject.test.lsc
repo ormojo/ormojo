@@ -1,6 +1,6 @@
 import { createSubject, test } from '..'
 
-describe! 'createSubject', ->
+describe! 'createSubject', (): void ->
   it! 'should work', ->
     subj = createSubject()
 

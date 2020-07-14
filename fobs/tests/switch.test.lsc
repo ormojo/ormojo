@@ -1,6 +1,6 @@
 import { createSubject, createBehaviorSubject, switchLatest, test } from '..'
 
-describe! 'switch', ->
+describe! 'switch', (): void ->
   it! 'should work', ->
     subj1 = createSubject()
     subj2 = createSubject()
@@ -77,13 +77,14 @@ describe! 'switch', ->
     outer.next(subj3)
 
   it! 'should manage subscriptions properly', ->
+    changelog = []
     subj1 = createSubject({
       onObserversChanged: (obs, added, removed) ->
-        console.log("subj1 observers", obs, "added", added, "removed", removed)
+        changelog.push({subject: 1, added, removed, length: obs.length })
     })
     subj2 = createSubject({
       onObserversChanged: (obs, added, removed) ->
-        console.log("subj2 observers", obs, "added", added, "removed", removed)
+        changelog.push({subject: 2, added, removed, length: obs.length })
     })
     outer = createSubject()
     switched = switchLatest(outer)
@@ -92,3 +93,31 @@ describe! 'switch', ->
     outer.next(subj1)
     outer.next(subj2)
     sub.unsubscribe()
+
+    // When first is pushed, we should subscribe to it.
+    expect(changelog[0]).toMatchObject({
+      subject: 1
+      added: expect.anything()
+      removed: null
+      length: 1
+    })
+    // When second is pushed, we should unsub from first and sub to second
+    expect(changelog[1]).toMatchObject({
+      subject: 1
+      added: null
+      removed: expect.anything()
+      length: 0
+    })
+    expect(changelog[2]).toMatchObject({
+      subject: 2
+      added: expect.anything()
+      removed: null
+      length: 1
+    })
+    // When we unsub from the switched observable, it should unsub from second
+    expect(changelog[3]).toMatchObject({
+      subject: 2
+      added: null
+      removed: expect.anything()
+      length: 0
+    })

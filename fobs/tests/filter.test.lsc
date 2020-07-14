@@ -1,6 +1,6 @@
 import { createBehaviorSubject, filter, test } from '..'
 
-describe! 'filter', ->
+describe! 'filter', (): void ->
   it! 'should work', ->
     obs1 = createBehaviorSubject()
     obs1.next(0)

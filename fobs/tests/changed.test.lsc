@@ -1,6 +1,6 @@
 import { createSubject, changed, test } from '..'
 
-describe! 'changed', ->
+describe! 'changed', (): void ->
   it! 'should work', ->
     subj1 = createSubject()
     ch = changed(subj1)

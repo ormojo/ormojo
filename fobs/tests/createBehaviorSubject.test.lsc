@@ -1,6 +1,6 @@
 import { createBehaviorSubject, test } from '..'
 
-describe! 'createBehaviorSubject', ->
+describe! 'createBehaviorSubject', (): void ->
   it! 'emits undefined when unprimed', ->
     subj = createBehaviorSubject()
 

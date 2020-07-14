@@ -135,7 +135,7 @@ export test(observable, always, expectations) ->
         throw new Error(`Unexpected error at ${currentIndex}`)
   })
 
-  nextSubscr = {
+  {
     unsubscribe: ->
       subscr.unsubscribe()
       if currentIndex < expectations.length:

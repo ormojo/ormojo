@@ -1,6 +1,6 @@
 import { createBehaviorSubject, map, test } from '..'
 
-describe! 'map', ->
+describe! 'map', (): void ->
   it! 'should work', ->
     obs1 = createBehaviorSubject()
     obs1.next(0)

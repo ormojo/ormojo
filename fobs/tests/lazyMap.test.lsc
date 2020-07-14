@@ -1,6 +1,6 @@
 import { createBehaviorSubject, map, toBehaviorSubject, test } from '..'
 
-describe! 'lazyMap', ->
+describe! 'lazyMap', (): void ->
   it! 'should work', ->
     obs1 = createBehaviorSubject()
     obs1.next(0)

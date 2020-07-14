@@ -1,6 +1,6 @@
 import { createSubject, merge, test, getObservableFrom } from '..'
 
-describe! 'merge', ->
+describe! 'merge', (): void ->
   it! 'should work', ->
     subj1 = createSubject()
     subj2 = createSubject()

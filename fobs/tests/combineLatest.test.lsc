@@ -1,6 +1,6 @@
 import { createSubject, combineLatest, test } from '..'
 
-describe! 'combineLatest', ->
+describe! 'combineLatest', (): void ->
   it! 'should work', ->
     obs1 = createSubject()
     obs2 = createSubject()

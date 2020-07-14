@@ -1,6 +1,6 @@
 import { createBehaviorSubject, memoize, test } from '..'
 
-describe! 'memoize', ->
+describe! 'memoize', (): void ->
   it! 'should work', ->
     obs1 = createBehaviorSubject()
     obs1.next(0)
