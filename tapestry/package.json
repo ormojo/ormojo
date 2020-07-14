@@ -24,7 +24,7 @@
     "@ormojo/ormojo": "^0.2.14"
   },
   "devDependencies": {
-    "jest": "^24.8.0",
+    "jest": "^26.1.0",
     "npm-run-all": "^4.1.5"
   },
   "jest": {

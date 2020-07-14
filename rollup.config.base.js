@@ -1,20 +1,26 @@
-import babel from 'rollup-plugin-babel';
-import resolve from 'rollup-plugin-node-resolve';
+import babel from '@rollup/plugin-babel';
+import resolve from '@rollup/plugin-node-resolve';
 
 var path = require('path');
 var findParentDir = require('find-parent-dir');
 
 export default function createConfig(opts) {
-  let { projectPath, targets } = opts
+  let { projectPath, targets, extensions } = opts
+
+  if(!extensions) { extensions = [".js", ".lsc"] }
 
   var srcPath = (path.resolve(projectPath, 'src')).replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
   var srcPathRegex = new RegExp(srcPath)
 
   // Find nearest babelrc
   var babelRCDir = findParentDir.sync(path.resolve(projectPath), 'babel.config.js')
-  var babelRC = require(babelRCDir + '/babel.config.js')
+  // XXX: consider lodash cloneDeep here
+  const babelRC = JSON.parse(JSON.stringify(require(babelRCDir + '/babel.config.js')))
   babelRC.babelrc = false;
-  babelRC.extensions = [".js", ".lsc"];
+  babelRC.extensions = extensions;
+  babelRC.caller = {
+    supportsTopLevelAwait: false
+  }
 
   // Locate LSC preset
   var lscPreset = babelRC.presets.find(x => x[0] === "@lightscript")
@@ -29,6 +35,9 @@ export default function createConfig(opts) {
     lscConfig.additionalPlugins = lscConfig.additionalPlugins || [];
     lscConfig.additionalPlugins.push("babel-plugin-istanbul");
   }
+
+  console.log("Rollup config builder: compiling with babelrc:")
+  console.dir(babelRC, { depth: 10 })
 
   // Attempt to determine if a module is external and should not be rolled into
   // the bundle. Check for presence in source path, presence of "." in module path,
@@ -46,7 +55,7 @@ export default function createConfig(opts) {
   }
 
   var getPlugins = () => [
-    resolve({ extensions: babelRC.extensions }),
+    resolve({ extensions }),
     babel(babelRC)
   ]
 
