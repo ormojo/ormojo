@@ -1,21 +1,21 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
 import { save, destroy, find, findAll } from '@ormojo/ormojo'
-import { toPlainObject, entity, field, types, setFieldType } from '@ormojo/ephraim'
+import { toPlainObject, entity, field, types, setFieldType, Entity } from '@ormojo/ephraim'
 import { createBackend } from '../backend'
 import { OneToOneRelationship, And, Or, Not, Eq, Op, Field } from '../..'
 
-@entity({name: 'Master'}) class Master:
+@entity({name: 'Master'}) class Master extends Entity:
   @field(types.integer) id
   @field(types.string) name = 'nameless'
   @field() detail
   @field() detail2
 
-@entity({name: 'Detail'}) class Detail:
+@entity({name: 'Detail'}) class Detail extends Entity:
   @field(types.integer) MasterId
   @field(Master) master
   @field(types.integer) qty = 2
 
-@entity({name: 'Detail2'}) class Detail2:
+@entity({name: 'Detail2'}) class Detail2 extends Entity:
   @field(types.integer) id
   @field(types.integer) MasterId
   @field(Master) master
@@ -69,7 +69,7 @@ beforeAll! ->
 afterAll! ->
   backend.shutdown!
 
-describe('master child', ->
+describe('master child', (): void ->
   it('should find', ->
     let tmp
     backend.create(Master, { name: 'one'})

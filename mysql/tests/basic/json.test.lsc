@@ -1,9 +1,9 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
 import { save, destroy } from '@ormojo/ormojo'
-import { toPlainObject, entity, field, types } from '@ormojo/ephraim'
+import { toPlainObject, entity, field, types, Entity } from '@ormojo/ephraim'
 import { createBackend } from '../backend'
 
-@entity({name: 'Widget'}) class Widget:
+@entity({name: 'Widget'}) class Widget extends Entity:
   @field(types.integer) id
   @field(types.json) extra
 
@@ -30,7 +30,7 @@ beforeAll! ->
 afterAll! ->
   backend.shutdown!
 
-describe('JSON', ->
+describe('JSON', (): void ->
   it('should create, save, find by id', ->
     awidget = backend.create(Widget)
     awidget.extra = [1, "two", { three: 4} ]

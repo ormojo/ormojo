@@ -1,10 +1,10 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
 import { save, destroy, find, findAll } from '@ormojo/ormojo'
-import { toPlainObject, entity, field, types } from '@ormojo/ephraim'
+import { toPlainObject, entity, field, types, Entity } from '@ormojo/ephraim'
 import { createBackend } from '../backend'
 import { And, Or, Not, Eq, Op } from '../..'
 
-@entity({name: 'Widget'}) class Widget:
+@entity({name: 'Widget'}) class Widget extends Entity:
   @field(types.string) id
   @field(types.string) name = 'nameless'
   @field(types.integer) qty = 2
@@ -29,7 +29,7 @@ beforeAll! ->
 afterAll! ->
   backend.shutdown!
 
-describe('find', ->
+describe('find', (): void ->
 
   it('should find', ->
     widgets = [...for let i=0;i<10;i++:

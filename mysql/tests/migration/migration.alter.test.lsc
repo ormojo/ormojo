@@ -1,7 +1,7 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
 
 import { create, save, findById, destroy, find } from '@ormojo/ormojo'
-import { toPlainObject, entity, field, types, listOf, extendField } from '@ormojo/ephraim'
+import { toPlainObject, entity, field, types, listOf, extendField, Entity } from '@ormojo/ephraim'
 import { createBackend } from '../backend'
 
 util = require('util')
@@ -15,9 +15,9 @@ afterAll! ->
   .then! -> backend.shutdown!
   .catch! (err) -> console.error(err)
 
-describe('alter table migration tests: ', ->
+describe('alter table migration tests: ', (): void ->
   it('add modify drop column', ->
-    @entity({name: 'Widget'}) class Widget:
+    @entity({name: 'Widget'}) class Widget extends Entity:
       @field(types.string) id
       @field(types.boolean) noMigrateBoolean
       @field(types.integer) willChangeType
@@ -29,7 +29,7 @@ describe('alter table migration tests: ', ->
     .then! ->
       mig.execute!
     .then! ->
-      @entity({name: 'Widget2'}) class Widget2:
+      @entity({name: 'Widget2'}) class Widget2 extends Entity:
         @field(types.string) id
         @field(types.boolean) noMigrateBoolean
         @field(types.string) willChangeType
@@ -45,7 +45,7 @@ describe('alter table migration tests: ', ->
       mig.execute!
   )
 
-  @entity({name: 'Wodget'}) class Wodget:
+  @entity({name: 'Wodget'}) class Wodget extends Entity:
     @field(types.string) id
     @field(types.integer) f1
     @field(types.integer) f2

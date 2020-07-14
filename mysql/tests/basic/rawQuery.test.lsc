@@ -10,7 +10,7 @@ beforeAll! ->
 afterAll! ->
   backend.shutdown()
 
-describe! 'raw queries', ->
+describe! 'raw queries', (): void ->
   it! 'simple exercise', ->
     backend.rawQuery(`
       CREATE TABLE IF NOT EXISTS example_autoincrement (

@@ -12,7 +12,7 @@ beforeAll! ->
 afterAll! ->
   backend.shutdown()
 
-describe! 'migration metadata', ->
+describe! 'migration metadata', (): void ->
   it! 'should enumerate database state', ->
     mig = backend.createMigration()
     mig._enumerateExistingTables()
