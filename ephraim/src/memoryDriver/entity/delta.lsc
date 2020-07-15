@@ -5,6 +5,7 @@ import { observedFieldsSymbol } from '../../observe'
 import { any as _Any } from '../../types/primitiveTypes'
 import { isOpaqueType } from '../../types/type'
 
+// eslint-disable-next-line @lightscript/variables
 {hasOwnProperty} = Object
 
 cloneCache = Symbol.for("ephraim.cloneCache")

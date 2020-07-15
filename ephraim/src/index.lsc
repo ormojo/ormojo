@@ -7,7 +7,7 @@ export { types }
 export { typeOf } from './types/typeOf'
 
 export {
-  Type, PrimitiveType, OpaqueType, ComplexType,
+  Type, PrimitiveType, OpaqueType, ComplexType
   typeFrom, isType, setType, isa, isKindOf, underlyingTypeSymbol
   isPrimitiveType, underlyingTypeOfType, isOpaqueType
 } from './types/type'
@@ -51,7 +51,7 @@ export {
 } from './singleton'
 
 export {
-  transformType as transformMemoryType,
-  create as createMemory,
+  transformType as transformMemoryType
+  create as createMemory
   createDelta as createMemoryDelta
 } from './memoryDriver'
