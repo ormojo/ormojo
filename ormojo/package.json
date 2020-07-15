@@ -1,6 +1,6 @@
 {
   "name": "@ormojo/ormojo",
-  "version": "0.2.14",
+  "version": "1.0.0",
   "license": "MIT",
   "description": "A multi-backend, isomorphic ORM for JavaScript.",
   "type": "commonjs",
@@ -19,7 +19,7 @@
     "preversion": "npm run lint && npm run build"
   },
   "dependencies": {
-    "@ormojo/ephraim": "^0.2.10"
+    "@ormojo/ephraim": "^1.0.0"
   },
   "devDependencies": {
     "jest": "^26.1.0",
@@ -33,7 +33,12 @@
       "lsc"
     ],
     "transform": {
-      "\\.lsc$": ["babel-jest", { "rootMode": "upward" }]
+      "\\.lsc$": [
+        "babel-jest",
+        {
+          "rootMode": "upward"
+        }
+      ]
     },
     "testRegex": "(\\.|/)test\\.lsc$",
     "coveragePathIgnorePatterns": [

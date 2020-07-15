@@ -1,6 +1,6 @@
 {
   "name": "@ormojo/react-observe",
-  "version": "0.1.2",
+  "version": "1.0.0",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
@@ -29,17 +29,17 @@
     "lint:fix": "eslint --fix --ext .js,.lsc src"
   },
   "dependencies": {
-    "@ormojo/fobs": "^1.0.7"
+    "@ormojo/fobs": "^1.0.8"
   },
   "peerDependencies": {
     "react": "^16.3.0"
   },
   "devDependencies": {
-    "react": "^16.5.2",
-    "react-test-renderer": "^16.5.2",
     "@babel/preset-react": "^7.10.4",
     "jest": "^26.1.0",
-    "npm-run-all": "^4.1.5"
+    "npm-run-all": "^4.1.5",
+    "react": "^16.5.2",
+    "react-test-renderer": "^16.5.2"
   },
   "jest": {
     "testEnvironment": "node",
@@ -49,7 +49,12 @@
       "lsc"
     ],
     "transform": {
-      "\\.lsc$": ["babel-jest", { "rootMode": "upward" }]
+      "\\.lsc$": [
+        "babel-jest",
+        {
+          "rootMode": "upward"
+        }
+      ]
     },
     "testRegex": "(\\.|/)test\\.lsc$",
     "coveragePathIgnorePatterns": [

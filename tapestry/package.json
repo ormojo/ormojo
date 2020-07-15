@@ -1,6 +1,6 @@
 {
   "name": "@ormojo/tapestry",
-  "version": "0.2.25",
+  "version": "0.3.0",
   "license": "MIT",
   "description": "Tools for describing cross-backend relationships in ormojo.",
   "main": "lib/index.js",
@@ -20,8 +20,8 @@
     "preversion": "npm run lint && npm run build"
   },
   "dependencies": {
-    "@ormojo/ephraim": "^0.2.10",
-    "@ormojo/ormojo": "^0.2.14"
+    "@ormojo/ephraim": "^1.0.0",
+    "@ormojo/ormojo": "^1.0.0"
   },
   "devDependencies": {
     "jest": "^26.1.0",
@@ -35,7 +35,12 @@
       "lsc"
     ],
     "transform": {
-      "\\.lsc$": ["babel-jest", { "rootMode": "upward" }]
+      "\\.lsc$": [
+        "babel-jest",
+        {
+          "rootMode": "upward"
+        }
+      ]
     },
     "testRegex": "(\\.|/)test\\.lsc$",
     "coveragePathIgnorePatterns": [
