@@ -72,8 +72,13 @@ generalQuery(backend, q: MySQLQuery) ->
   .then! (result) ->
     for elem row in result[0]:
       a.push(_deserializeRow(backend, row, q.readPattern))
-    results.setPagination(q, a.length)
     results
+
+countRows(backend, q: MySQLQuery) ->
+  backend.rawQuery(q._getCountSQL())
+  .then(
+    ([rows]) -> rows[0]['COUNT(*)']
+  )
 
 export class MySQLSource extends AsyncSource:
   constructor(opts) ->
@@ -89,10 +94,19 @@ export class MySQLSource extends AsyncSource:
     else:
       idQuery(this.backend, query, ids)
 
-  readFullQuery(query: MySQLQuery): Promise<MySQLResultSet> ->
+  readFullQuery(query: MySQLQuery): Promise<MySQLResultSet> -/>
     if not query.whereClause:
       throw new Error(`MySQLSource.read(): query must have a WHERE clause`)
-    generalQuery(this.backend, query)
+    rset <- generalQuery(this.backend, query)
+    let total = query.total
+    if query.shouldCount():
+      now total <- countRows(this.backend, query)
+      rset._ranCountQuery = true
+    else:
+      rset._ranCountQuery = false
+    rset._paginate(query, total)
+
+    rset
 
   read(query: MySQLQuery): Promise<MySQLResultSet> ->
     if query.ids:

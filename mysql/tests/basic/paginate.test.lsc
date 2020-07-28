@@ -1,0 +1,68 @@
+'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+import { save, destroy, find, findAll } from '@ormojo/ormojo'
+import { toPlainObject, entity, field, types, Entity } from '@ormojo/ephraim'
+import { createBackend } from '../backend'
+import { And, Or, Not, Eq, Op } from '../..'
+
+@entity({name: 'Widget'}) class Widget extends Entity:
+  @field(types.string) id
+  @field(types.string) name = 'nameless'
+  @field(types.integer) qty = 2
+
+let backend = null
+beforeAll! ->
+  now backend = createBackend()
+  backend.bind(Widget, {
+    table: 'Widget_paginate'
+  })
+  mig = backend.createMigration()
+  mig.prepare().then! ->
+    mig.execute()
+  .then! ->
+    backend.rawQuery('DELETE FROM Widget_paginate')
+
+// afterAll! ->
+//   backend.tables._dropAllTables()
+//   .then! -> backend.shutdown!
+//   .catch! (err) -> console.error(err)
+
+afterAll! ->
+  backend.shutdown!
+
+describe('paginate', (): void ->
+
+  it('should paginate', ->
+    widgets = [...for let i=0;i<10;i++:
+      [backend.create(Widget, {id: `${i}`, name: `findAll`, qty: i}, { noPersist: true })]
+    ]
+    widgets.push(backend.create(Widget, { id: '50', name: 'uniquely named thing', qty: 50}, { noPersist: true }))
+    backend.save(widgets)
+    .then! () ->
+      // pagination, first page
+      q = backend.createQuery().setType(Widget).setLimit(3).setOffset(0).where('name'~Eq('findAll')).orderBy('qty', 'ASC')
+      backend~findAll(q)
+    .then! (results) ->
+      expect(results.getTotalResultCount()).toBe(10)
+      expect(results._ranCountQuery).toBeTruthy()
+      expect(results.getResultCount()).toBe(3)
+      expect(results.getResults()[0].qty).toBe(0)
+      // pagination, next page
+      results.nextPage()
+    .then! (results) ->
+      expect(results.getTotalResultCount()).toBe(10)
+      expect(results._ranCountQuery).toBeFalsy()
+      expect(results.getResultCount()).toBe(3)
+      expect(results.getResults()[0].qty).toBe(3)
+      results.nextPage()
+    .then! (results) ->
+      expect(results.getResultCount()).toBe(3)
+      expect(results.getResults()[0].qty).toBe(6)
+      results.nextPage()
+    .then! (results) ->
+      expect(results.getResultCount()).toBe(1)
+      expect(results.getResults()[0].qty).toBe(9)
+      results.nextPage()
+    .then! (results) ->
+      expect(results == null).toBe(true)
+  )
+)
