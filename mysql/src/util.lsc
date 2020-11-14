@@ -2,13 +2,13 @@ import SqlString from 'sqlstring'
 
 export function array_move(arr, old_index, new_index) {
     if (new_index >= arr.length) {
-        var k = new_index - arr.length + 1;
+        var k = new_index - arr.length + 1
         while (k--) {
-            arr.push(undefined);
+            arr.push(undefined)
         }
     }
-    arr.splice(new_index, 0, arr.splice(old_index, 1)[0]);
-    return arr;
+    arr.splice(new_index, 0, arr.splice(old_index, 1)[0])
+    return arr
 }
 
 // Promise finally implementation
@@ -29,13 +29,13 @@ export quoteIdentifier(id) ->
 export escapeValue(val) ->
   if (typeof(val) == 'object') and (val instanceof Date):
     dt = val
-    year       = dt.getUTCFullYear();
-    month       = dt.getUTCMonth() + 1;
-    day         = dt.getUTCDate();
-    hour        = dt.getUTCHours();
-    minute      = dt.getUTCMinutes();
-    second      = dt.getUTCSeconds();
-    millisecond = dt.getUTCMilliseconds();
+    year       = dt.getUTCFullYear()
+    month       = dt.getUTCMonth() + 1
+    day         = dt.getUTCDate()
+    hour        = dt.getUTCHours()
+    minute      = dt.getUTCMinutes()
+    second      = dt.getUTCSeconds()
+    millisecond = dt.getUTCMilliseconds()
 
     str = zeroPad(year, 4) + '-' + zeroPad(month, 2) + '-' + zeroPad(day, 2) + ' ' +
     zeroPad(hour, 2) + ':' + zeroPad(minute, 2) + ':' + zeroPad(second, 2) + '.' +
@@ -46,10 +46,10 @@ export escapeValue(val) ->
     SqlString.escape(val)
 
 function zeroPad(number, length) {
-  now number = number.toString();
+  now number = number.toString()
   while (number.length < length) {
-    now number = '0' + number;
+    now number = '0' + number
   }
 
-  return number;
+  return number
 }
