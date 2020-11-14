@@ -1,0 +1,86 @@
+import { errors } from '@enmeshed/errors'
+
+class Part {}
+
+class Atom extends Part {}
+
+class Condition extends Atom:
+  // The name of the field to compare
+  fieldName: string = null
+  // The comparison operator:
+  // All platforms must support 'eq', 'ne', 'lt', 'gt', 'le', 'ge'
+  operator: string = null
+  // Value to compare against
+  value = null
+  // Extra info
+  extra = null
+
+class Compound extends Atom:
+  // logical operator: 'and', 'or', 'not'
+  operator: string = null
+  // Parts
+  atoms: Atom[] = null
+
+  constructor(operator, atoms) ->
+    this.operator = operator
+    this.atoms = atoms
+
+class Filter extends Part {}
+
+class Modifier extends Part {}
+
+class Query extends Part:
+  constructor(filter) ->
+    this.filter = filter
+
+  filter = null
+
+isPlainObject(val) ->
+  typeof(val) == 'object' and (not Array.isArray(val))
+
+class Parser:
+  isAtomicOperator(key) ->
+    key == '$and' or
+    key == '$or'
+
+  parseQuery(obj) ->
+    if not obj~isPlainObject(): this.raise('Expected an object')
+
+    if obj['$filter']: return this.parseModifiedQuery(obj)
+
+    new Query(this.parseFilter(obj))
+
+  parseFilter(obj) ->
+    if not obj~isPlainObject(): this.raise('Expected an object')
+
+    keys = Object.keys(obj)
+    if (keys.length == 1) and this.isAtomicOperator(keys[0]):
+      return this.parseFilterOperator(obj, keys[0])
+
+    return this.parseFilterObject(obj, 'and')
+
+  // A filter object whose only entry is an operator: { $and: [...] }
+  parseFilterOperator(obj, key) ->
+    op = key.substring(1)
+    def = obj[key]
+    return this.parseFilterOperatorDefinition(def, op)
+
+  parseFilterOperatorDefinition(def, op) ->
+    if Array.isArray(def):
+      filters = [...for elem e in def: [this.parseFilter(e)]]
+      return new Compound(op, filters)
+    elif typeof(def) == 'object':
+      return this.parseFilterObject(def, op)
+    else:
+      this.raise(`Operation '${op}': expected an object or array`)
+
+  parseFilterObject(def, op) ->
+    conditions = [...for key k, val v in def: [this.parseCondition(k, v)]]
+    new Compound(op, conditions)
+
+  parseCondition(fieldName, value) ->
+    // Distinguish directive values from literals
+    if value~isPlainObject():
+      keys = Object.keys(value)
+      if keys[0]?.startsWith('$'):
+        this.parseDirectiveCondition(fieldName, value)
