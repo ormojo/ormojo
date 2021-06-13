@@ -21,13 +21,13 @@ export Type = singleton("Type", ->
       otherT == this
 
     // Check that x is an instance of this type
-    // eslint-disable-next-line no-unused-vars
+    // eslint-disable-next-line @lightscript/no-unused-vars
     validate(x): boolean ->
       false
 
     // Called when a field of this type was defined on an EntityType.
     // Used to set up the `defineProperty` hooks, et al.
-    // eslint-disable-next-line no-unused-vars
+    // eslint-disable-next-line @lightscript/no-unused-vars
     fieldOfTypeWasDefined(defineeType, key, spec): void ->
       return
 
@@ -35,7 +35,7 @@ export Type = singleton("Type", ->
     recurseLeft(left) -> left
 
     // Descend into another object recursively, mapping it onto this object
-    // eslint-disable-next-line no-unused-vars
+    // eslint-disable-next-line @lightscript/no-unused-vars
     recurseRight(left, right): void -> return
 
     // Set type extra data. This is inherited (via Object.assign) when a new

@@ -11,7 +11,7 @@ export class Query {
 
   // Determine if this query is equal to another query.
   // @param otherQuery [Query] The query to test against.
-  // eslint-disable-next-line no-unused-vars
+  // eslint-disable-next-line @lightscript/no-unused-vars
   isEqual(otherQuery) -> false
 
   ////// istanbul ignore next //////
@@ -19,13 +19,13 @@ export class Query {
   // Determine if this query is a narrowing of another query.
   // A narrowing is a query that would have a set of results that is a subset of
   // the other query's results, had they been run at the same time.
-  // eslint-disable-next-line no-unused-vars
+  // eslint-disable-next-line @lightscript/no-unused-vars
   isNarrowingOf(otherQuery) -> false
 
   ////// istanbul ignore next //////
 
   // Resume this query from the given Cursor.
-  // eslint-disable-next-line no-unused-vars
+  // eslint-disable-next-line @lightscript/no-unused-vars
   resumeFrom(cursor) -> this
 
   ////// istanbul ignore next //////
