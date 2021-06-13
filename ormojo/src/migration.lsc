@@ -1,6 +1,11 @@
 // Abstract representation of a database migration.
 // @abstract
 export class Migration:
+  // has prepare() been run?
+  prepared = false
+  // List of migration parts
+  parts = []
+
   // Construct a Migration associated with the given `Backend`.
   constructor(backend) ->
     this.backend = backend
@@ -9,12 +14,42 @@ export class Migration:
   // computing the differences with expected state.
   //
   // @abstract
-  // @return [Promise<undefined>] A `Promise` that resolves when preparation is complete.
-  prepare() -> return
+  // @return [Promise<this>] A `Promise` that resolves when preparation is complete.
+  prepare() -> Promise.resolve(this)
+
+  // Executes a prepared migration.
+  execute() -> Promise.resolve(undefined)
+
+  // Get the parts of the migration that require action
+  getActionableParts() ->
+    [...for elem part in this.parts: if part.isActionNeeded(): [part]]
 
   // Returns a JSON object representing the migration plan. Backend-specific.
   //
   // @abstract
-  getMigrationPlan() -> return
+  getMigrationPlan() ->
+    actionableSteps = this.getActionableParts()
+
+    {
+      actionNeeded: if actionableSteps.length > 0: true else: false
+      parts: [...for elem part in this.parts: [part.toJSON()]]
+    }
 
   describe() -> this.getMigrationPlan()
+
+// Migrations are broken down into a series of parts which are handled
+// serially. A part most often represents a single data object, for example
+// a single table in SQL.
+//
+// A part may or may not require a migration action. Parts which require
+// no action may still be present for informational or diagnostic purposes.
+export class MigrationPart:
+  isActionNeeded(): boolean ->
+    false
+
+  // Describe this migration part in JSON
+  toJSON() -> {}
+
+  // Asynchronously execute a migration part.
+  // eslint-disable-next-line @lightscript/no-unused-vars
+  execute(context) -> Promise.resolve(undefined)
