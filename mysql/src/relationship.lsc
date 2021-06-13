@@ -22,7 +22,7 @@ export class OneToOneRelationship extends MySQLRelationship:
   constructor(backend) ->
     super(backend)
 
-  // eslint-disable-next-line no-unused-vars
+  // eslint-disable-next-line @lightscript/no-unused-vars
   setMultiJoin(priorJoin, foreignType, foreignField) ->
     this
 

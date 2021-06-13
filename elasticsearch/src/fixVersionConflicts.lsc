@@ -1,7 +1,7 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
 import { getPreviousValue, typeOf, setPreviousValue, underlyingTypeOfType, primitiveFields, opaqueFields } from '@ormojo/ephraim'
 
-// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line @lightscript/no-unused-vars
 defaultIsConflictFixable(newVersion, proposedChange) ->
   true
 

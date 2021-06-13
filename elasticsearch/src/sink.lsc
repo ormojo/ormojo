@@ -18,7 +18,7 @@ errorForResult(res) ->
 
 // Unwrap elasticsearch item returned from bulk api
 unwrapItem(item) ->
-  for const k in item:
+  for k in item:
     now item = item[k]
     break
   item
@@ -136,10 +136,12 @@ shouldThrowFirstError(data, opts) ->
     false
 
 crupsert(backend, log, data, lambda1, lambda2, opts) -/>
-  esResult <- bulkOperation(backend.es, log,
+  esResult <- bulkOperation(
+    backend.es
+    log
     [...for elem datum in data:
       [ lambda1(datum, opts), lambda2(datum, opts) ]
-    ],
+    ]
     opts
   )
 

@@ -126,7 +126,7 @@ export class MySQLBackend extends Backend:
       if rst?.results[0]: instance._wasDeleted = true
       instance
 
-  // eslint-disable-next-line no-unused-vars
+  // eslint-disable-next-line @lightscript/no-unused-vars
   destroyById(T, id, opts) ->
     now T = typeFrom(T)
     this.sink.deleteById(this.typeMap.get(T), id)
