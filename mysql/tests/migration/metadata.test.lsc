@@ -13,10 +13,8 @@ afterAll! ->
   backend.shutdown()
 
 describe! 'migration metadata', (): void ->
-  it! 'should enumerate database state', ->
+  it! 'should enumerate database state', -/>
     mig = backend.createMigration()
-    mig._enumerateExistingTables()
-    .then! ->
-      mig.existingTables._getAllTableMetadata()
-    .then! ->
-      console.log(util.inspect(mig.existingTables.toJSON(), false, null))
+    tables <- mig._enumerateExistingTables()
+    <- tables._getAllTableMetadata()
+    console.log(util.inspect(tables.toJSON(), false, null))

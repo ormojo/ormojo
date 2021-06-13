@@ -1,8 +1,31 @@
 'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
 
-import { Migration } from '@ormojo/ormojo'
+import { Migration, MigrationPart } from '@ormojo/ormojo'
 import { MySQLTables } from './metadata/tables'
 import { getTablesDiff } from './metadata/tableDiff'
+
+class MySQLMigrationPart extends MigrationPart:
+  constructor(diff) ->
+    this.tableName = diff.target.name
+    this.diff = diff
+    this.ddl = [
+      ...if diff.indexDropDDL: [diff.indexDropDDL]
+      ...if diff.ddl: [diff.ddl]
+    ]
+
+  isActionNeeded() -> this.ddl.length > 0
+
+  toJSON() -> {
+    tableName: this.tableName
+    actionNeeded: this.isActionNeeded()
+    diff: this.diff
+    ddl: this.ddl
+  }
+
+  execute({connection, backend}): void -/>
+    if this.ddl.length == 0: return
+    for elem ddlEntry in this.ddl:
+      <- backend.rawQuery(ddlEntry, null, connection)
 
 // Migration for a schema
 export class MySQLMigration extends Migration:
@@ -10,48 +33,37 @@ export class MySQLMigration extends Migration:
     super(backend)
     this.database = backend.database
 
-  prepare(): Promise<MySQLMigration> ->
-    this._prepareAlter!
+  prepare() -/>
+    // Diff current tables in database with target tables defined
+    // on backend
+    currentTables = new MySQLTables(this.backend, this.database)
+    <- currentTables._enumerateTables()
+    <- currentTables._getAllTableMetadata()
+    { diffs } = getTablesDiff(this.backend.tables, currentTables)
 
-  _prepareAlter() ->
-    this.ddl = []
-    this.currentTables = new MySQLTables(this.backend, this.database)
-    this.currentTables._enumerateTables()
-    .then! =>
-      this.currentTables._getAllTableMetadata()
-    .then! =>
-      this.plan = getTablesDiff(this.backend.tables, this.currentTables)
-      this.ddl = this.plan.ddl
-      if this.ddl.length == 0:
-        this.backend.log.trace("MySQLMigration: trivial migration")
-      else:
-        this.backend.log.trace("MySQLMigration: nontrivial migration", this.ddl)
-      this
+    // Convert diff into a series of migration steps
+    this.parts = [...for elem diff in diffs: [new MySQLMigrationPart(diff)]]
 
-  _prepareCreate() ->
-    this.ddl = []
-    for elem tbl in this.backend.tables.getTableList():
-      this.ddl.push(tbl._toCreateDDL!)
-    this.plan = { ddl: this.ddl }
-    Promise.resolve(this)
+    // Flag as prepared and return
+    this.prepared = true
+    this
 
-  getMigrationPlan() ->
-    this.plan
-
-  execute() ->
+  execute(): void -/>
     backend = this.backend
-    ddl = this.ddl
+    actionableParts = this.getActionableParts()
+    if actionableParts.length == 0: return
 
-    continuation(n, backend, conn) ->
-      if n >= ddl.length:
-        backend.connectionManager.closeConnection(conn)
-      else:
-        backend.rawQuery(ddl[n], null, conn).then(-> continuation(n+1, backend, conn))
-
-    backend.connectionManager.openConnection()
-      .then! (conn) -> continuation(0, backend, conn)
+    // Open connection
+    connection <- backend.connectionManager.openConnection()
+    context = {connection, backend}
+    // Execute actionable parts
+    for elem actionablePart in actionableParts:
+      <- actionablePart.execute(context)
+    // Close connection
+    <- backend.connectionManager.closeConnection(connection)
 
   // Get existing table structure from database
-  _enumerateExistingTables(): Promise<any> ->
-    this.existingTables = new MySQLTables(this.backend, this.database)
-    this.existingTables._enumerateTables()
+  _enumerateExistingTables() -/>
+    tables = new MySQLTables(this.backend, this.database)
+    <- tables._enumerateTables()
+    tables

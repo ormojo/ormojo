@@ -43,7 +43,7 @@ describe('migration tests: ', (): void ->
     mig = backend.createMigration()
     mig.prepare()
     .then(->
-      console.log("DDL:", mig.ddl)
+      console.log("Migration Plan:", mig.getMigrationPlan())
       mig.execute()
     )
   )
