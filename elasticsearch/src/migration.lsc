@@ -1,4 +1,4 @@
-import { Migration } from '@ormojo/ormojo'
+import { Migration, MigrationPart } from '@ormojo/ormojo'
 import { isEqual, last, isEmpty } from 'lodash'
 import deepDiff from 'deep-diff'
 
@@ -48,9 +48,8 @@ isRelevantDifference(difference) ->
 // Migration plan for a specific index. Determines if the index can
 // be migrated and how.
 //
-class MigrationPlan:
-  constructor(backend, index) ->
-    this.backend = backend
+class ESMigrationPart extends MigrationPart:
+  constructor(index) ->
     this.index = index
     this.indexStatus = 'UNKNOWN'
     this.migrationStrategy = 'UNKNOWN'
@@ -63,19 +62,18 @@ class MigrationPlan:
     if index.settings: Object.assign(settings, index.settings)
 
     this.targetSettings = {
-      mappings: this.index.mappings
+      mappings: index.mappings
       settings: { analysis }
     }
 
   getTargetSettings() -> this.targetSettings
 
-  prepare() -/>
-    <- this.getExistingAlias()
-    <- this.planIndexTransition()
+  prepare(context) -/>
+    <- this.getExistingAlias(context)
+    <- this.planIndexTransition(context)
 
   // See if the desired index has an existing alias.
-  getExistingAlias(): void -/>
-    { es } = this.backend
+  getExistingAlias({ es }): void -/>
     aliasName = this.index.name
 
     result <- es.indices.get({index: aliasName}, {ignore:[404]})
@@ -135,8 +133,7 @@ class MigrationPlan:
     }
 
 
-  planIndexTransition(): void ->
-    { log } = this.backend
+  planIndexTransition({ log }): void ->
     this.migrationStrategy = 'CANT_MIGRATE'
 
     // If the index doesn't exist, create it
@@ -167,19 +164,17 @@ class MigrationPlan:
     ]
 
     if this.relevantDiffs.length == 0:
-      this.backend.log.trace('elasticsearch: no relevant differences in index settings, migration not needed')
+      log.trace('elasticsearch: no relevant differences in index settings, migration not needed')
       this.migrationStrategy = 'NOT_NEEDED'
       return
 
-    this.backend.log.trace('elasticsearch: diff', this.relevantDiffs)
+    log.trace('elasticsearch: diff', this.relevantDiffs)
 
     if this.indexStatus == 'MIGRATABLE':
       this.migrationStrategy = 'ADD_PHYSICAL_INDEX'
 
 
-  executeCreateStrategy(): void -/>
-    { es, log } = this.backend
-
+  executeCreateStrategy({ es, log }): void -/>
     if this.migrationStrategy != 'ADD_PHYSICAL_INDEX':
       throw new Error('executeCreateStrategy() called in invalid state')
 
@@ -214,37 +209,48 @@ class MigrationPlan:
       })
     <- es.indices.updateAliases({ body: { actions} })
 
-  execute() ->
+  execute(context) ->
     if this.migrationStrategy == 'ADD_PHYSICAL_INDEX':
-      this.executeCreateStrategy()
+      this.executeCreateStrategy(context)
     else if (not this.migrationStrategy):
       Promise.reject(new Error('unprepared MigrationPlan'))
     else:
       Promise.resolve()
 
+  toJSON() -> {
+    migrationStrategy: this.migrationStrategy
+    indexName: this.index.name
+    currentSettings: this.currentSettings
+    targetSettings: this.targetSettings
+    diff: this.relevantDiffs
+  }
+
+  isActionNeeded() ->
+    if this.migrationStrategy == "ADD_PHYSICAL_INDEX":
+      true
+    else:
+      false
+
 export class ESMigration extends Migration:
-  constructor(backend) ->
-    super(backend)
-    this.plans = {}
-    for key name, val index in this.backend.indices.getIndices():
-      this.plans[name] = new MigrationPlan(backend, index)
-
   prepare() ->
-    // Develop a migration plan for each index.
-    promises = [...for val plan in this.plans: [plan.prepare()]]
-    Promise.all(promises).then(=> this)
-
-  getMigrationPlan() ->
-    [...for val plan in this.plans:
-      [{
-        strategy: plan.migrationStrategy
-        index: plan.index.name
-        currentSettings: plan.currentSettings
-        targetSettings: plan.targetSettings
-        settingsDiff: plan.relevantDiffs
-      }]
+    // Generate a migration part for each index
+    this.parts = [...for val index in this.backend.indices.getIndices():
+      [new ESMigrationPart(index)]
     ]
 
+    context = {
+      es: this.backend.es
+      log: this.backend.log
+    }
+
+    // Develop a migration plan for each index.
+    promises = [...for elem part in this.parts: [part.prepare(context)]]
+    Promise.all(promises).then(=> this)
+
   execute() ->
-    promises = [...for val plan in this.plans: [plan.execute()]]
+    context = {
+      es: this.backend.es
+      log: this.backend.log
+    }
+    promises = [...for elem part in this.parts: [part.execute(context)]]
     Promise.all(promises)

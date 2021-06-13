@@ -21,7 +21,7 @@ beforeAll! ->
 
 afterAll! -/>
   <- es_client.indices.delete({
-    index: [`widget_timestamped_v*`]
+    index: [`widget_timestamped_*`]
   }, { ignore: [404] })
   <- backend.shutdown()
 

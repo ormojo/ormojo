@@ -60,9 +60,9 @@ describe('migration tests: ', ->
     mig.prepare()
     .then(->
       plan = mig.getMigrationPlan()
-      // console.dir(plan, { depth: 50 })
+      console.dir(plan, { depth: 50 })
       // should need to create the index because it's absent
-      expect(plan[0].strategy).toBe('ADD_PHYSICAL_INDEX')
+      expect(plan.parts[0].migrationStrategy).toBe('ADD_PHYSICAL_INDEX')
       mig.execute()
     )
     .then! ->
@@ -76,7 +76,7 @@ describe('migration tests: ', ->
     .then! (mig2) ->
       plan = mig2.getMigrationPlan!
       // console.dir(plan, { depth: 50 })
-      expect(plan[0].strategy).toBe('NOT_NEEDED')
+      expect(plan.parts[0].migrationStrategy).toBe('NOT_NEEDED')
       now be3 = createBackend()
       be3.bind(NuWidget)
       mig3 = be3.createMigration()
@@ -84,7 +84,7 @@ describe('migration tests: ', ->
     .then! (mig3) ->
       plan = mig3.getMigrationPlan!
       // console.dir(plan, { depth: 50 })
-      expect(plan[0].strategy).toBe('ADD_PHYSICAL_INDEX')
+      expect(plan.parts[0].migrationStrategy).toBe('ADD_PHYSICAL_INDEX')
       mig3.execute()
     .then! ->
       be3.create(NuWidget, {name: 'joe', extra: 'pickles'}, {refresh: 'wait_for'})

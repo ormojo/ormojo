@@ -14,8 +14,6 @@ beforeAll! ->
 afterAll! -/>
   <- cleanupCorpus('crud')
 
-
-
 test('should create, save, find by id', ->
   awidget = backend.create(Widget)
   awidget.name = "whosit"

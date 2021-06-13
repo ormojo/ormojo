@@ -31,7 +31,7 @@ export cleanupCorpus(extraName) -/>
       name: [`widget_${extraName}`]
     }, { ignore: [404] })
     <- es_client.indices.delete({
-      index: [`widget_${extraName}_v*`]
+      index: [`widget_${extraName}_*`]
     }, { ignore: [ 404 ] })
   catch err:
     console.error("error while cleaning up", err)
