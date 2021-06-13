@@ -1,6 +1,6 @@
 {
   "name": "@ormojo/react-observe",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
@@ -29,7 +29,7 @@
     "lint:fix": "eslint --fix --ext .js,.lsc src"
   },
   "dependencies": {
-    "@ormojo/fobs": "^1.0.8"
+    "@ormojo/fobs": "^1.0.9"
   },
   "peerDependencies": {
     "react": "^16.3.0"
