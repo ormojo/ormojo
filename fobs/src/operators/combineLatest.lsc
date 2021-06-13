@@ -23,7 +23,7 @@ export combineLatest(observables, projection) ->
   subscribe = subscribeObserverAdapter! (observer) ->
     // Initial value map
     let values = if isArray:
-      // eslint-disable-next-line no-unused-vars
+      // eslint-disable-next-line @lightscript/no-unused-vars
       [...for elem observable in observables: [none]]
     else:
       {...for key k in observables: {[k]: none}}
