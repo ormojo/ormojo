@@ -14,6 +14,7 @@ import { ManyToManyRelationship, And, Or, Not, Eq, Op, Field } from '../..'
   @field(types.string) extraField
 
 @entity({name: 'MasterDetailJoin'}) class MasterDetailJoin extends Entity:
+  @field(types.integer) id
   @field(types.integer) masterId
   @field(types.integer) detailId
   @field(types.string) extra
@@ -36,7 +37,11 @@ beforeAll! ->
       extraField: { ignore: true }
     }
   })
-  backend.bind(MasterDetailJoin)
+  backend.bind(MasterDetailJoin, {
+    fields: {
+      id: { autoIncrement: true }
+    }
+  })
 
   now rel = new ManyToManyRelationship(backend).join(Master, Detail, MasterDetailJoin, 'masterId', 'detailId')
   rel.extraField('extraField', 'extra')

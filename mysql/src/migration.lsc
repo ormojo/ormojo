@@ -67,3 +67,7 @@ export class MySQLMigration extends Migration:
     tables = new MySQLTables(this.backend, this.database)
     <- tables._enumerateTables()
     tables
+
+  _describeDdl() ->
+    allDDL = [...for elem part in this.parts or []: part.ddl or []]
+    allDDL

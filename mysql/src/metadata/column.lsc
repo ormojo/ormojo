@@ -44,13 +44,13 @@ export class MySQLColumn:
   }
 
   setType(ty) ->
-    this.type = ty
+    this.type = ty.toLowerCase()
     if(
-      /^CHAR/i.test(ty) or
-      /^VARCHAR/i.test(ty) or
-      /TEXT/i.test(ty) or
-      /^ENUM/i.test(ty) or
-      /^SET/i.test(ty)
+      /^char/i.test(ty) or
+      /^varchar/i.test(ty) or
+      /text/i.test(ty) or
+      /^enum/i.test(ty) or
+      /^set/i.test(ty)
     ): this.isStringType = true
     else: this.isStringType = false
     this
@@ -82,14 +82,14 @@ export class MySQLColumn:
     ((not this.isStringType) or sameCharset(this.collation, other.collation))
 
   _fromInformationSchemaRow(row): void ->
-    this.nullable = if row.is_nullable == 'YES': true else: false
-    this.ordinalPosition = row.ordinal_position
-    this.keyType = row.column_key
-    this.setType(row.column_type)
-    this.charset = row.character_set_name
-    this.collation = row.collation_name
-    this.default = row.column_default
-    this.autoIncrement = /auto_increment/.test(row.extra)
+    this.nullable = if row.IS_NULLABLE == 'YES': true else: false
+    this.ordinalPosition = row.ORDINAL_POSITION
+    this.keyType = row.COLUMN_KEY
+    this.setType(row.COLUMN_TYPE)
+    this.charset = row.CHARACTER_SET_NAME
+    this.collation = row.COLLATION_NAME
+    this.default = row.COLUMN_DEFAULT
+    this.autoIncrement = /auto_increment/.test(row.EXTRA)
 
   _getTypeDDL(): string ->
     if not this.isStringType:

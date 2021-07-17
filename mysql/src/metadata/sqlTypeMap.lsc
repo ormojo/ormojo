@@ -6,7 +6,7 @@ export sqlTypeMap(orType) ->
   else if orType == types.text:
     'TEXT'
   else if orType == types.integer:
-    'INT(11)'
+    'INT'
   else if orType == types.boolean:
     'BOOLEAN'
   else if orType == types.number:

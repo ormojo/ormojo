@@ -11,30 +11,37 @@ afterAll! ->
   backend.shutdown()
 
 describe! 'raw queries', (): void ->
-  it! 'simple exercise', ->
-    backend.rawQuery(`
+  it! 'simple exercise', -/>
+    let result
+    now result <- backend.rawQuery(`
       CREATE TABLE IF NOT EXISTS example_autoincrement (
         id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         data VARCHAR(100),
         data2 VARCHAR(100) DEFAULT "It's ya boy"
       );
-    `).then! -> backend.rawQuery(`
+    `)
+    now result <- backend.rawQuery(`
       CREATE TABLE IF NOT EXISTS example_noautoincrement (
         id VARCHAR(100) NOT NULL PRIMARY KEY,
         data VARCHAR(100) DEFAULT "It's ya boi"
       );
-    `).then! (result) ->
-      console.log("CREATE", result)
-      backend.rawQuery(`INSERT INTO example_autoincrement (data) VALUES ("hello");`)
-    .then! (result) ->
-      console.log("INSERT", result)
-      n = Math.floor(Math.random() * 1000000)
-      backend.rawQuery(`INSERT INTO example_noautoincrement (id, data) VALUES ("henloz${n}", "hello");`)
-    .then! (result) ->
-      console.log("INSERT2", result)
-      backend.rawQuery(`SELECT \`example_autoincrement\`.\`id\`, data FROM example_autoincrement;`)
-    .then! (result) ->
-      console.log("SELECT+", result)
-      backend.rawQuery(`SELECT id, data FROM example_autoincrement WHERE id='dne';`)
-    .then! (result) ->
-      console.log("SELECT-", result)
+    `)
+    console.log("CREATE", result)
+
+    now result <- backend.rawQuery(`INSERT INTO example_autoincrement (data) VALUES ("hello");`)
+    expect(result[0].affectedRows).toBe(1)
+    expect(result[0].insertId).toBeGreaterThan(0)
+    console.log("INSERT", result)
+
+    n = Math.floor(Math.random() * 1000000)
+    now result <- backend.rawQuery(`INSERT INTO example_noautoincrement (id, data) VALUES ("henloz${n}", "hello");`)
+    expect(result[0].affectedRows).toBe(1)
+    console.log("INSERT2", result)
+
+    now result <- backend.rawQuery(`SELECT \`example_autoincrement\`.\`id\`, data FROM example_autoincrement;`)
+    expect(result[0].length).toBeGreaterThan(0)
+    console.log("SELECT+", result)
+
+    now result <- backend.rawQuery(`SELECT id, data FROM example_autoincrement WHERE id='dne';`)
+    expect(result[0].length).toBe(0)
+    console.log("SELECT-", result)

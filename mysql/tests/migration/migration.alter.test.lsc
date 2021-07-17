@@ -27,6 +27,7 @@ describe('alter table migration tests: ', (): void ->
     mig = backend.createMigration()
     mig.prepare!
     .then! ->
+      console.log("plan", util.inspect(mig.describe(), { depth: 10}))
       mig.execute!
     .then! ->
       @entity({name: 'Widget2'}) class Widget2 extends Entity:
@@ -39,9 +40,9 @@ describe('alter table migration tests: ', (): void ->
       backend._clearInternalTableStructure!
       backend.bind(Widget2, { table: 'Widget_alter' })
       const mig = backend.createMigration()
-      console.log("Made migration")
       mig.prepare!
     .then! (mig) ->
+      console.log("plan", util.inspect(mig.describe(), { depth: 10}))
       mig.execute!
   )
 
@@ -52,24 +53,31 @@ describe('alter table migration tests: ', (): void ->
   it! 'add modify drop index', ->
     console.log("******** Create")
     backend.bind(Wodget, { table: 'Wodget_alter', indices: [{ columnNames: ['f1'] }] })
-    backend.createMigration!.prepare!.then(mig -> mig.execute!)
+    backend.createMigration!.prepare!.then(mig ->
+      console.log("ddl", mig._describeDdl())
+      mig.execute!)
     .then! ->
       console.log("******** Alter")
       backend._clearInternalTableStructure!
       backend.bind(Wodget, { table: 'Wodget_alter', indices: [{ columnNames: ['f1'], unique: true }] })
-      backend.createMigration!.prepare!.then(mig -> mig.execute!)
+      backend.createMigration!.prepare!.then(mig ->
+        console.log("ddl", mig._describeDdl())
+        mig.execute!)
     .then! ->
       console.log("******** Add/Drop")
       backend._clearInternalTableStructure!
       backend.bind(Wodget, { table: 'Wodget_alter', indices: [{ columnNames: ['f1', 'f2'], unique: true }] })
-      backend.createMigration!.prepare!.then(mig -> mig.execute!)
+      backend.createMigration!.prepare!.then(mig ->
+        console.log("ddl", mig._describeDdl())
+        mig.execute!
+      )
     .then! ->
       console.log("******** NOOP")
       backend._clearInternalTableStructure!
       backend.bind(Wodget, { table: 'Wodget_alter', indices: [{ columnNames: ['f1', 'f2'], unique: true }] })
       backend.createMigration!.prepare!
       .then(mig ->
-        console.log("plan", util.inspect(mig.getMigrationPlan(), false, null))
+        console.log("ddl", mig._describeDdl())
         mig
       )
       .then(mig -> mig.execute!)

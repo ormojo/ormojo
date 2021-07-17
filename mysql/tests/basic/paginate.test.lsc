@@ -27,7 +27,7 @@ beforeAll! ->
 //   .catch! (err) -> console.error(err)
 
 afterAll! ->
-  backend.shutdown!
+  backend.shutdown().catch((err) -> console.error(err))
 
 describe('paginate', (): void ->
 
