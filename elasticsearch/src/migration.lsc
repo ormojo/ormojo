@@ -36,6 +36,10 @@ isRelevantDifference(difference) ->
   if difference.kind == 'D' and isShardingParameterDiff(difference):
     return false
 
+  // Omitted routing settings are acceptable
+  if difference.kind == 'D' and isEqual(difference.path, ['settings', 'routing']):
+    return false
+
   // An empty, new, analysis setting is irrelevant
   if difference.kind == 'N'
     and isEqual(difference.path, ['settings', 'analysis'])
