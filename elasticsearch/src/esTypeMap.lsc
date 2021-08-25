@@ -13,6 +13,8 @@ export esTypeMap(orType) ->
     ({ type: 'double' })
   else if orType == types.object:
     ({ type: 'object' })
+  else if orType == types.json:
+    ({ type: 'object' })
   else if orType == types.date:
     ({ type: 'date', format: 'strict_date_optional_time||epoch_millis' })
   else if orType == types.point:
