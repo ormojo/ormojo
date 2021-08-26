@@ -1,6 +1,6 @@
 {
   "name": "@ormojo/ormojo",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "license": "MIT",
   "description": "A multi-backend, isomorphic ORM for JavaScript.",
   "type": "commonjs",
@@ -19,7 +19,7 @@
     "preversion": "npm run lint && npm run build"
   },
   "dependencies": {
-    "@ormojo/ephraim": "^1.0.1"
+    "@ormojo/ephraim": "^1.0.2"
   },
   "devDependencies": {
     "jest": "^27.0.4",

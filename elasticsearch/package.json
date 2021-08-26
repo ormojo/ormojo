@@ -1,6 +1,6 @@
 {
   "name": "@ormojo/elasticsearch",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
@@ -24,8 +24,8 @@
     "self-link": "mkdir -p node_modules/@ormojo && ln -s ../.. node_modules/@ormojo/ephraim-memory"
   },
   "dependencies": {
-    "@ormojo/ephraim": "^1.0.1",
-    "@ormojo/ormojo": "^1.1.0",
+    "@ormojo/ephraim": "^1.0.2",
+    "@ormojo/ormojo": "^1.1.1",
     "deep-diff": "^1.0.2",
     "lodash": "^4.17.21"
   },
