@@ -15,6 +15,14 @@ export date = singleton("date", ->
       new Date(x.getTime())
     elif typeof(x) == 'string':
       new Date(x)
+
+  // When converting dates to json, stringify
+  date.recurseLeft = (left, state) ->
+    if state.toJson:
+      if left: left.toISOString() else: null
+    else:
+      left
+
   date
 )
 

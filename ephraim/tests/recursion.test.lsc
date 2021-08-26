@@ -12,6 +12,14 @@ test! 'toPlainObject', ->
   e._private = 3
   console.log(e~toPlainObject({includeTypeStamp: true}))
 
+test! 'toPlainObject json date', ->
+  @entity({name: "E"}) class E extends Entity:
+    @field(types.date) d
+
+  e = create(E)
+  e.d = new Date()
+  console.log(e~toPlainObject({includeTypeStamp: true, toJson: true}))
+
 test! 'toPlainObject transients', ->
   @entity({name: "E"}) class E extends Entity:
     @field({type: types.any, transient: true}) t

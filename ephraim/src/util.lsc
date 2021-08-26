@@ -14,6 +14,7 @@ objectConversionState(opts) ->
   includeTypeStamp = opts?.includeTypeStamp
   includeTransients = opts?.includeTransients
   {
+    toJson: opts?.toJson
     seen(x) -> this.map?.get(x)
     remember(x, val): void ->
       if not this.map: this.map = new Map()
