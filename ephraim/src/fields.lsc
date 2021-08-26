@@ -56,10 +56,9 @@ export forEachField(ent, f): void ->
 
   // Flex fields
   for elem k in Object.keys(ent):
-    if k.charCodeAt(0) != 95:
-      v = ent[k]
-      if typeof(v) != "function":
-        f(k, v)
+    v = ent[k]
+    if typeof(v) != "function":
+      f(k, v)
 
 // Directly set a field on an entity without triggering observers, deltas, et cetera
 export rawSet(ent, fieldKey, val): void ->
