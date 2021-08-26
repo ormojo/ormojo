@@ -14,7 +14,7 @@ export _createNew(type, backend) ->
 export hydrateInstance(instance, esData) ->
   instance._isNewRecord = undefined
   if not esData:
-    instance~clearDelta!
+    instance~clearDelta()
     return instance
 
   // Data
@@ -26,15 +26,15 @@ export hydrateInstance(instance, esData) ->
     // TODO: smarter assignment here
     instance~assignPlainObject(esData._source)
     instance._type = orm_type
-    instance~clearDelta!
+    instance~clearDelta()
   else:
-    instance~clearDelta!
+    instance~clearDelta()
 
   // Metadata
   if esData._index: instance._index = esData._index
-  if esData._seq_no:
+  if "_seq_no" in esData:
     instance._occ = { seq_no: esData._seq_no, primary_term: esData._primary_term }
-  if esData._score: instance._score = esData._score
+  if "_score" in esData: instance._score = esData._score
   if esData._routing: instance._routing = esData._routing
 
   instance
