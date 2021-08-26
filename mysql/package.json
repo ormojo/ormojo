@@ -1,6 +1,6 @@
 {
   "name": "@ormojo/mysql",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "license": "MIT",
   "description": "MySQL driver for ormojo.",
   "type": "commonjs",
@@ -20,8 +20,8 @@
     "preversion": "npm run lint && npm run build"
   },
   "dependencies": {
-    "@ormojo/ephraim": "^1.0.2",
-    "@ormojo/ormojo": "^1.1.1",
+    "@ormojo/ephraim": "^1.0.3",
+    "@ormojo/ormojo": "^1.1.2",
     "lodash": "^4.17.21",
     "sqlstring": "^2.3.2"
   },
