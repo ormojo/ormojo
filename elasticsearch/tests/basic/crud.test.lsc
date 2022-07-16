@@ -26,12 +26,12 @@ test('should create, save, find by id', ->
     debugger
     backend.findById(Widget, widg.id)
   .then! (widg) ->
-    console.log(widg~toPlainObject!)
+    delete widg._score // XXX
     expect(widg~toPlainObject!).toEqual(awidget~toPlainObject!)
     expect(widg~getBackend!).toBe(backend)
     backend.findById(Widget, [widg.id])
   .then! (widgs) ->
-    console.log(widgs)
+    delete widgs[0]._score // XXX
     expect(widgs[0]~toPlainObject!).toEqual(awidget~toPlainObject!)
 )
 

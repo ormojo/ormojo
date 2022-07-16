@@ -28,11 +28,13 @@ wrapAPI({log, longname, run = runner}, driver, method) ->
     {body, warnings, meta} = result
 
     if warnings and warnings.length > 0:
-      log.warn(`Elasticsearch returned warnings while invoking '${longname}'`, { meta })
-      for elem warning in warnings:
-        log.warn(`Elasticsearch warning: ${warning}`)
+      log.warn(`Elasticsearch returned warnings while invoking '${longname}'`, { meta, warnings })
 
-    log.trace(`Elasticsearch API call: ${longname}: successful`, util.inspect(body, false, 50))
+    // Log errors in bulk calls
+    if (method == 'bulk') and (body?.errors):
+      log.warn(`Elasticsearch API call: bulk: partially executed with errors`, util.inspect(body, false, 50))
+    else:
+      log.trace(`Elasticsearch API call: ${longname}: successful`, util.inspect(body, false, 50))
 
     body
 

@@ -74,5 +74,11 @@ export getBulkDataForInstance(instance, opts) ->
   // Conform to standard Elasticsearch timestamp naming conventions
   if instance~isa(Timestamped) and ob.createdAt:
     ob['@timestamp'] = ob.createdAt
-  delete ob.id // use Elasticsearch virtual id field
+  // use Elasticsearch virtual id field
+  delete ob.id
+  // Elasticsearch doesn't like _index or _type as a field on the object
+  delete ob._index
+  delete ob._type
+  // Remove metadata junk (XXX: toPlainObject should probably do this)
+  delete ob._isNewRecord
   ob
