@@ -1,6 +1,6 @@
 {
   "name": "@ormojo/elasticsearch",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
