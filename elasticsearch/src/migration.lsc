@@ -21,6 +21,7 @@ isShardingParameterDiff(difference) ->
     | else: false
 
 // Determine if a difference in index settings is relevant during migration
+// eslint-disable-next-line @lightscript/no-unused-vars
 isRelevantDifference(difference, current, target) ->
   // Elasticsearch stringifies numbers, causing false positives
   if difference.kind == 'E' and (JSON.stringify(difference.rhs) == difference.lhs):
