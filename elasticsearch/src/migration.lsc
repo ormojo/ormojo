@@ -21,7 +21,7 @@ isShardingParameterDiff(difference) ->
     | else: false
 
 // Determine if a difference in index settings is relevant during migration
-isRelevantDifference(difference) ->
+isRelevantDifference(difference, current, target) ->
   // Elasticsearch stringifies numbers, causing false positives
   if difference.kind == 'E' and (JSON.stringify(difference.rhs) == difference.lhs):
     return false
@@ -45,6 +45,10 @@ isRelevantDifference(difference) ->
     and isEqual(difference.path, ['settings', 'analysis'])
     and isEmpty(difference.rhs):
       return false
+
+  // Elasticsearch may infer a binding for a flex field we don't know about.
+  // We can ignore these.
+  // TODO: implement
 
   true
 
@@ -164,7 +168,7 @@ class ESMigrationPart extends MigrationPart:
 
     // Patch up white noise in migration diff
     this.relevantDiffs = [...for elem difference in this.migrationDiff:
-      if isRelevantDifference(difference): [difference]
+      if isRelevantDifference(difference, this.currentSettings, this.targetSettings): [difference]
     ]
 
     if this.relevantDiffs.length == 0:

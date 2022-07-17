@@ -79,6 +79,7 @@ export getBulkDataForInstance(instance, opts) ->
   // Elasticsearch doesn't like _index or _type as a field on the object
   delete ob._index
   delete ob._type
+  delete ob._score
   // Remove metadata junk (XXX: toPlainObject should probably do this)
   delete ob._isNewRecord
   ob
